@@ -7,6 +7,7 @@ class server
 private:
     int _server;
     int _client[3]; // Tableau pour les descripteurs de fichiers des clients
+    int const _timeoutval;
     struct sockaddr_in _serverAddr;
     struct sockaddr_in _clientAddr[3]; // Tableau pour les adresses des clients
     

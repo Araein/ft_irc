@@ -36,7 +36,8 @@ void sig_int(int signum)
 {
 	(void)signum;
 	srv->stopServer();
-	// delete srv;
+	delete srv;
+	exit(0);
 }
 
 int main (int ac, char **av)
