@@ -1,29 +1,48 @@
-NAME	= ircserv
+BLACK = \033[30m
+RED = \033[31m
+GREEN = \033[32m
+YELLOW = \033[33m
+BLUE = \033[34m
+PINK =\033[35m
+CYAN = \033[36m
+GREY =\033[37m
+BOLD = \033[1m
+LINE = \033[4m
+NONE = \033[0m
 
-SRCS	= main.cpp
+NAME=ircserv
 
-COMPIL	= c++
+INC = ./include
+HEARDER = $(INC)/irc.hpp $(INC)/server.hpp
 
-REMOVE	= rm -rf
+CC = c++
+CFLAGS = -Wall -Werror -Wextra -std=c++98
 
-FLAGS	= -Wall -Wextra -Werror -std=c++98
+DIR_SRCS = ./srcs
+SRCS = main.cpp server.cpp
+SRC = $(addprefix $(DIR_SRCS)/, $(SRCS))
+OBJS = $(SRC:.cpp=.o)
 
-OBJS	= ${SRCS:.cpp=.o}
+all: $(NAME)
 
-all:		${NAME}
+$(NAME): $(OBJS) $(HEARDER)
+	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+	@echo "$(GREEN)Compilation completed successfully$(NONE)"
 
-%.o: 		%.cpp
-				${COMPIL} ${FLAGS} -o  $@ -c $<
 
-$(NAME):	${OBJS}
-				${COMPIL} -o ${NAME} ${OBJS}
+.cpp.o : 
+	@$(CC) $(CFLAGS) -I$(INC) -c $< -o $@
 
-clean: 
-				${REMOVE} ${OBJS}
 
-fclean: 	clean
-				${REMOVE} ${NAME}
+clean:
+	@rm -f $(OBJS)
+	@echo "$(RED)Objects files deleted$(NONE)"
 
-re:			fclean all
+fclean: clean
+	@rm -f $(NAME)
+	@echo "$(RED)Executable file deleted$(NONE)"
 
-.PHONY: 	all fclean clean re
+re: fclean all
+
+
+.PHONY: all clean fclean re
