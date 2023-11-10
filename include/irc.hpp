@@ -11,7 +11,6 @@
 #include <signal.h>
 #include <poll.h>
 #include <fcntl.h>
-
 #define bufferSize 1024
 #define minPort 49152
 #define maxPort 65535
