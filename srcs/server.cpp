@@ -112,7 +112,7 @@ void server::mainloop()
                         std::cerr << "Erreur lors de l'acceptation de la connexion" << std::endl;
                     }
                     std::cout << "[SERVER: ACCEPTED CONNECTION FROM " << inet_ntoa(_clientAddr[i].sin_addr) << "]" << std::endl;
-					send(_fds[i + 1].fd, "Coucou bienvenue sur IRC\n", 25, 0);
+					send(_client[i], "Coucou bienvenue sur IRC\n", 25, 0);
 					break;
                 }
 				i++;
