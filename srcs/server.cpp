@@ -25,6 +25,7 @@ void server::setNonBlocking(int socket)
     fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
 
+
 void server::stopServer(void)
 {
 	int i = 0;
@@ -39,6 +40,7 @@ void server::stopServer(void)
 		close(_server);
 	_server = -1;
 	std::cout << "[SERVER: DISCONNECTED]" << std::endl;
+	exit(1);
 }
 
 void server::initServer()
@@ -86,7 +88,7 @@ void server::setupPoll()
 	{
         _client[i - 1] = -1;
         _fds[i].fd = _client[i - 1];
-        _fds[i].events = POLLIN;
+        _fds[i].events = POLLOUT;
     }
 	_pollResult = poll(_fds, 4, -1);
 }
@@ -97,7 +99,7 @@ void server::mainloop()
 	int test = 0; //a retirer plus tard
     while (true) 
 	{
-        if (_pollResult == -1) 
+        if (_pollResult == -1)
 		{
             std::cerr << "Erreur lors de l'appel à poll" << std::endl;
             break;
@@ -127,16 +129,16 @@ void server::mainloop()
 		{
 			for (int i = 1; i <= 3; ++i) 
 			{
-				//if (_client[i - 1] != -1 && (_fds[i].revents & POLLIN))	-> censé marcher en non bloquant			
+				// if (_client[i - 1] != -1 && (_fds[i].revents & POLLIN))	//-> censé marcher en non bloquant			
 				if (_client[i - 1] != -1)
 				{
 					char buffer[bufferSize];
-					ssize_t bytesRead = recv(_client[i - 1], buffer, sizeof(buffer) - 1, 0);
+					ssize_t bytesRead = recv(_client[i - 1], buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
 
-					if (bytesRead <= 0)
+					if (bytesRead < 0)
 					{
 						// Gestion de la déconnexion du client à changer
-						std::cout << "[CLIENT " << i << "BREAK " << std::endl;
+						std::cout << "[CLIENT " << i << "] BREAK " << std::endl;
 						close(_client[i - 1]);
 						_client[i - 1] = -1;
 					}
