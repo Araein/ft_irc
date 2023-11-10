@@ -112,7 +112,7 @@ void server::mainloop()
                         std::cerr << "Erreur lors de l'acceptation de la connexion" << std::endl;
                     }
                     std::cout << "[SERVER: ACCEPTED CONNECTION FROM " << inet_ntoa(_clientAddr[i].sin_addr) << "]" << std::endl;
-					send(_fds[i + 1].fd, "Coucou bienvenue sur IRC\n", 25, 0);
+					send(_client[i], "Coucou bienvenue sur IRC\n", 25, 0);
 					break;
                 }
 				i++;
@@ -124,26 +124,6 @@ void server::mainloop()
 		{
 			if (_client[j - 1] != -1 && (_fds[j].events & POLLIN))		
 			{
-<<<<<<< HEAD
-				// if (_client[i - 1] != -1 && (_fds[i].revents & POLLIN))	//-> censé marcher en non bloquant			
-				if (_client[i - 1] != -1)
-				{
-					char buffer[bufferSize];
-					ssize_t bytesRead = recv(_client[i - 1], buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
-
-					if (bytesRead < 0)
-					{
-						// Gestion de la déconnexion du client à changer
-						std::cout << "[CLIENT " << i << "] BREAK " << std::endl;
-						close(_client[i - 1]);
-						_client[i - 1] = -1;
-					}
-					else
-					{
-						buffer[bytesRead] = '\0';
-						std::cout << "[CLIENT " << i << "]: " << buffer << std::endl;
-					}
-=======
 				char buffer[bufferSize];
 				ssize_t bytesRead = recv(_client[j - 1], buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
 
@@ -159,7 +139,6 @@ void server::mainloop()
 				{
 					buffer[bytesRead] = '\0';
 					std::cout << "[CLIENT " << j << "]: " << buffer << std::endl;
->>>>>>> 8e5c531f7840101dac5a690c76152d02ea01d497
 				}
 			}
 		}
