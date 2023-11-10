@@ -1,6 +1,6 @@
 #include "server.hpp"
 
-server::server(void): _server(0), _timeoutval(5000)
+server::server(void): _server(0)
 { 
 	_client[0] = -1;
     _client[1] = -1;
@@ -40,7 +40,6 @@ void server::initServer()
 
 //Creation d'un socket
 	_server = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
-	setsockopt(_server, getprotobyname("TCP")->p_proto, SO_RCVTIMEO, &_timeoutval, sizeof(_server));
 	if (_server < 0){
 			std::cout << "[SERVER: CONNECTION FAILLED]" << std::endl;
 			return;
@@ -86,6 +85,17 @@ void server::setupPoll()
 	_pollResult = poll(_fds, 4, -1);
 }
 
+void server::sendMsgToClients(char *buffer, int n){
+	std::stringstream tmp;
+	std::string str = "Client ";
+	tmp << n << " dit: "; //a changé vers nickname dit
+	for (int i = 0; i <= 2; i++){
+		str.append(tmp.str()); 
+		str.append(buffer);
+		if (i != n)
+			send(_client[i], str.c_str(), str.length(),0);
+	}
+}
 
 void server::mainloop()
 {
@@ -141,6 +151,7 @@ void server::mainloop()
 				{
 					buffer[bytesRead] = '\0';
 					std::cout << "[CLIENT " << j << "]: " << buffer << std::endl;
+					sendMsgToClients(buffer, j - 1);
 				}
 			}
 		}

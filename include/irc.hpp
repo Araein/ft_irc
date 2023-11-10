@@ -11,6 +11,8 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <poll.h>
+#include <string>
+#include <sstream>
 #include <fcntl.h>
 #define bufferSize 1024
 #define minPort 49152
