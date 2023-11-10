@@ -81,7 +81,7 @@ void server::setupPoll()
 	{
         _client[i - 1] = -1;
         _fds[i].fd = _client[i - 1];
-        _fds[i].events = POLLOUT;
+        _fds[i].events = POLLIN;
     }
 	_pollResult = poll(_fds, 4, -1);
 }
