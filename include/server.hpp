@@ -31,5 +31,4 @@ public:
     int getClient(int index);
     void stopServer(void);
     void initServer();
-	void setNonBlocking(int socket);
 };

@@ -19,12 +19,6 @@ void server::setPassword(std::string pass) { _pass = pass; }
 int server::getServer(void) { return _server; }
 int server::getClient(int i) { return _client[i]; }
 
-void server::setNonBlocking(int socket)
-{
-    int flags = fcntl(socket, F_GETFL, 0);
-    fcntl(socket, F_SETFL, flags | O_NONBLOCK);
-}
-
 void server::stopServer(void)
 {
 	int i = 0;
@@ -39,6 +33,7 @@ void server::stopServer(void)
 		close(_server);
 	_server = -1;
 	std::cout << "[SERVER: DISCONNECTED]" << std::endl;
+	exit(1);
 }
 
 void server::initServer()
@@ -94,7 +89,8 @@ void server::setupPoll()
 
 void server::mainloop()
 {
-	int test = 0; //a retirer plus tard
+	int i = 0;
+
     while (true) 
 	{
         if (_pollResult == -1) 
@@ -103,9 +99,9 @@ void server::mainloop()
             break;
         }
 		/*recuperation des nouveaux clients*/
-        if (test != 3 && (_fds[0].revents & POLLIN))
+        if (_fds[0].revents & POLLIN) 
 		{
-            for (int i = 0; i < 3; ++i) 
+            while (i < 3) 
 			{
                 if (_client[i] == -1) 
 				{
@@ -116,35 +112,33 @@ void server::mainloop()
                         std::cerr << "Erreur lors de l'acceptation de la connexion" << std::endl;
                     }
                     std::cout << "[SERVER: ACCEPTED CONNECTION FROM " << inet_ntoa(_clientAddr[i].sin_addr) << "]" << std::endl;
-					test++;
+					send(_fds[i + 1].fd, "Coucou bienvenue sur IRC\n", 25, 0);
 					break;
                 }
+				i++;
             }
         }
 
 		/*lecture des donnees des clients*/
-		if (test == 3)
+		for (int j = 1; j <= 3; ++j) 
 		{
-			for (int i = 1; i <= 3; ++i) 
+			if (_client[j - 1] != -1 && (_fds[j].events & POLLIN))		
 			{
-				//if (_client[i - 1] != -1 && (_fds[i].revents & POLLIN))	-> censé marcher en non bloquant			
-				if (_client[i - 1] != -1)
-				{
-					char buffer[bufferSize];
-					ssize_t bytesRead = recv(_client[i - 1], buffer, sizeof(buffer) - 1, 0);
+				char buffer[bufferSize];
+				ssize_t bytesRead = recv(_client[j - 1], buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
 
-					if (bytesRead <= 0)
-					{
-						// Gestion de la déconnexion du client à changer
-						std::cout << "[CLIENT " << i << "BREAK " << std::endl;
-						close(_client[i - 1]);
-						_client[i - 1] = -1;
-					}
-					else
-					{
-						buffer[bytesRead] = '\0';
-						std::cout << "[CLIENT " << i << "]: " << buffer << std::endl;
-					}
+				// if (bytesRead <= 0)
+				// {
+				// 	// Gestion de la déconnexion du client à changer
+				// 	//std::cout << "[CLIENT " << j << "BREAK " << std::endl;
+				// 	// close(_client[j - 1]);
+				// 	// _client[j - 1] = -1;
+				// 	//break;
+				// }
+				if (bytesRead > 0)
+				{
+					buffer[bytesRead] = '\0';
+					std::cout << "[CLIENT " << j << "]: " << buffer << std::endl;
 				}
 			}
 		}
