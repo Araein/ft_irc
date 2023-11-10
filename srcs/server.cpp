@@ -1,6 +1,6 @@
 #include "server.hpp"
 
-server::server(void): _server(0)
+server::server(void): _server(0), _timeoutval(5000)
 { 
 	_client[0] = -1;
     _client[1] = -1;
@@ -33,14 +33,14 @@ void server::stopServer(void)
 		close(_server);
 	_server = -1;
 	std::cout << "[SERVER: DISCONNECTED]" << std::endl;
-	exit(1);
 }
 
 void server::initServer()
 {
 
 //Creation d'un socket
-	_server = socket(AF_INET, SOCK_STREAM, 0);
+	_server = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	setsockopt(_server, getprotobyname("TCP")->p_proto, SO_RCVTIMEO, &_timeoutval, sizeof(_server));
 	if (_server < 0){
 			std::cout << "[SERVER: CONNECTION FAILLED]" << std::endl;
 			return;
@@ -93,13 +93,14 @@ void server::mainloop()
 
     while (true) 
 	{
-        if (_pollResult == -1) 
+        if (_pollResult == -1)
 		{
             std::cerr << "Erreur lors de l'appel à poll" << std::endl;
             break;
         }
 		/*recuperation des nouveaux clients*/
-        if (_fds[0].revents & POLLIN) 
+		int p = 0;
+        if (p < 4 && _fds[0].revents & POLLIN)
 		{
             while (i < 3) 
 			{
@@ -107,11 +108,12 @@ void server::mainloop()
 				{
                     _sizeAddr = sizeof(_clientAddr[i]);	
                     _client[i] = accept(_server, (sockaddr*)&_clientAddr[i], &_sizeAddr);
-                    if (_client[i] == -1)
-					{
-                        std::cerr << "Erreur lors de l'acceptation de la connexion" << std::endl;
-                    }
-                    std::cout << "[SERVER: ACCEPTED CONNECTION FROM " << inet_ntoa(_clientAddr[i].sin_addr) << "]" << std::endl;
+                    // if (_client[i] == -1)
+					// {
+                    //     std::cerr << "Erreur lors de l'acceptation de la connexion" << std::endl;
+                    // }
+					if (_client[i] > 0)
+                    	std::cout << "[SERVER: ACCEPTED CONNECTION FROM " << inet_ntoa(_clientAddr[i].sin_addr) << "]" << std::endl;
 					send(_client[i], "Coucou bienvenue sur IRC\n", 25, 0);
 					break;
                 }
