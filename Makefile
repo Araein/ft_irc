@@ -16,7 +16,7 @@ INC = ./include
 HEARDER = $(INC)/irc.hpp $(INC)/server.hpp
 
 CC = c++
-CFLAGS = -Wall -Werror -Wextra -std=c++98
+CFLAGS = -g3 -Wall -Werror -Wextra -std=c++98
 
 DIR_SRCS = ./srcs
 SRCS = main.cpp server.cpp
