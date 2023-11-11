@@ -89,9 +89,9 @@ void server::sendMsgToClients(char *buffer, int n){
 	std::stringstream tmp;
 	std::string str = "Client ";
 	tmp << n << " dit: "; //a changé vers nickname dit
+	str.append(tmp.str()); 
+	str.append(buffer);
 	for (int i = 0; i <= 2; i++){
-		str.append(tmp.str()); 
-		str.append(buffer);
 		if (i != n)
 			send(_client[i], str.c_str(), str.length(),0);
 	}
