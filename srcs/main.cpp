@@ -42,29 +42,23 @@ void sig_int(int signum)
 
 int main (int ac, char **av)
 {
-	srv = new server();
 	signal(SIGINT, sig_int);
 	signal(SIGQUIT, SIG_IGN);
 
-	if (ac != 3){
-		std::cerr << "Error. Argument(s) missing" << std::endl;
-		return -1;//false;
+	if (ac != 3 || (av[2] && !av[2][0])){
+		std::cerr << "Error. Argument invalid or missing" << std::endl;
+		return 1;
 	}
 	int port = parsePort(av[1]);
 	if (!port){
 		std::cerr << "Error. Invalid port number" << std::endl;
-		return -1;//false;
+		return 1;
 	}
-	srv->setPort(port);
-
-// A placer au bon endroit plus tard
-	// if (parsePass(av[2]) == false){
-	// 	std::cerr << "Error. Invalid password" << std::endl;
-	// 	return false;
-	// }
-	// srv->setPassword(av[2]);
-
-	srv->initServer();
+	srv = new server(port, av[2]);
+	if (srv->initServer() == true)
+		srv->mainloop();
+	else
+		std::cout << "[SERVER: DISCONNECTED]" << std::endl;
 	delete srv;
 }
 
