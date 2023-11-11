@@ -34,7 +34,7 @@ typedef struct infoConnect{
 	struct pollfd fds;
 	struct sockaddr_in Addr;
 	char buffer[bufferSize];
-}infoUser;
+}infoConnect;
 
 
 #include "server.hpp"

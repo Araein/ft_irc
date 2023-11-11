@@ -106,7 +106,7 @@ void server::sendMsgToClients(char *buffer, int n){
 
 void server::accept_newUser(void)
 {
-	infoUser user;
+	infoConnect user;
 	initStruct(&user);
 	user.fds.fd = accept(_fds[0].fd, (sockaddr*)&user.Addr, &user.sizeAddr);
 	if (user.fds.fd > 0){
