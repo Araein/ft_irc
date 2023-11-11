@@ -90,6 +90,30 @@ bool server::initServer()
 	return true;
 }
 
+bool server::verify_Pwd(infoConnect user){
+	std::stringstream tries;
+	std::string tmp;
+	send(user.fds.fd, "ENTER PASSWORD\n", 16, 0);
+	for (int i = 0; i < 3; i++){
+		int bytesRead = recv(user.fds.fd, _buffer, bufferSize, 0);
+		_buffer[bytesRead - 1] = '\0';
+		if (_server.password.compare(_buffer) == 0)
+			return (true);
+		else{
+			if (3 - (i + 1) == 0)
+				break;
+			send(user.fds.fd, "INCORRECT PASSWORD, TRY AGAIN\n", 31, 0);
+			tries.str("");
+			tries << (3 - (i + 1));
+			tmp = tries.str();
+			send(user.fds.fd, "YOU HAVE ", 10, 0);
+			send(user.fds.fd, tmp.c_str(), 1, 0);
+			send(user.fds.fd, " TRIES REMAINING\n", 18, 0);
+		}
+	}
+	send(user.fds.fd, "INVALID PASSWORD, CONNECTION DENIED\n", 37, 0);
+	return (false);
+}
 
 //BOUCLE
 
@@ -117,7 +141,14 @@ void server::accept_newUser(void)
 		std::cout << "[SERVER: SUCCESS CONNECTION FROM : " << inet_ntoa(user.Addr.sin_addr) << "]" << std::endl;
 		//obtenir les info du user avant de stocker dans vector
 		_vect.push_back(user);
-		send(user.fds.fd, "|---------- WELCOME IN 42 IRC ----------|\n", 42, 0); //gestion erreur send
+		if (verify_Pwd(user))
+			send(user.fds.fd, "|---------- WELCOME IN 42 IRC ----------|\n", 42, 0); //gestion erreur send
+		else{
+			_fds[_curFD].fd = -1;
+			_curFD--;
+			_vect.pop_back();
+			_id--;
+		}
 	}
 }
 
@@ -134,7 +165,7 @@ void server::mainloop()
 		accept_newUser();
 		for (int i = 1; i <= _curFD; i++){
 			if (_fds[i].revents & POLLIN){
-				std::cout << "[CLIENT " << _fds[i].fd << "]: ";
+				std::cout << "[CLIENT " << _vect[i].id << "]: ";
 				while (true){
 					_bytesRead = recv(_fds[i].fd, _buffer, bufferSize - 1, MSG_DONTWAIT);
 					if (_bytesRead == -1){
