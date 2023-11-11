@@ -22,6 +22,7 @@ class server
 
 		void accept_newUser();
 		void sendMsgToClients(char *buffer, int n);
+		int findFdById(int id);
 		// bool deleteUser();
 
 

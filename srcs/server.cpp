@@ -9,6 +9,7 @@ server::server(int port, std::string password): _id(1000), _curFD(0), _bytesRead
 	_server.id = _id;
 	_server.port = port;
 	_server.password = password;
+	_id = 0;
 	std::cout << "[SERVER: INITIALISATION]" << std::endl;
 }
 
@@ -92,13 +93,21 @@ bool server::initServer()
 
 //BOUCLE
 
+int server::findFdById(int id){
+	for (std::vector<infoConnect>::iterator it = _vect.begin(); it != _vect.end(); it++){
+		if (it->id == (id - 1))
+			return (it->fds.fd);
+	}
+	return (-1);
+}
+
 void server::sendMsgToClients(char *buffer, int n){
 	std::stringstream tmp;
 	std::string str = "Client ";
-	tmp << _fds[n].fd << " dit: "; //a changé vers nickname dit
-	for (int i = 1; i < _curFD; i++){
-		str.append(tmp.str()); 
-		str.append(buffer);
+	tmp << _vect[n].id << " dit: "; //a changé vers nickname dit
+	str.append(tmp.str()); 
+	str.append(buffer);
+	for (int i = 1; i <= _curFD; i++){
 		if (i != n)
 			send(_fds[i].fd, str.c_str(), str.length(),0);
 	}
@@ -110,9 +119,9 @@ void server::accept_newUser(void)
 	initStruct(&user);
 	user.fds.fd = accept(_fds[0].fd, (sockaddr*)&user.Addr, &user.sizeAddr);
 	if (user.fds.fd > 0){
-		user.id = ++_id;
+		user.id = _id++;
 		_fds[++_curFD].fd = user.fds.fd;
-		_fds[++_curFD].events = POLLIN | POLLPRI;;
+		_fds[_curFD].events = POLLIN | POLLPRI;;
 		std::cout << "[SERVER: SUCCESS CONNECTION FROM : " << inet_ntoa(user.Addr.sin_addr) << "]" << std::endl;
 		//obtenir les info du user avant de stocker dans vector
 		_vect.push_back(user);
@@ -124,14 +133,14 @@ void server::mainloop()
 {
 	while (true)
 	{
-		_pollResult = poll(_fds, _curFD, 1000);
+		_pollResult = poll(_fds, _curFD + 1, 1000);
 		if (_pollResult < 0){
 			std::cout << "[SERVER: POLL CALLING FAILED]" << std::endl;
 			stopServer();
 			return;
 		}
 		accept_newUser();
-		for (int i = 1; i < _curFD; i++){
+		for (int i = 1; i <= _curFD; i++){
 			if (_fds[i].revents & POLLIN){
 				std::cout << "[CLIENT " << _fds[i].fd << "]: ";
 				while (true){
