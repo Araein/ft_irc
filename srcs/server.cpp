@@ -93,14 +93,6 @@ bool server::initServer()
 
 //BOUCLE
 
-int server::findFdById(int id){
-	for (std::vector<infoConnect>::iterator it = _vect.begin(); it != _vect.end(); it++){
-		if (it->id == (id - 1))
-			return (it->fds.fd);
-	}
-	return (-1);
-}
-
 void server::sendMsgToClients(char *buffer, int n){
 	std::stringstream tmp;
 	std::string str = "Client ";
