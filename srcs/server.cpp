@@ -28,6 +28,7 @@ void server::setupPoll(void)
 	for (int i = 0; i < maxFD; i++){
 		_fds[i].fd = -1;
 		_fds[i].events = POLLIN | POLLPRI;
+		_fds[i].revents = 0;
 	}
 }
 
@@ -162,8 +163,10 @@ void server::mainloop()
 
 void server::stopServer(void)
 {
-	for (int i = 0; i < maxFD; i++)
-		close(_fds[i].fd);
+	for (int i = 0; i < maxFD; i++){
+		if (_fds[i].fd > -1)
+			close(_fds[i].fd);
+	}
 	std::cout << "[SERVER: DISCONNECTED]" << std::endl;
 }
 
