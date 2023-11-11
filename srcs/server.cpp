@@ -96,8 +96,9 @@ bool server::verify_Pwd(infoConnect user){
 	send(user.fds.fd, "ENTER PASSWORD\n", 16, 0);
 	for (int i = 0; i < 3; i++){
 		int bytesRead = recv(user.fds.fd, _buffer, bufferSize, 0);
-		_buffer[bytesRead - 1] = '\0';
-		if (_server.password.compare(_buffer) == 0)
+		if (bytesRead > 0)
+			_buffer[bytesRead - 1] = '\0';
+		else if (_server.password.compare(_buffer) == 0)
 			return (true);
 		else{
 			if (3 - (i + 1) == 0)
