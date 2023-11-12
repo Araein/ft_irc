@@ -1,10 +1,10 @@
 #include "client.hpp"
 
-client::client(infoConnect *user): _level(0)
+client::client(pollfd *fds): _level(0)
 {
-	(void)user;
-	profil.insert(std::make_pair("Nickname", ""));
-	profil.insert(std::make_pair("Password", ""));
+	(void)fds;
+	_profil.insert(std::make_pair("Nickname", ""));
+	_profil.insert(std::make_pair("Password", ""));
 
 
 }
@@ -13,6 +13,7 @@ client::~client(void) {}
 
 
 int client::getLevel(void) { return _level; }
+std::string client::getNickname(void) { return _nickname; }
 
 void client::setLevel(int level) { _level = level; }
 
