@@ -168,7 +168,6 @@ bool server::selectCommand(std::string message, int i)
 void server::accept_newUser(void)
 {
 	_curFD = findCurFD();
-	std::cout << _curFD << std::endl;
 	_fds[_curFD].fd = accept(_fds[0].fd, (sockaddr*)&_sock.Addr, &_sock.sizeAddr);
 	if (_fds[_curFD].fd > 0){
 		send(_fds[_curFD].fd, "|---------- WELCOME IN 42_IRC ----------|\n", 42, 0);
@@ -218,9 +217,10 @@ void server::mainloop()
 				}
 				else if (_bytesRead > 0){
 					_buffer[_bytesRead] = '\0';
-					if (getUserLevel(_fds[i].fd) == 0){// niveau 0 c'est donc le 1er mess avec les infos de connexion
-						if (firstMsg(_buffer) == false){// traiter les info
+					if (getUserLevel(_fds[i].fd) == 0){
+						if (firstMsg(_buffer) == false){
 							// impossible de traiter le message
+							// ou mot de passe incorrect
 							// deconnecter le client
 							return;
 						}

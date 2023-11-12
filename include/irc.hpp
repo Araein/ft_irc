@@ -28,6 +28,7 @@
 
 class server;
 class client;
+class channel;
 
 typedef struct infoSocket{
 	socklen_t sizeAddr;
@@ -37,4 +38,5 @@ typedef struct infoSocket{
 
 #include "server.hpp"
 #include "client.hpp"
+#include "channel.hpp"
 

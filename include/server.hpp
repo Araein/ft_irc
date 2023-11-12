@@ -16,6 +16,7 @@ class server
 		pollfd _fds[maxFD];
 		char _buffer[bufferSize];
 		std::map<int, client> mapUser;
+		std::vector<channel> chan;
 
 		void setupPoll();
 		bool initServerSocket();
