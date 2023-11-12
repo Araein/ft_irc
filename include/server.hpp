@@ -2,34 +2,47 @@
 
 #include "irc.hpp"
 
+
 class server 
 {
-private:
-    int _server;
-    int _client[3]; // Tableau pour les descripteurs de fichiers des clients
-    struct sockaddr_in _serverAddr;
-    struct sockaddr_in _clientAddr[3]; // Tableau pour les adresses des clients
-    
-    /*variables de poll*/
-    int _pollResult;
-    struct pollfd _fds[4];
+	private:
+		int _id;
+		int _port;
+		int _totalFD;
+		int _curFD;
+		int _pollResult;
+		int _bytesRead;
+		infoSocket _sock;
+		pollfd _fds[maxFD];
+		char _buffer[bufferSize];
+		std::map<int, client> mapUser;
+		std::vector<channel> chan;
 
-    socklen_t _sizeAddr;
-    //char _buff[1024]; // faire un buff par client?
-    int _port;
-	std::string _pass;
-	//ssize_t _sizeRead;
-    void mainloop();
-    void setupPoll();
-    void sendMsgToClients(char *buffer, int n);
+		void setupPoll();
+		bool initServerSocket();
+		bool bindServerSocket();
+		bool listenServerSocket();
 
-public:
-    server(void);
-    ~server();
-    void setPort(int port);
-    void setPassword(std::string pass);
-    int getServer(void);
-    int getClient(int index);
-    void stopServer(void);
-    void initServer();
+		void accept_newUser();
+		int findCurFD();
+		void cleanFDS(int i);
+		bool firstMsg(std::string message, int fd);
+		bool selectCommand(std::string message, int i);
+		// void sendMsgToClients(char *buffer, int n);
+		// bool verify_Pwd(infoConnect user);
+		// bool deleteUser();
+
+
+	public:
+		server(int port, std::string password);
+		~server();
+
+		std::string getUserName(int fd);
+		int getUserLevel(int fd);
+		
+		void setUserLevel(int fd, int level);
+
+		void stopServer(void);
+		bool initServer();
+		void mainloop();
 };
