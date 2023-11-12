@@ -13,13 +13,13 @@ NONE = \033[0m
 NAME=ircserv
 
 INC = ./include
-HEARDER = $(INC)/irc.hpp $(INC)/server.hpp
+HEARDER = $(INC)/irc.hpp $(INC)/server.hpp $(INC)/client.hpp $(INC)/channel.hpp
 
 CC = c++
 CFLAGS = -g3 -Wall -Werror -Wextra -std=c++98
 
 DIR_SRCS = ./srcs
-SRCS = main.cpp server.cpp
+SRCS = main.cpp server.cpp client.cpp channel.cpp
 SRC = $(addprefix $(DIR_SRCS)/, $(SRCS))
 OBJS = $(SRC:.cpp=.o)
 

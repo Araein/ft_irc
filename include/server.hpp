@@ -2,27 +2,34 @@
 
 #include "irc.hpp"
 
+
 class server 
 {
 	private:
 		int _id;
+		int _port;
+		int _totalFD;
 		int _curFD;
 		int _pollResult;
 		int _bytesRead;
+		infoSocket _sock;
+		pollfd _fds[maxFD];
 		char _buffer[bufferSize];
-		std::vector<infoConnect> _vect;
-		infoConnect _server;
-		struct pollfd _fds[maxFD];
+		std::map<int, client> mapUser;
+		std::vector<channel> chan;
 
 		void setupPoll();
-		void initStruct(infoConnect *info);
 		bool initServerSocket();
 		bool bindServerSocket();
 		bool listenServerSocket();
 
 		void accept_newUser();
-		void sendMsgToClients(char *buffer, int n);
-		bool verify_Pwd(infoConnect user);
+		int findCurFD();
+		void cleanFDS(int i);
+		bool firstMsg(std::string message);
+		bool selectCommand(std::string message, int i);
+		// void sendMsgToClients(char *buffer, int n);
+		// bool verify_Pwd(infoConnect user);
 		// bool deleteUser();
 
 
@@ -30,7 +37,10 @@ class server
 		server(int port, std::string password);
 		~server();
 
-		std::string getName(int fd);
+		std::string getUserName(int fd);
+		int getUserLevel(int fd);
+		
+		void setUserLevel(int fd, int level);
 
 		void stopServer(void);
 		bool initServer();
