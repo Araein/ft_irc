@@ -125,7 +125,7 @@ void server::cleanFDS(int i)
 
 
 
-std::string extract(const std::string& message, const std::string& start, const std::string& end)
+const std::string extract(const std::string& message, const std::string& start, const std::string& end)
 {
     size_t startPos = message.find(start);
     size_t endPos = message.find(end, startPos + start.length());
@@ -148,17 +148,17 @@ bool server::firstMsg(std::string message, int fd)
 
         client& clientFound = it->second;
 
-		clientFound._password = extract(message, "PASS ", "\n");
-		std::cout << "Password: " << clientFound._password << std::endl;
+		clientFound.setPassword(extract(message, "PASS ", "\n"));
+		std::cout << "Password: " << clientFound.getPassword() << std::endl;
 
-		clientFound._nickname = extract(message, "NICK ", "\n");
-		std::cout << "Nickname: " << clientFound._nickname << std::endl;
+		clientFound.setNickname(extract(message, "NICK ", "\n"));
+		std::cout << "Nickname: " << clientFound.getNickname() << std::endl;
 
-		clientFound._username = extract(message, "USER ", " ");
-		std::cout << "Username: " << clientFound._username << std::endl;
+		clientFound.setUsername(extract(message, "USER ", " "));
+		std::cout << "Username: " << clientFound.getUsername() << std::endl;
 
-		clientFound._identity = extract(message, ":", "\n");
-		std::cout << "Identity: " << clientFound._identity << std::endl;
+		clientFound.setIdentity(extract(message, ":", "\n"));
+		std::cout << "Identity: " << clientFound.getIdentity() << std::endl;
 
     }
 	else
