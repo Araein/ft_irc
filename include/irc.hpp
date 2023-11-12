@@ -14,15 +14,19 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>
 #include <iterator>
 #include <errno.h>
 
 
 
-#define bufferSize 1024
+#define bufferSize 4096
 #define minPort 49152
 #define maxPort 65535
-#define maxFD 100
+#define maxFD 2
+
+class server;
+class client;
 
 typedef struct infoConnect{
 	int id;
@@ -34,7 +38,10 @@ typedef struct infoConnect{
 	struct pollfd fds;
 	struct sockaddr_in Addr;
 	char buffer[bufferSize];
+	client *infoUser;
 }infoConnect;
 
 
 #include "server.hpp"
+#include "client.hpp"
+

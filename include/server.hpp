@@ -2,6 +2,7 @@
 
 #include "irc.hpp"
 
+
 class server 
 {
 	private:
@@ -21,7 +22,10 @@ class server
 		bool listenServerSocket();
 
 		void accept_newUser();
+		bool firstMsg(std::string message);
+		bool selectCommand(std::string message, int i);
 		void sendMsgToClients(char *buffer, int n);
+		bool verify_Pwd(infoConnect user);
 		// bool deleteUser();
 
 
