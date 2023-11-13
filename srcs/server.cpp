@@ -41,7 +41,7 @@ bool server::initServerSocket(void)
 		return false;
 	}
 	_sock.Addr.sin_family = AF_INET;
-	_sock.Addr.sin_addr.s_addr = INADDR_ANY;
+	_sock.Addr.sin_addr.s_addr = inet_addr("127.0.0.1"); //INADDR_ANY;
 	_sock.Addr.sin_port = htons(_port);
 	std::cout << "[SERVER: CONNECTED]" << std::endl;
 	return true;
@@ -106,47 +106,45 @@ bool server::initServer()
 
 int server::findCurFD(void)
 {
-	for (int i = 1; i < _totalFD; i++){
+	for (int i = 1; i < maxFD; i++){
 		if (_fds[i].fd == -1)
 			return i;
 	}
-	return _totalFD;
+	return maxFD;
 }
 
 void server::cleanFDS(int i)
 {
-	mapUser.erase(mapUser.find(_fds[i].fd)); 
-	if (_fds[i].fd > -1)
-		close(_fds[i].fd);
+	std::cout << "[SERVER:] Disconnected: " << getUserName(_fds[i].fd) << std::endl;
+	mapUser.erase(mapUser.find(_fds[i].fd));
+	close(_fds[i].fd);
 	_fds[i].fd = -1;
 	_fds[i].revents = 0;
 	_totalFD--;
 }
 
-
-
 const std::string extract(const std::string& message, const std::string& start, const std::string& end)
 {
-    size_t startPos = message.find(start);
-    size_t endPos = message.find(end, startPos + start.length());
+	size_t startPos = message.find(start);
+	size_t endPos = message.find(end, startPos + start.length());
 
-    if (startPos != std::string::npos && endPos != std::string::npos)
-        return message.substr(startPos + start.length(), endPos - startPos - start.length());
+	if (startPos != std::string::npos && endPos != std::string::npos)
+		return message.substr(startPos + start.length(), endPos - startPos - start.length());
 
-    return "";
+	return "";
 }
 
 
 bool server::firstMsg(std::string message, int fd)
 {
-	//std::cout << ":::::" << message << "::::::" << std::endl;
+	// std::cout << ":::::" << message << "::::::" << std::endl;
 
 	std::map<int, client>::iterator it = mapUser.find(fd);
 
-    if (it != mapUser.end())
+	if (it != mapUser.end())
 	{
 
-        client& clientFound = it->second;
+		client& clientFound = it->second;
 
 		clientFound.setPassword(extract(message, "PASS ", "\n"));
 		std::cout << "Password: " << clientFound.getPassword() << std::endl;
@@ -160,31 +158,36 @@ bool server::firstMsg(std::string message, int fd)
 		clientFound.setIdentity(extract(message, ":", "\n"));
 		std::cout << "Identity: " << clientFound.getIdentity() << std::endl;
 
-    }
+	}
 	else
-        std::cout << "Descripteur de fichier non trouvé dans la map." << std::endl;
+		std::cout << "Descripteur de fichier non trouvé dans la map." << std::endl;
 
 	return true;
 }
 
 bool server::selectCommand(std::string message, int i)
 {
-	(void)i;
 	std::istringstream iss(message);
 	std::string command;
 	iss >> command;
-	if (command == "KICK"){
-		//fonction KICK 
-		std::cout << command << std::endl;
+	if (command == "KICK" || command == "kick"){
+		send(_fds[i].fd, "commande KICK\n", 14, 0);
 	}
-	else if (command == "INVITE"){
-		std::cout << command << std::endl;
+	else if (command == "JOIN" || command == "join"){
+		send(_fds[i].fd, "commande JOIN\n", 14, 0);
 	}
-	else if (command == "TOPIC"){
-		std::cout << command << std::endl;
+	else if (command == "INVITE" || command == "invite"){
+		send(_fds[i].fd, "commande INVITE\n", 16, 0);
 	}
-	else if (command == "MODE"){
-		std::cout << command << std::endl;
+	else if (command == "TOPIC" || command == "topic"){
+		send(_fds[i].fd, "commande TOPIC\n", 15, 0);
+	}
+	else if (command == "MODE" || command == "mode"){
+		send(_fds[i].fd, "commande MODE\n", 14, 0);
+	}
+	else if (command == "QUIT" || command == "quit"){ //test
+		send(_fds[i].fd, "Thanks to use 42_IRC.\n", 22, 0);
+		cleanFDS(i);
 	}
 	else
 		return false;
@@ -205,27 +208,23 @@ bool server::selectCommand(std::string message, int i)
 
 void server::accept_newUser(void)
 {
+	int fd;
 	_curFD = findCurFD();
-	_fds[_curFD].fd = accept(_fds[0].fd, (sockaddr*)&_sock.Addr, &_sock.sizeAddr);
-	if (_fds[_curFD].fd > 0){
-		send(_fds[_curFD].fd, "|---------- WELCOME IN 42_IRC ----------|\n", 42, 0);
-		if (_curFD > maxFD){
-			send(_fds[_curFD].fd, "42_IRC is full please try again later\n", 38, 0);
-			close(_fds[_curFD].fd);
+	if (_curFD == maxFD){
+		fd = accept(_fds[0].fd, (sockaddr*)&_sock.Addr, &_sock.sizeAddr);
+		if (fd > 0){
+			send(fd, "42_IRC is full please try again later", 37, 0);
+			close(fd);
 			return;
 		}
+	}
+	_fds[_curFD].fd = accept(_fds[0].fd, (sockaddr*)&_sock.Addr, &_sock.sizeAddr);
+	if (_fds[_curFD].fd > 0){
 		_totalFD++;
+		send(_fds[_curFD].fd, "|---------- WELCOME IN 42_IRC ----------|\n", 42, 0);
 		client user(_fds);
 		mapUser.insert(std::make_pair(_fds[_curFD].fd, user));
 		std::cout << "[SERVER: SUCCESS CONNECTION FROM : " << inet_ntoa(_sock.Addr.sin_addr) << "]" << std::endl;
-		//obtenir les info du user avant de stocker dans vector
-		// if (verify_Pwd(user))
-		// 	_vect.push_back(user);
-		// else{
-		// 	_fds[_curFD].fd = -1;
-		// 	_curFD--;
-		// 	_id--;
-		// }
 	}
 }
 
@@ -233,26 +232,24 @@ void server::mainloop()
 {
 	while (true)
 	{
-		_pollResult = poll(_fds, _totalFD, 1000);
+		_pollResult = poll(_fds, maxFD, 1000);
 		if (_pollResult < 0){
 			std::cout << "[SERVER: POLL CALLING FAILED]" << std::endl;
 			stopServer();
 			return;
 		}
-		else if (_pollResult == 0) // voir si necessaire
+		else if (_pollResult == 0) // si timeout
 			continue;
 		accept_newUser();
-		for (int i = 1; i < _totalFD; i++){
-			if (_fds[i].revents & (POLLIN | POLLPRI)){
+		for (int i = 1; i < maxFD + 1; i++){
+			if (_fds[i].revents & (POLLIN)){
 				_bytesRead = recv(_fds[i].fd, _buffer, bufferSize - 1, MSG_DONTWAIT);
 				if (_bytesRead == -1){
 					if (errno != EAGAIN && errno != EWOULDBLOCK)
 						std::cout << "[CLIENT " <<getUserName(_fds[i].fd) << "]: Incomming message failed" << std::endl; //mettre nickname au lieu de fds
 				}
-				else if (_bytesRead == 0){
-					std::cout << "DISCONNECTED" << std::endl;
+				else if (_bytesRead == 0)
 					cleanFDS(i);
-				}
 				else if (_bytesRead > 0){
 					_buffer[_bytesRead] = '\0';
 					if (getUserLevel(_fds[i].fd) == 0){
@@ -262,15 +259,15 @@ void server::mainloop()
 							// deconnecter le client
 							return;
 						}
-						setUserLevel(_fds[i].fd, 1); //choisir quel niveau pour bannir
+						setUserLevel(_fds[i].fd, 1); // choisir quel niveau pour bannir
 					}
-					else if (getUserLevel(_fds[i].fd) == 1){ //level en attente d'une commande uniquement
+					else if (getUserLevel(_fds[i].fd) == 1){
 						if (_bytesRead > commandSize)
-							send(_fds[i].fd, "You can't exceeded 60 characters\nPlease try again.", 50, 0); //gerer les eventuelles erreur de send
+							send(_fds[i].fd, "You can't exceeded 60 characters.Please try again\n", 50, 0); // gerer les eventuelles erreur de send
 						else if (_buffer[0] != '/' || selectCommand(&_buffer[1], i) == false)
-							std::cout << "Wrong command\nPlease try again" << std::endl;
+							send(_fds[i].fd, "Wrong command.Please try again\n", 31, 0);
 					}
-					else if (getUserLevel(_fds[i].fd) == 2){ //pourrait etre destine aux messages vers le chanel
+					else if (getUserLevel(_fds[i].fd) == 2){
 						// a faire
 						// je pense que les mess channel ne devraient pas s afficher dans le serveur mais plutot
 						// dans les client connectes au channel a discuter

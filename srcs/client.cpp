@@ -3,8 +3,8 @@
 client::client(pollfd *fds): _level(0)
 {
 	(void)fds;
-	_profil.insert(std::make_pair("Nickname", ""));
-	_profil.insert(std::make_pair("Password", ""));
+	// _profil.insert(std::make_pair("Nickname", ""));
+	// _profil.insert(std::make_pair("Password", ""));
 
 
 }
