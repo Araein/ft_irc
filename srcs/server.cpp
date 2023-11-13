@@ -208,14 +208,16 @@ bool server::selectCommand(std::string message, int i)
 
 void server::sendWelcomeMsgs(client user){
 	std::string msg;
-	msg = "RPL_WELCOME :Welcome to 42 IRC" + user.getNickname() + "\n";
-	send(_fds[_curFD].fd, RPL_WELCOME(user.getNickname()).c_str(), RPL_WELCOME(user.getNickname()).length(), 0);
-	msg = "RPL_YOURHOST :Your host is ircserv running version 0.1\n";
-	send(_fds[_curFD].fd, msg.c_str(), msg.length(), 0);
-	msg = "RPL_CREATED :The server was created god knows when\n";
-	send(_fds[_curFD].fd, msg.c_str(), msg.length(), 0);
-	msg = "RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
-	send(_fds[_curFD].fd, msg.c_str(), msg.length(), 0);
+	msg = "001 " + user.getNickname() + ":Welcome to 42 IRC\n";
+	std::cout << "fd = " << _fds[_curFD - 1].fd << std::endl;
+	std::cout << "retour send " << send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
+	std::cout << "errno = " << errno << std::endl;
+	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
+	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
+	msg = "003 RPL_CREATED :The server was created god knows when\n";
+	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
+	msg = "004 RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
+	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
 }
 
 void server::accept_newUser(void)
@@ -236,7 +238,6 @@ void server::accept_newUser(void)
 		send(_fds[_curFD].fd, "|---------- WELCOME IN 42_IRC ----------|\n", 42, 0);
 		client user(_fds);
 		mapUser.insert(std::make_pair(_fds[_curFD].fd, user));
-		sendWelcomeMsgs(user);
 		std::cout << "[SERVER: SUCCESS CONNECTION FROM : " << inet_ntoa(_sock.Addr.sin_addr) << "]" << std::endl;
 	}
 }
@@ -272,6 +273,8 @@ void server::mainloop()
 							// deconnecter le client
 							return;
 						}
+						else
+							sendWelcomeMsgs(mapUser.find(_fds[i].fd)->second);
 						// debug();
 						setUserLevel(_fds[i].fd, 1); // choisir quel niveau pour bannir
 					}
