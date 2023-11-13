@@ -3,13 +3,8 @@
 client::client(pollfd *fds): _level(0)
 {
 	(void)fds;
-<<<<<<< HEAD
-	_profil.insert(std::make_pair("Nickname", ""));
-	_profil.insert(std::make_pair("Password", ""));
-=======
 	// _profil.insert(std::make_pair("Nickname", ""));
 	// _profil.insert(std::make_pair("Password", ""));
->>>>>>> 1bf8c0a73195a7ebcdbc30524917c3eb388e1c59
 
 
 }
@@ -17,19 +12,9 @@ client::client(pollfd *fds): _level(0)
 client::~client(void) {}
 
 
-<<<<<<< HEAD
-int client::getLevel(void) { return _level; }
-std::string client::getNickname(void) { return _nickname; }
-
-void client::setLevel(int level) { _level = level; }
-
-void client::fillProfil(void)
-{
-}
-=======
 
 
-void client::fillProfil(void)
+void client::fillProfil()
 {
 }
 
@@ -47,4 +32,3 @@ std::string client::getPassword() { return _password; }
 std::string client::getNickname() { return _nickname; }
 std::string client::getUsername() { return _username; }
 std::string client::getIdentity() { return _identity; }
->>>>>>> 1bf8c0a73195a7ebcdbc30524917c3eb388e1c59

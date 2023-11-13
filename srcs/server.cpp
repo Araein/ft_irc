@@ -206,6 +206,18 @@ bool server::selectCommand(std::string message, int i)
 // 	}
 // }
 
+void server::sendWelcomeMsgs(client user){
+	std::string msg;
+	msg = "RPL_WELCOME :Welcome to 42 IRC" + user.getNickname() + "\n";
+	send(_fds[_curFD].fd, RPL_WELCOME(user.getNickname()).c_str(), RPL_WELCOME(user.getNickname()).length(), 0);
+	msg = "RPL_YOURHOST :Your host is ircserv running version 0.1\n";
+	send(_fds[_curFD].fd, msg.c_str(), msg.length(), 0);
+	msg = "RPL_CREATED :The server was created god knows when\n";
+	send(_fds[_curFD].fd, msg.c_str(), msg.length(), 0);
+	msg = "RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
+	send(_fds[_curFD].fd, msg.c_str(), msg.length(), 0);
+}
+
 void server::accept_newUser(void)
 {
 	int fd;
@@ -224,6 +236,7 @@ void server::accept_newUser(void)
 		send(_fds[_curFD].fd, "|---------- WELCOME IN 42_IRC ----------|\n", 42, 0);
 		client user(_fds);
 		mapUser.insert(std::make_pair(_fds[_curFD].fd, user));
+		sendWelcomeMsgs(user);
 		std::cout << "[SERVER: SUCCESS CONNECTION FROM : " << inet_ntoa(_sock.Addr.sin_addr) << "]" << std::endl;
 	}
 }
@@ -239,14 +252,14 @@ void server::mainloop()
 			return;
 		}
 		else if (_pollResult == 0) // si timeout
-			continue;
+			;
 		accept_newUser();
-		for (int i = 1; i < maxFD + 1; i++){
+		for (int i = 1; i < _totalFD + 1; i++){
 			if (_fds[i].revents & (POLLIN)){
 				_bytesRead = recv(_fds[i].fd, _buffer, bufferSize - 1, MSG_DONTWAIT);
 				if (_bytesRead == -1){
 					if (errno != EAGAIN && errno != EWOULDBLOCK)
-						std::cout << "[CLIENT " <<getUserName(_fds[i].fd) << "]: Incomming message failed" << std::endl; //mettre nickname au lieu de fds
+						;// std::cout << "[CLIENT " <<getUserName(_fds[i].fd) << "]: Incomming message failed" << std::endl; //mettre nickname au lieu de fds
 				}
 				else if (_bytesRead == 0)
 					cleanFDS(i);
@@ -259,6 +272,7 @@ void server::mainloop()
 							// deconnecter le client
 							return;
 						}
+						// debug();
 						setUserLevel(_fds[i].fd, 1); // choisir quel niveau pour bannir
 					}
 					else if (getUserLevel(_fds[i].fd) == 1){

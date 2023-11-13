@@ -4,12 +4,6 @@
 
 class client
 {
-<<<<<<< HEAD
-	int _id;
-	int _level;
-	std::string _nickname;
-	std::string _password;
-=======
 
 	int _id;
 	int _level;
@@ -18,23 +12,15 @@ class client
 	std::string _username;
 	std::string _identity; 
 
->>>>>>> 1bf8c0a73195a7ebcdbc30524917c3eb388e1c59
+	void fillProfil();
 	std::map<std::string, std::string> _profil;
 
-	void fillProfil();
 
 
 	public:
 		client(pollfd *fds);
 		~client();
 
-<<<<<<< HEAD
-		int getLevel();
-		std::string getNickname();
-
-		void setLevel(int level);
-
-=======
 
 
 		void setLevel(int level);
@@ -48,6 +34,5 @@ class client
 		std::string getNickname();
 		std::string getUsername();
 		std::string getIdentity();
->>>>>>> 1bf8c0a73195a7ebcdbc30524917c3eb388e1c59
 
 };
