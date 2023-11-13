@@ -17,7 +17,8 @@
 #include <map>
 #include <iterator>
 #include <errno.h>
-
+#include <algorithm>
+#include <cctype>
 
 
 #define bufferSize 1024

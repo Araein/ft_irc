@@ -26,7 +26,8 @@ void server::setUserLevel(int fd, int level) { (mapUser.find(fd))->second.setLev
 //FONCTIONS INITIALISATION
 void server::setupPoll(void)
 {
-	for (int i = 0; i < maxFD; i++){
+	for (int i = 0; i < maxFD; i++)
+	{
 		_fds[i].fd = -1;
 		_fds[i].events = POLLIN | POLLPRI; // voir comment gerer POLLPRI
 		_fds[i].revents = 0;
@@ -36,7 +37,8 @@ void server::setupPoll(void)
 bool server::initServerSocket(void)
 {
 	_fds[0].fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
-	if (_fds[0].fd < 0){
+	if (_fds[0].fd < 0)
+	{
 		std::cout << "[SERVER: CONNECTION FAILLED]" << std::endl;
 		return false;
 	}
@@ -49,7 +51,8 @@ bool server::initServerSocket(void)
 
 bool server::bindServerSocket(void)
 {
-	if (bind(_fds[0].fd, (sockaddr *)&_sock.Addr, sizeof(_sock.Addr)) < 0){
+	if (bind(_fds[0].fd, (sockaddr *)&_sock.Addr, sizeof(_sock.Addr)) < 0)
+	{
 		std::cout << "[SERVER: FAILED TO BIND]" << std::endl;
 		return false;
 	}
@@ -59,7 +62,8 @@ bool server::bindServerSocket(void)
 
 bool server::listenServerSocket(void)
 {
-	if (listen(_fds[0].fd, SOMAXCONN) < 0){
+	if (listen(_fds[0].fd, SOMAXCONN) < 0)
+	{
 		std::cout << "[SERVER: FAILED TO LISTENING]" << std::endl;
 		return false;
 	}
@@ -71,7 +75,8 @@ bool server::initServer()
 {
 	if (initServerSocket() == false)
 		return false;
-	if (bindServerSocket() == false || listenServerSocket() == false){
+	if (bindServerSocket() == false || listenServerSocket() == false)
+	{
 		stopServer();
 		return false;
 	}
@@ -106,7 +111,8 @@ bool server::initServer()
 
 int server::findCurFD(void)
 {
-	for (int i = 1; i < maxFD; i++){
+	for (int i = 1; i < maxFD; i++)
+	{
 		if (_fds[i].fd == -1)
 			return i;
 	}
@@ -123,21 +129,40 @@ void server::cleanFDS(int i)
 	_totalFD--;
 }
 
+bool IsNotSpace(int ch)
+{
+    return !std::isspace(ch);
+}
+
+std::string ltrim(const std::string& str)
+{
+    std::string::const_iterator it = std::find_if(str.begin(), str.end(), IsNotSpace);
+    return std::string(it, str.end());
+}
+
+std::string rtrim(const std::string& str)
+{
+    std::string::const_reverse_iterator it = std::find_if(str.rbegin(), str.rend(), IsNotSpace);
+    return std::string(str.begin(), it.base());
+}
+
 const std::string extract(const std::string& message, const std::string& start, const std::string& end)
 {
-	size_t startPos = message.find(start);
-	size_t endPos = message.find(end, startPos + start.length());
+    size_t startPos = message.find(start);
+    size_t endPos = message.find(end, startPos + start.length());
 
-	if (startPos != std::string::npos && endPos != std::string::npos)
-		return message.substr(startPos + start.length(), endPos - startPos - start.length());
+    if (startPos != std::string::npos && endPos != std::string::npos)
+    {
+        return rtrim(ltrim(message.substr(startPos + start.length(), endPos - startPos - start.length())));
+    }
 
-	return "";
+    return "";
 }
 
 
 bool server::firstMsg(std::string message, int fd)
 {
-	// std::cout << ":::::" << message << "::::::" << std::endl;
+	//std::cout << ":::::" << message << "::::::" << std::endl;
 
 	std::map<int, client>::iterator it = mapUser.find(fd);
 
@@ -147,16 +172,16 @@ bool server::firstMsg(std::string message, int fd)
 		client& clientFound = it->second;
 
 		clientFound.setPassword(extract(message, "PASS ", "\n"));
-		std::cout << "Password: " << clientFound.getPassword() << std::endl;
+		std::cout << "Password: ." << clientFound.getPassword() << "." << std::endl;
 
 		clientFound.setNickname(extract(message, "NICK ", "\n"));
-		std::cout << "Nickname: " << clientFound.getNickname() << std::endl;
+		std::cout << "Nickname: ." << clientFound.getNickname() << "." << std::endl;
 
 		clientFound.setUsername(extract(message, "USER ", " "));
-		std::cout << "Username: " << clientFound.getUsername() << std::endl;
+		std::cout << "Username: ." << clientFound.getUsername() << "." << std::endl;
 
 		clientFound.setIdentity(extract(message, ":", "\n"));
-		std::cout << "Identity: " << clientFound.getIdentity() << std::endl;
+		std::cout << "Identity: ." << clientFound.getIdentity() << "." << std::endl;
 
 	}
 	else
@@ -206,6 +231,20 @@ bool server::selectCommand(std::string message, int i)
 // 	}
 // }
 
+void server::sendWelcomeMsgs(client user)
+{
+
+	std::string msg;
+	msg = "001 " + user.getNickname() + " :Welcome to 42 IRC!\n";
+	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
+	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
+	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
+	msg = "003 RPL_CREATED :The server was created god knows when\n";
+	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
+	msg = "004 RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
+	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
+}
+
 void server::accept_newUser(void)
 {
 	int fd;
@@ -233,41 +272,53 @@ void server::mainloop()
 	while (true)
 	{
 		_pollResult = poll(_fds, maxFD, 1000);
-		if (_pollResult < 0){
+		if (_pollResult < 0)
+		{
 			std::cout << "[SERVER: POLL CALLING FAILED]" << std::endl;
 			stopServer();
 			return;
 		}
 		else if (_pollResult == 0) // si timeout
-			continue;
+			;
 		accept_newUser();
-		for (int i = 1; i < maxFD + 1; i++){
-			if (_fds[i].revents & (POLLIN)){
+		for (int i = 1; i < _totalFD + 1; i++)
+		{
+			if (_fds[i].revents & (POLLIN))
+			{
 				_bytesRead = recv(_fds[i].fd, _buffer, bufferSize - 1, MSG_DONTWAIT);
-				if (_bytesRead == -1){
+				if (_bytesRead == -1)
+				{
 					if (errno != EAGAIN && errno != EWOULDBLOCK)
-						std::cout << "[CLIENT " <<getUserName(_fds[i].fd) << "]: Incomming message failed" << std::endl; //mettre nickname au lieu de fds
+						;// std::cout << "[CLIENT " <<getUserName(_fds[i].fd) << "]: Incomming message failed" << std::endl; //mettre nickname au lieu de fds
 				}
 				else if (_bytesRead == 0)
 					cleanFDS(i);
-				else if (_bytesRead > 0){
+				else if (_bytesRead > 0)
+				{
 					_buffer[_bytesRead] = '\0';
-					if (getUserLevel(_fds[i].fd) == 0){
-						if (firstMsg(_buffer, _fds[i].fd) == false){
+					if (getUserLevel(_fds[i].fd) == 0)
+					{
+						if (firstMsg(_buffer, _fds[i].fd) == false)
+						{
 							// impossible de traiter le message
 							// ou mot de passe incorrect
 							// deconnecter le client
 							return;
 						}
+						else
+							sendWelcomeMsgs(mapUser.find(_fds[i].fd)->second);
+						// debug();
 						setUserLevel(_fds[i].fd, 1); // choisir quel niveau pour bannir
 					}
-					else if (getUserLevel(_fds[i].fd) == 1){
+					else if (getUserLevel(_fds[i].fd) == 1)
+					{
 						if (_bytesRead > commandSize)
 							send(_fds[i].fd, "You can't exceeded 60 characters.Please try again\n", 50, 0); // gerer les eventuelles erreur de send
 						else if (_buffer[0] != '/' || selectCommand(&_buffer[1], i) == false)
 							send(_fds[i].fd, "Wrong command.Please try again\n", 31, 0);
 					}
-					else if (getUserLevel(_fds[i].fd) == 2){
+					else if (getUserLevel(_fds[i].fd) == 2)
+					{
 						// a faire
 						// je pense que les mess channel ne devraient pas s afficher dans le serveur mais plutot
 						// dans les client connectes au channel a discuter

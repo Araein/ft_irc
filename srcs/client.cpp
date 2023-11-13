@@ -14,7 +14,7 @@ client::~client(void) {}
 
 
 
-void client::fillProfil(void)
+void client::fillProfil()
 {
 }
 

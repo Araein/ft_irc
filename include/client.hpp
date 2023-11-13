@@ -12,9 +12,9 @@ class client
 	std::string _username;
 	std::string _identity; 
 
+	void fillProfil();
 	std::map<std::string, std::string> _profil;
 
-	void fillProfil();
 
 
 	public:

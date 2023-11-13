@@ -28,6 +28,7 @@ class server
 		void cleanFDS(int i);
 		bool firstMsg(std::string message, int fd);
 		bool selectCommand(std::string message, int i);
+		void sendWelcomeMsgs(client user);
 		// void sendMsgToClients(char *buffer, int n);
 		// bool verify_Pwd(infoConnect user);
 		// bool deleteUser();
