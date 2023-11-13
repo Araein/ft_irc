@@ -9,13 +9,6 @@ _id(1000), _port(port), _totalFD(1), _pollResult(0), _bytesRead(0)
 	_sock.sizeAddr = sizeof(_sock.Addr);
 	memset(&_sock.Addr, 0, _sock.sizeAddr);
 	memset(&_buffer, 0, bufferSize);
-<<<<<<< HEAD
-	_server.id = _id;
-	_server.port = port;
-	_server.password = password;
-	_id = 0;
-=======
->>>>>>> 4192b7b63e51bc2f0081a71b3f9f8e79e9c3b56a
 	std::cout << "[SERVER: INITIALISATION]" << std::endl;
 }
 
@@ -208,8 +201,8 @@ void server::mainloop()
 			stopServer();
 			return;
 		}
-		else if (_pollResult == 0) // voir si necessaire
-			continue;
+		// else if (_pollResult == 0) // voir si necessaire
+		// 	continue;
 		accept_newUser();
 		for (int i = 1; i < _totalFD; i++){
 			if (_fds[i].revents & (POLLIN | POLLPRI)){
@@ -231,6 +224,7 @@ void server::mainloop()
 							// deconnecter le client
 							return;
 						}
+						std::cout << "RECEIVED DATA FROM " << _fds[i].fd << std::endl;
 						setUserLevel(_fds[i].fd, 1); //choisir quel niveau pour bannir
 					}
 					else if (getUserLevel(_fds[i].fd) == 1){ //level en attente d'une commande uniquement
