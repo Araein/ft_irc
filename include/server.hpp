@@ -26,7 +26,7 @@ class server
 		void accept_newUser();
 		int findCurFD();
 		void cleanFDS(int i);
-		bool firstMsg(std::string message);
+		bool firstMsg(std::string message, int fd);
 		bool selectCommand(std::string message, int i);
 		// void sendMsgToClients(char *buffer, int n);
 		// bool verify_Pwd(infoConnect user);

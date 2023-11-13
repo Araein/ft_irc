@@ -24,7 +24,11 @@
 #define commandSize 60
 #define minPort 49152
 #define maxPort 65535
+<<<<<<< HEAD
 #define maxFD 2
+=======
+#define maxFD 5 //inclure le server
+>>>>>>> 1bf8c0a73195a7ebcdbc30524917c3eb388e1c59
 
 class server;
 class client;
