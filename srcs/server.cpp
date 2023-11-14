@@ -88,10 +88,11 @@ void server::mainLoop(void)
 
 void server::acceptNewUser(void)
 {
-	close(_fds[maxFD].fd);
-	_fds[maxFD].fd = -2;
-	_fds[maxFD].revents = 0;
-
+	if (_fds[maxFD].fd > 0){
+		close(_fds[maxFD].fd);
+		_fds[maxFD].fd = -2;
+		_fds[maxFD].revents = 0;
+	}
 	sockaddr_in sock;
 	socklen_t sizeSock = sizeof(sock);
 	memset(&sock, 0, sizeSock);
@@ -99,24 +100,18 @@ void server::acceptNewUser(void)
 	tempfds.events = POLLIN | POLLERR;
 	tempfds.revents = 0;
 	tempfds.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
-
-	sendWelcomeMsgs(tempfds.fd);//**********************************************A REGLER (affichae nickname)
-
 	if (tempfds.fd < 0)
 		return;
 	_curPlace = findPlace();
+	_fds[_curPlace].fd = tempfds.fd;
+	_fds[_curPlace].revents = tempfds.revents;
 	if (_curPlace == maxFD)
-	{
-		printFullUser(tempfds.fd);
-		_fds[_curPlace].fd = tempfds.fd;
-	}
+		printFullUser(_fds[_curPlace].fd);
 	else
 	{
 		_totalPlace++;
-		_fds[_curPlace].fd = tempfds.fd;
-		_fds[_curPlace].revents = tempfds.revents;
 		client us;
-		mapUser.insert(std::make_pair(tempfds.fd, us));
+		mapUser.insert(std::make_pair(_fds[_curPlace].fd, us));
 	}
 }
 
@@ -150,8 +145,9 @@ void server::userMessage(int fd)// si POLLIN
 			else
 			{
 				(mapUser.find(fd))->second.setPWD();//definie passeword validate
+				sendWelcomeMsgs(fd);//**********************************************A REGLER (affichae nickname)
 				send(fd, "Password validate\n", 18, 0);
-				printNewUser(fd);//**********************************************A FAIRE
+				// printNewUser(fd);//**********************************************A FAIRE
 			}
 		}
 		else
@@ -227,9 +223,8 @@ void server::sendWelcomeMsgs(int fd)
 {
 	if (fd == -1)
 		return;
-	std::string nickname = (mapUser.find(fd))->second.getNickname();
 	std::string msg;
-	msg = "001 " + nickname + " :Welcome to 42 IRC!\n";
+	msg = "001 " + (mapUser.find(fd))->second.getNickname() + " :Welcome to 42 IRC!\n";
 	send(fd, msg.c_str(), msg.length(), 0);
 	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
 	send(fd, msg.c_str(), msg.length(), 0);

@@ -36,6 +36,7 @@ class server
 	int getFD(int i) const;
 	int getPort() const;
 	std::string getPassword() const;
+	std::string getNicname(client user) const;
 
 	void setFD(int i, int val);
 

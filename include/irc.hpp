@@ -23,7 +23,7 @@
 #define bufferSize 4096
 #define minPort 49152
 #define maxPort 65535
-#define maxFD 5
+#define maxFD 2
 
 
 class server;
