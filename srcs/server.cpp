@@ -168,7 +168,7 @@ void server::parseMessage(std::string buff, int fd)
 	else if (command == "JOIN" || command == "join")
 	{
 		iss >> command;
-		std::cout << "commande recu a traiter: JOIN  with : " << command << std::endl;		
+		//std::cout << "commande recu a traiter: JOIN  with : " << command << std::endl;		
 		joinChannel(fd, command);
 	}
 	else if (command == "INVITE" || command == "invite")
@@ -187,8 +187,11 @@ void server::parseMessage(std::string buff, int fd)
 	{
 		iss >> command;
 		std::string actualChannel = command;
-		iss >> command;
-		std::string message = command;
+		// iss >> command;
+		// std::string command;
+
+		std::string message;
+		std::getline(iss, message);		
     	sendMessage(fd, actualChannel, message);
 	}
 	else if (command == "QUIT" || command == "quit")
@@ -286,7 +289,7 @@ void server::printFullUser(int fd)
 
 
 
-    void server::sendMessage(int fd, const std::string& channel, const std::string& message)
+    void server::sendMessage(int fd, const std::string& channel, std::string& message)
 	{
 		std::map<int, client>::iterator it = mapUser.find(fd);
 		if (it != mapUser.end())
@@ -303,22 +306,14 @@ void server::printFullUser(int fd)
 				{
 					if (*it != &sender)
 					{
+       					 message = ":" + sender.getNickname() + " PRIVMSG " + channel + " :" + message + "\n";
 						std::cout << "  [Message to " << (*it)->getNickname() << "]: " << message << std::endl;
 						send((*it)->getFD(), message.c_str(), message.size(), 0);
-						// For example: send((*it)->getSocket(), message.c_str(), , 0);
 					}
 				}
 			}
-
-
-		}
-
-		/***************************/
-    
-
+		}    
     }
-
-
 
 	/**********************************************/
 

@@ -43,7 +43,7 @@ class server
 	/*********communication intra channel**********/
 	
     void joinChannel(int fd, const std::string& channel);
-    void sendMessage(int fd, const std::string& channel, const std::string& message);
+    void sendMessage(int fd, const std::string& channel, std::string& message);
 
 	
 	/**********************************************/
