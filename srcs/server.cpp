@@ -295,15 +295,12 @@ void server::printFullUser(int fd)
 		
 			std::cout << "in " << channel << ": " << "[" << sender.getNickname() << "]: " << message << std::endl;
 
-			//Send the message to all clients in the same channel
 			const std::vector<client*>& clients = channels[channel];
 			
 			for (std::vector<client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
 			{
-				// Ensure the client pointer is not null
 				if (*it != NULL)
 				{
-					// Avoid sending the message back to the sender
 					if (*it != &sender)
 					{
 						std::cout << "  [Message to " << (*it)->getNickname() << "]: " << message << std::endl;
