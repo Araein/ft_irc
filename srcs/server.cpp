@@ -7,12 +7,15 @@ server::server(int fd, int port, std::string password)
 	_password = password;
 	_curPlace = 0;
 	_totalPlace = 0;
-	for (int i = 0; i < maxFD; i++)
+	for (int i = 0; i < maxFD; i++)//+1 pour un fd temporaire pour eviter les BROKE PIPE
 	{
 		_fds[i].fd = -1;
-		_fds[i].events = POLLIN | POLLHUP | POLLERR;
+		_fds[i].events = POLLIN | POLLERR;
 		_fds[i].revents = 0;
 	}
+	_fds[maxFD].fd = -2;
+	_fds[maxFD].events = POLLIN | POLLERR;
+	_fds[maxFD].revents = 0;
 	_fds[0].fd = fd;
 }
 
@@ -60,7 +63,7 @@ void server::mainLoop(void)
 	int ret;
 	while (1)
 	{
-		ret = poll(_fds, maxFD, 1000);
+		ret = poll(_fds, maxFD + 1, 1000);
 		if (ret < 0)
 		{
 			std::cerr << "Failed to call poll()" << std::endl;
@@ -70,16 +73,14 @@ void server::mainLoop(void)
 		acceptNewUser();
 		if (ret == 0)
 			continue;
-		for (int i = 1; i < maxFD; i++)
+		for (int i = 1; i < maxFD + 1; i++)
 		{
-			if (_fds[i].revents & (POLLIN | POLLHUP | POLLERR))
+			if (_fds[i].revents & (POLLIN | POLLERR))
 			{
 				if (_fds[i].revents & POLLIN)//surveille les messages recus des clients
 					userMessage(_fds[i].fd);//**********************************************A FINIR
 				else if (_fds[i].revents & POLLERR)//surveille les erreurs venant d'une fonction qui crash entre autre
 					errMessage(_fds[i].fd);//**********************************************A FAIRE
-				else if (_fds[i].revents & POLLHUP)//surveille les deconnexion
-					disconnectMessage(_fds[i].fd);//**********************************************A FAIRE
 			}
 		}
 	}
@@ -87,11 +88,15 @@ void server::mainLoop(void)
 
 void server::acceptNewUser(void)
 {
+	close(_fds[maxFD].fd);
+	_fds[maxFD].fd = -2;
+	_fds[maxFD].revents = 0;
+
 	sockaddr_in sock;
 	socklen_t sizeSock = sizeof(sock);
 	memset(&sock, 0, sizeSock);
 	pollfd tempfds;
-	tempfds.events = POLLIN | POLLHUP | POLLERR;
+	tempfds.events = POLLIN | POLLERR;
 	tempfds.revents = 0;
 	tempfds.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
 
@@ -102,15 +107,17 @@ void server::acceptNewUser(void)
 	_curPlace = findPlace();
 	if (_curPlace == maxFD)
 	{
-		printFullUser(tempfds.fd);//**********************************************A FINIR
-		close(tempfds.fd);
-		return;
+		printFullUser(tempfds.fd);
+		_fds[_curPlace].fd = tempfds.fd;
 	}
-	_totalPlace++;
-	_fds[_curPlace].fd = tempfds.fd;
-	_fds[_curPlace].revents = tempfds.revents;
-	client us;
-	mapUser.insert(std::make_pair(tempfds.fd, us));
+	else
+	{
+		_totalPlace++;
+		_fds[_curPlace].fd = tempfds.fd;
+		_fds[_curPlace].revents = tempfds.revents;
+		client us;
+		mapUser.insert(std::make_pair(tempfds.fd, us));
+	}
 }
 
 void server::userMessage(int fd)// si POLLIN
@@ -125,13 +132,17 @@ void server::userMessage(int fd)// si POLLIN
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
 			send(fd, "An error has occurred\nYour message could not be sent./nPlease try again\n", 72, 0);
 	}
+	else if (size == 0){
+		std::cout << (mapUser.find(fd))->second.getNickname() << " Thanks to use 42_IRC.\n" << std::endl;
+		closeOne(fd);
+	}
 	else if (size > 0)
 	{
 		if ((mapUser.find(fd))->second.getPWD() == false)// password non encore valide
 		{
 			(mapUser.find(fd))->second.firstMessage(buff);//parsing du message dans la class client
-			if (((mapUser.find(fd))->second.getPassword()).compare(_password) != 0)
-			{//compare les mot de passe
+			if (((mapUser.find(fd))->second.getPassword()).compare(_password) != 0)//compare les mot de passe
+			{
 				send(fd, "INCORRECT PASSWORD\n You will be disconnected\n", 45, 0);
 				closeOne(fd);
 			}
@@ -176,7 +187,7 @@ void server::parseMessage(std::string buff, int fd)
 	else if (command == "QUIT" || command == "quit")
 	{
 		std::cout << (mapUser.find(fd))->second.getNickname() << " Thanks to use 42_IRC.\n" << std::endl;
-		//closeOne();
+		closeOne(fd);
 	}
 	else
 		std::cout << "Message en attente de parsing\n" << buff << std::endl;
@@ -190,17 +201,10 @@ void server::errMessage(int fd)// si POLLERR
 	std::cout << " errMessage en cours" << std::endl;
 }
 
-void server::disconnectMessage(int fd)//si POLLHUP
-{
-	(void)fd;
-	std::cout << " disconnectMessage en cours" << std::endl;
-}
-
-
 void server::closeOne(int fd)
 {
 	mapUser.erase(mapUser.find(fd));
-	for(int i = 1; i < maxFD; i++)
+	for(int i = 1; i < maxFD + 1; i++)
 	{
 		if (_fds[i].fd == fd){
 			close(_fds[i].fd);

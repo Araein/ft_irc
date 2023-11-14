@@ -6,7 +6,7 @@ class server
 {
 
 	int _port;
-	pollfd _fds[maxFD];
+	pollfd _fds[maxFD + 1];
 	std::string _password;
 	int _curPlace;
 	int _totalPlace;
@@ -16,7 +16,6 @@ class server
 	void acceptNewUser();
 	void userMessage(int fd);
 	void errMessage(int fd);
-	void disconnectMessage(int fd);
 	void sendWelcomeMsgs(int fd);
 	int findPlace();
 	void printFullUser(int fd);
