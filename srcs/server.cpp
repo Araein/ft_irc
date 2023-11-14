@@ -48,7 +48,7 @@ bool server::initSocket(void)
 		std::cerr << "Failed to listen to socket" << std::endl;
 		return false;
 	}
-	client us;
+	client us;//**********************************************A COMPLETER
 	mapUser.insert(std::make_pair(_fds[0].fd, us));
 	std::cout << "[SERVER: LISTENING ON PORT " << _port << "]" << std::endl;
 	_totalPlace++;
@@ -75,11 +75,11 @@ void server::mainLoop(void)
 			if (_fds[i].revents & (POLLIN | POLLHUP | POLLERR))
 			{
 				if (_fds[i].revents & POLLIN)//surveille les messages recus des clients
-					userMessage(_fds[i].fd);
+					userMessage(_fds[i].fd);//**********************************************A FINIR
 				else if (_fds[i].revents & POLLERR)//surveille les erreurs venant d'une fonction qui crash entre autre
-					errMessage(_fds[i].fd);
+					errMessage(_fds[i].fd);//**********************************************A FAIRE
 				else if (_fds[i].revents & POLLHUP)//surveille les deconnexion
-					disconnectMessage(_fds[i].fd);
+					disconnectMessage(_fds[i].fd);//**********************************************A FAIRE
 			}
 		}
 	}
@@ -87,24 +87,22 @@ void server::mainLoop(void)
 
 void server::acceptNewUser(void)
 {
-	socklen_t sizeSock;
 	sockaddr_in sock;
-	size_t size = sizeof(sock);
-	memset(&sock, 0, size);
-	
+	socklen_t sizeSock = sizeof(sock);
+	memset(&sock, 0, sizeSock);
 	pollfd tempfds;
 	tempfds.events = POLLIN | POLLHUP | POLLERR;
 	tempfds.revents = 0;
 	tempfds.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
 
-	sendWelcomeMsgs(tempfds.fd);
+	sendWelcomeMsgs(tempfds.fd);//**********************************************A REGLER (affichae nickname)
 
 	if (tempfds.fd < 0)
 		return;
 	_curPlace = findPlace();
 	if (_curPlace == maxFD)
 	{
-		printFullUser(tempfds.fd);
+		printFullUser(tempfds.fd);//**********************************************A FINIR
 		close(tempfds.fd);
 		return;
 	}
@@ -115,13 +113,13 @@ void server::acceptNewUser(void)
 	mapUser.insert(std::make_pair(tempfds.fd, us));
 }
 
-void server::userMessage(int fd)// si  POLLIN
+void server::userMessage(int fd)// si POLLIN
 {
 	int size;
 	char buff[bufferSize];
-	memset(&buff, 0, bufferSize - 1);
+	memset(&buff, 0, bufferSize);
 
-	size = recv(fd, buff, bufferSize - 2, MSG_DONTWAIT);
+	size = recv(fd, buff, bufferSize - 1, MSG_DONTWAIT);
 	if (size == -1)
 	{
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
@@ -129,8 +127,8 @@ void server::userMessage(int fd)// si  POLLIN
 	}
 	else if (size > 0)
 	{
-		if ((mapUser.find(fd))->second.getPWD() == false)
-		{//si PWD du client est false alors le mot de passe n est pas encore valider donc le message recu est forcement les info irssi
+		if ((mapUser.find(fd))->second.getPWD() == false)// password non encore valide
+		{
 			(mapUser.find(fd))->second.firstMessage(buff);//parsing du message dans la class client
 			if (((mapUser.find(fd))->second.getPassword()).compare(_password) != 0)
 			{//compare les mot de passe
@@ -139,13 +137,13 @@ void server::userMessage(int fd)// si  POLLIN
 			}
 			else
 			{
-				(mapUser.find(fd))->second.setPWD();//passe PWD a true
+				(mapUser.find(fd))->second.setPWD();//definie passeword validate
 				send(fd, "Password validate\n", 18, 0);
-				printNewUser(fd);
+				printNewUser(fd);//**********************************************A FAIRE
 			}
 		}
 		else
-			parseMessage(buff, fd);
+			parseMessage(buff, fd);//**********************************************A COMPLETER
 	}
 }
 

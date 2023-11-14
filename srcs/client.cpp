@@ -1,7 +1,13 @@
 #include "irc.hpp"
 
 client::~client(void) {}
-client::client(void): _pwd(false), _ban(false) { }
+client::client(void): _pwd(false), _ban(false)
+{
+	Identity = "";
+	Username = "";
+	Nickname = "";
+	Password = "";
+}
 
 void client::firstMessage(std::string message)
 {
