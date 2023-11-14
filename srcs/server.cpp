@@ -137,6 +137,7 @@ void server::userMessage(int fd)// si POLLIN
 		if ((mapUser.find(fd))->second.getPWD() == false)// password non encore valide
 		{
 			(mapUser.find(fd))->second.firstMessage(buff);//parsing du message dans la class client
+			mapUser.find(fd)->second.setFD(fd); // a verifier
 			if (((mapUser.find(fd))->second.getPassword()).compare(_password) != 0)//compare les mot de passe
 			{
 				send(fd, "INCORRECT PASSWORD\n You will be disconnected\n", 45, 0);
@@ -166,7 +167,9 @@ void server::parseMessage(std::string buff, int fd)
 	}
 	else if (command == "JOIN" || command == "join")
 	{
-		std::cout << "commande recu a traiter: JOIN" << std::endl;
+		iss >> command;
+		std::cout << "commande recu a traiter: JOIN  with : " << command << std::endl;		
+		joinChannel(fd, command);
 	}
 	else if (command == "INVITE" || command == "invite")
 	{
@@ -180,6 +183,14 @@ void server::parseMessage(std::string buff, int fd)
 	{
 		std::cout << "commande recu a traiter: MODE" << std::endl;
 	}
+	else if (command == "PRIVMSG" || command == "privmsg")
+	{
+		iss >> command;
+		std::string actualChannel = command;
+		iss >> command;
+		std::string message = command;
+    	sendMessage(fd, actualChannel, message);
+	}
 	else if (command == "QUIT" || command == "quit")
 	{
 		std::cout << "Bye " << (mapUser.find(fd))->second.getNickname() << ". Thanks to use 42_IRC." << std::endl;
@@ -187,7 +198,6 @@ void server::parseMessage(std::string buff, int fd)
 	}
 	else
 		std::cout << "Message en attente de parsing: " << buff << std::endl;
-
 }
 
 void server::errMessage(int fd)// si POLLERR
@@ -261,6 +271,59 @@ void server::printFullUser(int fd)
 }
 
 
+	/*********communication intra channel**********/
+
+
+    void server::joinChannel(int fd, const std::string& channel)
+	{
+		std::map<int, client>::iterator it = mapUser.find(fd);
+		if (it != mapUser.end())
+        {
+			client& myClient = it->second;
+        	channels[channel].push_back(&myClient); // on remplit le map des channels
+		} //message d'erreur si trouve pas?
+    }
+
+
+
+    void server::sendMessage(int fd, const std::string& channel, const std::string& message)
+	{
+		std::map<int, client>::iterator it = mapUser.find(fd);
+		if (it != mapUser.end())
+		{
+			client& sender = it->second;
+		
+			std::cout << "in " << channel << ": " << "[" << sender.getNickname() << "]: " << message << std::endl;
+
+			//Send the message to all clients in the same channel
+			const std::vector<client*>& clients = channels[channel];
+			
+			for (std::vector<client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+			{
+				// Ensure the client pointer is not null
+				if (*it != NULL)
+				{
+					// Avoid sending the message back to the sender
+					if (*it != &sender)
+					{
+						std::cout << "  [Message to " << (*it)->getNickname() << "]: " << message << std::endl;
+						send((*it)->getFD(), message.c_str(), message.size(), 0);
+						// For example: send((*it)->getSocket(), message.c_str(), , 0);
+					}
+				}
+			}
+
+
+		}
+
+		/***************************/
+    
+
+    }
+
+
+
+	/**********************************************/
 
 
 int server::getFD(int i) const { return _fds[i].fd; }

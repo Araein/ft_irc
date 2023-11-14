@@ -50,8 +50,9 @@ std::string client::getPassword(void) const { return Password;}
 std::string client::getIdentity(void) const { return Identity;}
 std::string client::getNickname(void) const { return Nickname;}
 std::string client::getUsername(void) const { return Username;}
+int			client::getFD(void) const {return _fd;}
 
-
+void client::setFD(int myfd) { _fd = myfd; }
 void client::setPWD(void) { _pwd = true; }
 void client::setBAN(void) { _ban = true; }
 

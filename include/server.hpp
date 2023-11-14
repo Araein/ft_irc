@@ -12,6 +12,13 @@ class server
 	int _totalPlace;
 	std::map<int, client> mapUser;
 
+	/*********communication intra channel**********/
+	
+    std::map<std::string, std::vector<client*> > channels; // string = nom du channel  // vector = membres du channel
+	//il faudra ajouter la suppression des channels lorsque personne est dedans ?
+
+	
+	/**********************************************/
 
 	void acceptNewUser();
 	void userMessage(int fd);
@@ -32,6 +39,14 @@ class server
 	public:
 	server(int fd, int port, std::string password);
 	~server();
+
+	/*********communication intra channel**********/
+	
+    void joinChannel(int fd, const std::string& channel);
+    void sendMessage(int fd, const std::string& channel, const std::string& message);
+
+	
+	/**********************************************/
 
 	int getFD(int i) const;
 	int getPort() const;

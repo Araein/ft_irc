@@ -6,6 +6,7 @@ class client
 {
 	bool _pwd;
 	bool _ban;
+	int			_fd;
 	std::string Identity;
 	std::string Username;
 	std::string Nickname;
@@ -27,7 +28,8 @@ class client
 	std::string getIdentity() const;
 	std::string getUsername() const;
 	std::string getNickname() const;
-
+	int			getFD() const;
+	void setFD(int myfd);
 	void setPWD();
 	void setBAN();
 
