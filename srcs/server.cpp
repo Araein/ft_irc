@@ -241,7 +241,7 @@ void server::sendWelcomeMsgs(int fd)
 
 void server::printNewUser(int fd)
 {
-
+	(void)fd;
 }
 
 int server::findPlace(void)
