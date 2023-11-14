@@ -2,4 +2,11 @@
 
 #include "irc.hpp"
 
+class channel
+{
 
+
+	public:
+	channel();
+	~channel();
+};

@@ -15,14 +15,9 @@ class client
 	std::string rtrim(const std::string& str);
 	std::string ltrim(const std::string& str);
 
-
-
-
-
 	public:
 	client();
 	~client();
-
 
 	void firstMessage(std::string message);
 
@@ -32,7 +27,6 @@ class client
 	std::string getIdentity() const;
 	std::string getUsername() const;
 	std::string getNickname() const;
-
 
 	void setPWD();
 	void setBAN();

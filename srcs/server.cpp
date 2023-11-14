@@ -132,7 +132,8 @@ void server::userMessage(int fd)// si POLLIN
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
 			send(fd, "An error has occurred\nYour message could not be sent./nPlease try again\n", 72, 0);
 	}
-	else if (size == 0){
+	else if (size == 0)
+	{
 		std::cout << "Bye " << (mapUser.find(fd))->second.getNickname() << ". Thanks to use 42_IRC." << std::endl;
 		closeOne(fd);
 	}
@@ -157,7 +158,6 @@ void server::userMessage(int fd)// si POLLIN
 			parseMessage(buff, fd);//**********************************************A COMPLETER
 	}
 }
-
 
 void server::parseMessage(std::string buff, int fd)
 {
@@ -191,7 +191,6 @@ void server::parseMessage(std::string buff, int fd)
 	}
 	else
 		std::cout << "Message en attente de parsing: " << buff << std::endl;
-
 
 }
 

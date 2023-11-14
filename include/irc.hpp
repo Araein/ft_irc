@@ -20,11 +20,10 @@
 #include <algorithm>
 #include <cctype>
 
-#define bufferSize 1024
-#define commandSize 60
+#define bufferSize 4096
 #define minPort 49152
 #define maxPort 65535
-#define maxFD 2
+#define maxFD 5
 
 
 class server;

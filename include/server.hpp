@@ -23,6 +23,12 @@ class server
 	void closeOne(int fd);
 	void parseMessage(std::string buff, int fd);
 
+	void cmdKick();
+	void cmdJoin();
+	void cmdInvite();
+	void cmdTopic();
+	void cmdMode();
+
 	public:
 	server(int fd, int port, std::string password);
 	~server();
