@@ -133,7 +133,7 @@ void server::userMessage(int fd)// si POLLIN
 			send(fd, "An error has occurred\nYour message could not be sent./nPlease try again\n", 72, 0);
 	}
 	else if (size == 0){
-		std::cout << (mapUser.find(fd))->second.getNickname() << " Thanks to use 42_IRC.\n" << std::endl;
+		std::cout << "Bye " << (mapUser.find(fd))->second.getNickname() << ". Thanks to use 42_IRC." << std::endl;
 		closeOne(fd);
 	}
 	else if (size > 0)
@@ -166,31 +166,31 @@ void server::parseMessage(std::string buff, int fd)
 	iss >> command;
 	if (command == "KICK" || command == "kick")
 	{
-		std::cout << "commande recu en a traiter: KICK\n" << std::endl; 
+		std::cout << "commande recu a traiter: KICK" << std::endl; 
 	}
 	else if (command == "JOIN" || command == "join")
 	{
-		std::cout << "commande recu en a traiter: JOIN\n" << std::endl;
+		std::cout << "commande recu a traiter: JOIN" << std::endl;
 	}
 	else if (command == "INVITE" || command == "invite")
 	{
-		std::cout << "commande recu en a traiter: INVITE\n" << std::endl;
+		std::cout << "commande recu a traiter: INVITE" << std::endl;
 	}
 	else if (command == "TOPIC" || command == "topic")
 	{
-		std::cout << "commande recu en a traiter: TOPIC\n" << std::endl;
+		std::cout << "commande recu a traiter: TOPIC" << std::endl;
 	}
 	else if (command == "MODE" || command == "mode")
 	{
-		std::cout << "commande recu en a traiter: MODE\n" << std::endl;
+		std::cout << "commande recu a traiter: MODE" << std::endl;
 	}
 	else if (command == "QUIT" || command == "quit")
 	{
-		std::cout << (mapUser.find(fd))->second.getNickname() << " Thanks to use 42_IRC.\n" << std::endl;
+		std::cout << "Bye " << (mapUser.find(fd))->second.getNickname() << ". Thanks to use 42_IRC." << std::endl;
 		closeOne(fd);
 	}
 	else
-		std::cout << "Message en attente de parsing\n" << buff << std::endl;
+		std::cout << "Message en attente de parsing: " << buff << std::endl;
 
 
 }
