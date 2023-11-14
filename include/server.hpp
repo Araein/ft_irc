@@ -2,47 +2,43 @@
 
 #include "irc.hpp"
 
-
-class server 
+class server
 {
-	private:
-		int _id;
-		int _port;
-		int _totalFD;
-		int _curFD;
-		int _pollResult;
-		int _bytesRead;
-		infoSocket _sock;
-		pollfd _fds[maxFD];
-		char _buffer[bufferSize];
-		std::map<int, client> mapUser;
-		std::vector<channel> chan;
 
-		void setupPoll();
-		bool initServerSocket();
-		bool bindServerSocket();
-		bool listenServerSocket();
+	int _port;
+	pollfd _fds[maxFD];
+	std::string _password;
+	int _curPlace;
+	int _totalPlace;
+	std::map<int, client> mapUser;
 
-		void accept_newUser();
-		int findCurFD();
-		void cleanFDS(int i);
-		bool firstMsg(std::string message);
-		bool selectCommand(std::string message, int i);
-		// void sendMsgToClients(char *buffer, int n);
-		// bool verify_Pwd(infoConnect user);
-		// bool deleteUser();
 
+	void acceptNewUser();
+	void userMessage(int fd);
+	void errMessage(int fd);
+	void disconnectMessage(int fd);
+	void sendWelcomeMsgs(int fd);
+	int findPlace();
+	void printFullUser(int fd);
+	void printNewUser(int fd);
+	void closeOne(int fd);
+	void parseMessage(std::string buff, int fd);
 
 	public:
-		server(int port, std::string password);
-		~server();
+	server(int fd, int port, std::string password);
+	~server();
 
-		std::string getUserName(int fd);
-		int getUserLevel(int fd);
-		
-		void setUserLevel(int fd, int level);
+	int getFD(int i) const;
+	int getPort() const;
+	std::string getPassword() const;
 
-		void stopServer(void);
-		bool initServer();
-		void mainloop();
+	void setFD(int i, int val);
+
+	void closeAll();
+	bool initSocket();
+	void mainLoop();
+	
+
+
+
 };

@@ -2,7 +2,4 @@
 
 #include "irc.hpp"
 
-class channel
-{
 
-};

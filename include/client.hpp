@@ -4,23 +4,42 @@
 
 class client
 {
-	int _id;
-	int _level;
-	std::string _nickname;
-	std::string _password;
-	std::map<std::string, std::string> _profil;
+	bool _pwd;
+	bool _ban;
+	std::string Identity;
+	std::string Username;
+	std::string Nickname;
+	std::string Password;
 
-	void fillProfil();
+	std::string extract(const std::string& message, const std::string& start, const std::string& end);
+	std::string rtrim(const std::string& str);
+	std::string ltrim(const std::string& str);
+
+
+
 
 
 	public:
-		client(pollfd *fds);
-		~client();
+	client();
+	~client();
 
-		int getLevel();
-		std::string getNickname();
 
-		void setLevel(int level);
+	void firstMessage(std::string message);
+
+	bool getPWD() const;
+	bool getBAN() const;
+	std::string getPassword() const;
+	std::string getIdentity() const;
+	std::string getUsername() const;
+	std::string getNickname() const;
+
+
+	void setPWD();
+	void setBAN();
 
 
 };
+	
+
+
+
