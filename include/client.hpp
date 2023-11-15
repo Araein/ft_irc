@@ -23,6 +23,7 @@ class client
 
 	void firstMessage(std::string message);
 	std::string extract(const std::string& message, const std::string& start, const std::string& end);
+	void fillProfil(std::string message);
 
 	bool getPWD() const;
 	int getID() const;

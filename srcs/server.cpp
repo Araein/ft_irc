@@ -39,6 +39,9 @@ bool server::initSocket(void)
 		close(_fds[0].fd);
 		return false;
 	}
+	sock.sin_family = AF_INET;
+	sock.sin_addr.s_addr = inet_addr("127.0.0.1"); //INADDR_ANY;
+	sock.sin_port = htons(_port);
 	std::cout << "[SERVER: CONNECTED]" << std::endl;
 	if (bind(_fds[0].fd, (sockaddr *)&sock, sizeof(sock)) < 0)
 	{
