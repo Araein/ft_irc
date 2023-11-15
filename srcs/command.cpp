@@ -68,9 +68,57 @@ void server::cmdInvite()
 
 }
 
-void server::cmdTopic()
+void server::cmdTopic(int fd, std::string buff)
 {
+	std::string tmp;
+	std::string channel;
+	std::istringstream iss(buff);
+	int index;
+	(void)fd;
 
+	iss >> tmp;
+	iss >> channel;
+	std::cout << "wtf = " << channel << std::endl;
+	if (findChanbyName(channel) == -1){
+		std::cout << findChanbyName(channel) << " test" << std::endl;
+		send(fd, std::string("403 " + channel + ":no such channel\r\n").c_str(), std::string("403 " + channel + ":no such channel\r\n").length(), 0);
+		return ;
+	}
+	index = findChanbyName(channel);
+	iss >> tmp;
+	iss >> tmp;
+	std::cout << "topic = " << tmp << std::endl;
+	if (vecChannel[index].getConnected(mapUser.find(fd)->second) == true){
+		if (tmp.empty() == true && vecChannel[index].getTopic().empty() == true){
+			send(fd, std::string("331 " + channel + " :No topic is set\r\n").c_str(), std::string("331 " + channel + " :No topic is set\r\n").length(), 0);
+			std::cout << "ça devrait pas = " << vecChannel[index].getTopic() << std::endl;
+			return ;
+		}
+		else if (tmp.empty() == true && vecChannel[index].getTopic().empty() == false){
+			send(fd, std::string("332 " + channel + " :" + vecChannel[index].getTopic() + "\r\n").c_str(), std::string("332 " + channel + " :" + vecChannel[index].getTopic() + "\r\n").length(), 0);
+			return ;
+		}
+		else if (tmp.empty() == false && vecChannel[index].isTopicRestricted() == true && vecChannel[index].getAdmin(mapUser.find(fd)->second) == false){
+			send(fd, std::string("482 " + channel + " :You do not have permission to change the topic\r\n").c_str(), std::string("482 " + channel + " :You do not have permission to change the topic\r\n").length(), 0);
+			return ;
+		}
+		else if (tmp.empty() == false && vecChannel[index].isTopicRestricted() == true && vecChannel[index].getAdmin(mapUser.find(fd)->second) == true){
+			vecChannel[index].setTopic(tmp);
+			send(fd, std::string("TOPIC " + channel + tmp + "\r\n").c_str(), std::string(channel + tmp + "\r\n").length(), 0);
+			return ;
+		}
+		else if (tmp.empty() == false && vecChannel[index].isTopicRestricted() == false){
+			vecChannel[index].setTopic(tmp);
+			std::cout << "On est entré" << std::endl;
+			send(fd, std::string("TOPIC " + channel + tmp + "\r\n").c_str(), std::string(channel + tmp + "\r\n").length(), 0);
+			std::cout << "ça devrait pas = " << vecChannel[index].getTopic().empty() << std::endl;
+			return ;
+		}
+	}
+	else{
+		send(fd, std::string("442 " + channel + " :You are not part of this channel\r\n").c_str(), std::string("442 " + channel + " :You are not part of this channel\r\n").length(), 0);
+		return ;
+	}
 }
 
 void server::cmdMode()

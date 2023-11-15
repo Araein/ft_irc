@@ -159,6 +159,16 @@ void server::userMessage(int fd)// si POLLIN
 	}
 }
 
+int server::findChanbyName(std::string chan) const{
+	int i = 0;
+	for (std::vector<channel>::const_iterator it = vecChannel.begin(); it != vecChannel.end(); it++){
+		if (it->getChannelName() == chan)
+			return (i);
+		i++;
+	}
+	return (-1);
+}
+
 void server::parseMessage(std::string buff, int fd)
 {
 	std::istringstream iss(buff);
@@ -181,7 +191,7 @@ void server::parseMessage(std::string buff, int fd)
 	}
 	else if (command == "TOPIC" || command == "topic")
 	{
-		std::cout << "commande recu a traiter: TOPIC" << std::endl;
+		cmdTopic(fd, buff);
 	}
 	else if (command == "MODE" || command == "mode")
 	{

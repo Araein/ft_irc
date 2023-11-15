@@ -1,11 +1,15 @@
 #include "irc.hpp"
 
 channel::~channel(void) {}
-channel::channel(std::string name): _nbUser(0), _name(name) {}
+channel::channel(std::string name): _nbUser(0), _name(name), _topicRestricted(0) {}
 
 
 std::string channel::getChannelName() const
 { return _name; }
+
+std::string channel::getTopic(void)const { return _topic; }
+
+bool channel::isTopicRestricted(void) const { return _topicRestricted == 0 ? false : true; }
 
 bool channel::getConnected(client const &user) const
 {
@@ -60,6 +64,7 @@ void channel::setDisconnect(client const &user)
 	}
 }
 
+void channel::setTopic(std::string topic){ _topic = topic; }
 
 void channel::setAdminTrue(client const &user)
 {

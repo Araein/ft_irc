@@ -26,6 +26,7 @@ class server
 	void errMessage(int fd);
 	void sendWelcomeMsgs(int fd);
 	int findPlace();
+	int findChanbyName(std::string channel) const;
 	void printFullUser(int fd);
 	void printNewUser(int fd);
 	void closeOne(int fd);
@@ -35,7 +36,7 @@ class server
 	void cmdNick(int fd, std::string buff);
 	void cmdJoin(std::string buff, int fd);
 	void cmdInvite();
-	void cmdTopic();
+	void cmdTopic(int fd, std::string buff);
 	void cmdMode();
 	void cmdPrivmsg(int fd, std::string buff);
 
