@@ -47,8 +47,10 @@ int main (int ac, char **av)
 	signal(SIGINT, sig_int);
 	signal(SIGQUIT, SIG_IGN);
 	srv = new server(fd, port, av[2]);
-	if (srv->initSocket() == true)
+	if (srv->initSocket() == true){
+		srv->createChannel();
 		srv->mainLoop();
+	}
 	delete srv;
 	return 0;
 }

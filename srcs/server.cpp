@@ -51,7 +51,7 @@ bool server::initSocket(void)
 		std::cerr << "Failed to listen to socket" << std::endl;
 		return false;
 	}
-	client us;//**********************************************A COMPLETER
+	client us(_id, _fds[0].fd);//**********************************************A COMPLETER
 	mapUser.insert(std::make_pair(_fds[0].fd, us));
 	std::cout << "[SERVER: LISTENING ON PORT " << _port << "]" << std::endl;
 	_totalPlace++;
@@ -110,7 +110,7 @@ void server::acceptNewUser(void)
 	else
 	{
 		_totalPlace++;
-		client us;
+		client us(++_id, _fds[_curPlace].fd);
 		mapUser.insert(std::make_pair(_fds[_curPlace].fd, us));
 	}
 }
@@ -169,7 +169,7 @@ void server::parseMessage(std::string buff, int fd)
 		iss >> command;
 		mapUser.find(fd)->second.setNickname(command);
 		send(fd, std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").c_str(), std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").length(), 0);
-		send(fd, std::string("Your new nickname is " + command + "\r\n").c_str(), std::string("Your new nickname is " + command + "\r\n").length(), 0);
+		send(fd, std::string("Your new nickname is " + command + "\r\n").c_str(), std::string("Your new nickname is " + command + "\n").length(), 0);
 	}
 	else if (command == "JOIN" || command == "join")
 	{
@@ -256,6 +256,17 @@ void server::sendWelcomeMsgs(int fd)
 	send(fd, msg.c_str(), msg.length(), 0);
 }
 
+void server::createChannel(void)
+{
+	channel chan0("#Minishell");
+	vecChannel.push_back(chan0);
+	channel chan1("#SoLong");
+	vecChannel.push_back(chan1);
+	channel chan2("#PushSwap");
+	vecChannel.push_back(chan2);
+	channel chan3("#Inception");
+	vecChannel.push_back(chan3);
+}
 
 void server::printNewUser(int fd)
 {
