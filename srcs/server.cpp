@@ -176,6 +176,8 @@ void server::parseMessage(std::string buff, int fd)
 	{
 		std::cout << "commande recu a traiter: KICK" << std::endl; 
 	}
+	else if (command == "NICK" || command == "nick")
+		cmdNick(fd, buff);
 	else if (command == "PRIVMSG" || command == "privmsg")
 		cmdPrivmsg(fd, buff);
 	else if (command == "JOIN" || command == "join")
@@ -190,7 +192,7 @@ void server::parseMessage(std::string buff, int fd)
 	}
 	else if (command == "MODE" || command == "mode")
 	{
-		std::cout << "commande recu a traiter: MODE" << std::endl;
+		std::cout << "commande recu a traiter: " << buff << std::endl;
 	}
 	else if (command == "PING" || command == "ping")
 	{

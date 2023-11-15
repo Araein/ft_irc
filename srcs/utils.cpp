@@ -6,7 +6,6 @@ bool IsNotSpace(int ch)
 	return !std::isspace(ch);
 }
 
-
 std::string ltrim(const std::string& str)
 {
 	std::string::const_iterator it = std::find_if(str.begin(), str.end(), IsNotSpace);

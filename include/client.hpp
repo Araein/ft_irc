@@ -13,10 +13,6 @@ class client
 	std::string Nickname;
 	std::string Password;
 
-	// std::string extract(const std::string& message, const std::string& start, const std::string& end);
-	// std::string rtrim(const std::string& str);
-	// std::string ltrim(const std::string& str);
-
 	public:
 	client(int id, int fd);
 	~client();
@@ -32,7 +28,8 @@ class client
 	std::string getNickname() const;
 
 	void setPWD();
-
+	void setBAN(void);
+	void setNickname(std::string nick);
 
 };
 	
