@@ -4,35 +4,40 @@
 
 class client
 {
+	bool _pwd;
+	bool _ban;
+	int			_fd;
+	std::string _perm;
+	std::string Identity;
+	std::string Username;
+	std::string Nickname;
+	std::string Password;
 
-	int _id;
-	int _level;
-	std::string _password;
-	std::string _nickname;
-	std::string _username;
-	std::string _identity; 
-
-	void fillProfil();
-	std::map<std::string, std::string> _profil;
-
-
+	std::string rtrim(const std::string& str);
+	std::string ltrim(const std::string& str);
 
 	public:
-		client(pollfd *fds);
-		~client();
+	client();
+	~client();
 
+	void firstMessage(std::string message);
+	std::string extract(const std::string& message, const std::string& start, const std::string& end);
 
+	bool getPWD() const;
+	bool getBAN() const;
+	std::string getPassword() const;
+	std::string getIdentity() const;
+	std::string getUsername() const;
+	std::string getNickname() const;
+	int			getFD() const;
+	void setFD(int myfd);
+	void setPWD();
+	void setBAN();
+	void setNickname(std::string nick);
 
-		void setLevel(int level);
-		void setPassword(const std::string& password);
-		void setNickname(const std::string& nickname);
-		void setUsername(const std::string& username);
-		void setIdentity(const std::string& identity);
-	
-		int getLevel();
-		std::string getPassword();
-		std::string getNickname();
-		std::string getUsername();
-		std::string getIdentity();
 
 };
+	
+
+
+

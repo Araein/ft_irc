@@ -1,115 +1,268 @@
-#include "server.hpp"
+#include "irc.hpp"
 
-// CONSTRUCTORS
-server::server(int port, std::string password): 
-_id(1000), _port(port), _totalFD(1), _pollResult(0), _bytesRead(0)
+server::~server(void) {}
+server::server(int fd, int port, std::string password)
 {
-	(void)password;
-	setupPoll();
-	_sock.sizeAddr = sizeof(_sock.Addr);
-	memset(&_sock.Addr, 0, _sock.sizeAddr);
-	memset(&_buffer, 0, bufferSize);
-	std::cout << "[SERVER: INITIALISATION]" << std::endl;
-}
-
-server::~server() {}
-
-//GETTER
-
-std::string server::getUserName(int fd) { return (mapUser.find(fd))->second.getNickname(); }
-int server::getUserLevel(int fd) { return (mapUser.find(fd))->second.getLevel(); }
-
-//SETTER
-
-void server::setUserLevel(int fd, int level) { (mapUser.find(fd))->second.setLevel(level); }
-
-//FONCTIONS INITIALISATION
-void server::setupPoll(void)
-{
-	for (int i = 0; i < maxFD; i++)
+	_port = port;
+	_password = password;
+	_curPlace = 0;
+	_totalPlace = 0;
+	for (int i = 0; i < maxFD; i++)//+1 pour un fd temporaire pour eviter les BROKE PIPE
 	{
 		_fds[i].fd = -1;
-		_fds[i].events = POLLIN | POLLPRI; // voir comment gerer POLLPRI
+		_fds[i].events = POLLIN | POLLERR;
 		_fds[i].revents = 0;
 	}
+	_fds[maxFD].fd = -2;
+	_fds[maxFD].events = POLLIN | POLLERR;
+	_fds[maxFD].revents = 0;
+	_fds[0].fd = fd;
 }
 
-bool server::initServerSocket(void)
+bool server::initSocket(void)
 {
+	int opt = 1;
+	sockaddr_in sock;
+	sock.sin_family = AF_INET;
+	sock.sin_addr.s_addr = INADDR_ANY;
+	sock.sin_port = htons(_port);
+
+	std::cout << "[SERVER: INITIALISATION]" << std::endl;
 	_fds[0].fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
 	if (_fds[0].fd < 0)
 	{
-		std::cout << "[SERVER: CONNECTION FAILLED]" << std::endl;
+		std::cerr << "Failed to open socket" << std::endl;
 		return false;
 	}
-	_sock.Addr.sin_family = AF_INET;
-	_sock.Addr.sin_addr.s_addr = inet_addr("127.0.0.1"); //INADDR_ANY;
-	_sock.Addr.sin_port = htons(_port);
+	if (setsockopt(_fds[0].fd, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt))){
+		std::cerr << "Failed to config socket" << std::endl;
+		close(_fds[0].fd);
+		return false;
+	}
 	std::cout << "[SERVER: CONNECTED]" << std::endl;
-	return true;
-}
-
-bool server::bindServerSocket(void)
-{
-	if (bind(_fds[0].fd, (sockaddr *)&_sock.Addr, sizeof(_sock.Addr)) < 0)
+	if (bind(_fds[0].fd, (sockaddr *)&sock, sizeof(sock)) < 0)
 	{
-		std::cout << "[SERVER: FAILED TO BIND]" << std::endl;
+		std::cerr << "Failed to bind to socket" << std::endl;
 		return false;
 	}
 	std::cout << "[SERVER: BINDING]" << std::endl;
-	return true;
-}
-
-bool server::listenServerSocket(void)
-{
 	if (listen(_fds[0].fd, SOMAXCONN) < 0)
 	{
-		std::cout << "[SERVER: FAILED TO LISTENING]" << std::endl;
+		std::cerr << "Failed to listen to socket" << std::endl;
 		return false;
 	}
+	client us;//**********************************************A COMPLETER
+	mapUser.insert(std::make_pair(_fds[0].fd, us));
 	std::cout << "[SERVER: LISTENING ON PORT " << _port << "]" << std::endl;
+	_totalPlace++;
 	return true;
 }
 
-bool server::initServer()
+void server::mainLoop(void)
 {
-	if (initServerSocket() == false)
-		return false;
-	if (bindServerSocket() == false || listenServerSocket() == false)
+	int ret;
+	while (1)
 	{
-		stopServer();
-		return false;
+		ret = poll(_fds, maxFD + 1, 1000);
+		if (ret < 0)
+		{
+			std::cerr << "Failed to call poll()" << std::endl;
+			closeAll();
+			return;
+		}
+		acceptNewUser();
+		if (ret == 0)
+			continue;
+		for (int i = 1; i < maxFD + 1; i++)
+		{
+			if (_fds[i].revents & (POLLIN | POLLERR))
+			{
+				if (_fds[i].revents & POLLIN)//surveille les messages recus des clients
+					userMessage(_fds[i].fd);//**********************************************A FINIR
+				else if (_fds[i].revents & POLLERR)//surveille les erreurs venant d'une fonction qui crash entre autre
+					errMessage(_fds[i].fd);//**********************************************A FAIRE
+			}
+		}
 	}
-	return true;
 }
 
-// bool server::verify_Pwd(infoConnect user){// voir ou le placer car bloque tant que pas de reponse.
-// 	std::stringstream tries;
-// 	std::string tmp;
-// 	send(user.fds.fd, "ENTER PASSWORD\n", 16, 0);
-// 	for (int i = 0; i < 3; i++){
-// 		int bytesRead = recv(user.fds.fd, _buffer, bufferSize, 0);
-// 		if (bytesRead > 0)
-// 			_buffer[bytesRead - 1] = '\0';
-// 		if (_sock.password.compare(_buffer) == 0)
-// 			return (true);
-// 		else{
-// 			if (3 - (i + 1) == 0)
-// 				break;
-// 			send(user.fds.fd, "INCORRECT PASSWORD, TRY AGAIN\n", 31, 0);
-// 			tries.str("");
-// 			tries << (3 - (i + 1));
-// 			tmp = tries.str();
-// 			send(user.fds.fd, "YOU HAVE ", 10, 0);
-// 			send(user.fds.fd, tmp.c_str(), 1, 0);
-// 			send(user.fds.fd, " TRIES REMAINING\n", 18, 0);
-// 		}
-// 	}
-// 	send(user.fds.fd, "INVALID PASSWORD, CONNECTION DENIED\n", 37, 0);
-// 	return (false);
-// }
+void server::acceptNewUser(void)
+{
+	if (_fds[maxFD].fd > 0){
+		close(_fds[maxFD].fd);
+		_fds[maxFD].fd = -2;
+		_fds[maxFD].revents = 0;
+	}
+	sockaddr_in sock;
+	socklen_t sizeSock = sizeof(sock);
+	memset(&sock, 0, sizeSock);
+	pollfd tempfds;
+	tempfds.events = POLLIN | POLLERR;
+	tempfds.revents = 0;
+	tempfds.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
+	if (tempfds.fd < 0)
+		return;
+	_curPlace = findPlace();
+	_fds[_curPlace].fd = tempfds.fd;
+	_fds[_curPlace].revents = tempfds.revents;
+	if (_curPlace == maxFD)
+		printFullUser(_fds[_curPlace].fd);
+	else
+	{
+		_totalPlace++;
+		client us;
+		mapUser.insert(std::make_pair(_fds[_curPlace].fd, us));
+	}
+}
 
-int server::findCurFD(void)
+void server::userMessage(int fd)// si POLLIN
+{
+	int size;
+	char buff[bufferSize];
+	memset(&buff, 0, bufferSize);
+
+	size = recv(fd, buff, bufferSize - 1, MSG_DONTWAIT);
+	if (size == -1)
+	{
+		if (errno != EAGAIN && errno != EWOULDBLOCK)
+			send(fd, "An error has occurred\nYour message could not be sent./nPlease try again\n", 72, 0);
+	}
+	else if (size == 0)
+	{
+		std::cout << "Bye " << (mapUser.find(fd))->second.getNickname() << ". Thanks to use 42_IRC." << std::endl;
+		closeOne(fd);
+	}
+	else if (size > 0)
+	{
+		if ((mapUser.find(fd))->second.getPWD() == false)// password non encore valide
+		{
+			(mapUser.find(fd))->second.firstMessage(buff);//parsing du message dans la class client
+			mapUser.find(fd)->second.setFD(fd); // a verifier
+			if (((mapUser.find(fd))->second.getPassword()).compare(_password) != 0)//compare les mot de passe
+			{
+				send(fd, "INCORRECT PASSWORD\n You will be disconnected\n", 45, 0);
+				closeOne(fd);
+			}
+			else
+			{
+				(mapUser.find(fd))->second.setPWD();//definie passeword validate
+				sendWelcomeMsgs(fd);//**********************************************A REGLER (affichae nickname)
+				send(fd, "Password validate\n", 18, 0);
+				// printNewUser(fd);//**********************************************A FAIRE
+			}
+		}
+		else
+			parseMessage(buff, fd);//**********************************************A COMPLETER
+	}
+}
+
+void server::parseMessage(std::string buff, int fd)
+{
+	std::istringstream iss(buff);
+	std::string command;
+	iss >> command;
+	if (command == "KICK" || command == "kick")
+	{
+		std::cout << "commande recu a traiter: KICK" << std::endl; 
+	}
+	else if (command == "NICK" || command == "nick"){
+		iss >> command;
+		mapUser.find(fd)->second.setNickname(command);
+		send(fd, std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").c_str(), std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").length(), 0);
+		send(fd, std::string("Your new nickname is " + command + "\r\n").c_str(), std::string("Your new nickname is " + command + "\r\n").length(), 0);
+	}
+	else if (command == "JOIN" || command == "join")
+	{
+		iss >> command;
+		//std::cout << "commande recu a traiter: JOIN  with : " << command << std::endl;		
+		joinChannel(fd, command);
+	}
+	else if (command == "INVITE" || command == "invite")
+	{
+		std::cout << "commande recu a traiter: INVITE" << std::endl;
+	}
+	else if (command == "TOPIC" || command == "topic")
+	{
+		std::cout << "commande recu a traiter: TOPIC" << std::endl;
+	}
+	else if (command == "MODE" || command == "mode")
+	{
+		std::cout << "commande recu a traiter: MODE" << std::endl;
+	}
+	else if (command == "PRIVMSG" || command == "privmsg")
+	{
+		iss >> command;
+		std::string actualChannel = command;
+		// iss >> command;
+		// std::string command;
+
+		std::string message;
+		std::getline(iss, message);
+    	sendMessage(fd, actualChannel, message);
+	}
+	else if (command == "QUIT" || command == "quit")
+	{
+		std::cout << "Bye " << (mapUser.find(fd))->second.getNickname() << ". Thanks to use 42_IRC." << std::endl;
+		closeOne(fd);
+	}
+	else if (command == "PING" || command == "ping"){
+		std::cout << "commande recu a traiter: PING" << std::endl;
+	}
+	else
+		std::cout << "Message en attente de parsing: " << buff << std::endl;
+}
+
+void server::errMessage(int fd)// si POLLERR
+{
+	(void)fd;
+	std::cout << " errMessage en cours" << std::endl;
+}
+
+void server::closeOne(int fd)
+{
+	mapUser.erase(mapUser.find(fd));
+	for(int i = 1; i < maxFD + 1; i++)
+	{
+		if (_fds[i].fd == fd){
+			close(_fds[i].fd);
+			_fds[i].fd = -1;
+			_fds[i].revents = 0;
+		}
+	}
+	_totalPlace--;
+}
+
+void server::closeAll(void)
+{
+	for (int i = 0; i < maxFD; i++)
+	{
+		if (_fds[i].fd > -1)
+			close(_fds[i].fd);
+	}
+}
+
+void server::sendWelcomeMsgs(int fd)
+{
+	if (fd == -1)
+		return;
+	std::string msg;
+	msg = "001 " + (mapUser.find(fd))->second.getNickname() + " :Welcome to 42 IRC!\n";
+	send(fd, msg.c_str(), msg.length(), 0);
+	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
+	send(fd, msg.c_str(), msg.length(), 0);
+	msg = "003 RPL_CREATED :The server was created god knows when\n";
+	send(fd, msg.c_str(), msg.length(), 0);
+	msg = "004 RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
+	send(fd, msg.c_str(), msg.length(), 0);
+}
+
+
+void server::printNewUser(int fd)
+{
+	(void)fd;
+}
+
+int server::findPlace(void)
 {
 	for (int i = 1; i < maxFD; i++)
 	{
@@ -119,226 +272,69 @@ int server::findCurFD(void)
 	return maxFD;
 }
 
-void server::cleanFDS(int i)
+void server::printFullUser(int fd)
 {
-	std::cout << "[SERVER:] Disconnected: " << getUserName(_fds[i].fd) << std::endl;
-	mapUser.erase(mapUser.find(_fds[i].fd));
-	close(_fds[i].fd);
-	_fds[i].fd = -1;
-	_fds[i].revents = 0;
-	_totalFD--;
+	send(fd, "|-------------------------------------------------------|\n", 58, 0);
+	send(fd, "|-------------------------------------------------------|\n", 58, 0);
+	send(fd, "|------------------ 42_IRC is full ---------------------|\n", 58, 0);
+	send(fd, "|--------------- Please try again later ----------------|\n", 58, 0);
+	send(fd, "|-------------------------------------------------------|\n", 58, 0);
+	send(fd, "|-------------------------------------------------------|\n", 58, 0);
 }
 
-bool IsNotSpace(int ch)
-{
-    return !std::isspace(ch);
-}
 
-std::string ltrim(const std::string& str)
-{
-    std::string::const_iterator it = std::find_if(str.begin(), str.end(), IsNotSpace);
-    return std::string(it, str.end());
-}
+	/*********communication intra channel**********/
 
-std::string rtrim(const std::string& str)
-{
-    std::string::const_reverse_iterator it = std::find_if(str.rbegin(), str.rend(), IsNotSpace);
-    return std::string(str.begin(), it.base());
-}
 
-const std::string extract(const std::string& message, const std::string& start, const std::string& end)
-{
-    size_t startPos = message.find(start);
-    size_t endPos = message.find(end, startPos + start.length());
-
-    if (startPos != std::string::npos && endPos != std::string::npos)
-    {
-        return rtrim(ltrim(message.substr(startPos + start.length(), endPos - startPos - start.length())));
+    void server::joinChannel(int fd, const std::string& channel)
+	{
+		std::map<int, client>::iterator it = mapUser.find(fd);
+		if (it != mapUser.end())
+        {
+			client& myClient = it->second;
+        	channels[channel].push_back(&myClient); // on remplit le map des channels
+		} //message d'erreur si trouve pas?
     }
 
-    return "";
-}
 
 
-bool server::firstMsg(std::string message, int fd)
-{
-	//std::cout << ":::::" << message << "::::::" << std::endl;
-
-	std::map<int, client>::iterator it = mapUser.find(fd);
-
-	if (it != mapUser.end())
+    void server::sendMessage(int fd, const std::string& channel, std::string& message)
 	{
-
-		client& clientFound = it->second;
-
-		clientFound.setPassword(extract(message, "PASS ", "\n"));
-		std::cout << "Password: ." << clientFound.getPassword() << "." << std::endl;
-
-		clientFound.setNickname(extract(message, "NICK ", "\n"));
-		std::cout << "Nickname: ." << clientFound.getNickname() << "." << std::endl;
-
-		clientFound.setUsername(extract(message, "USER ", " "));
-		std::cout << "Username: ." << clientFound.getUsername() << "." << std::endl;
-
-		clientFound.setIdentity(extract(message, ":", "\n"));
-		std::cout << "Identity: ." << clientFound.getIdentity() << "." << std::endl;
-
-	}
-	else
-		std::cout << "Descripteur de fichier non trouvé dans la map." << std::endl;
-
-	return true;
-}
-
-bool server::selectCommand(std::string message, int i)
-{
-	std::istringstream iss(message);
-	std::string command;
-	iss >> command;
-	if (command == "KICK" || command == "kick"){
-		send(_fds[i].fd, "commande KICK\n", 14, 0);
-	}
-	else if (command == "JOIN" || command == "join"){
-		send(_fds[i].fd, "commande JOIN\n", 14, 0);
-	}
-	else if (command == "INVITE" || command == "invite"){
-		send(_fds[i].fd, "commande INVITE\n", 16, 0);
-	}
-	else if (command == "TOPIC" || command == "topic"){
-		send(_fds[i].fd, "commande TOPIC\n", 15, 0);
-	}
-	else if (command == "MODE" || command == "mode"){
-		send(_fds[i].fd, "commande MODE\n", 14, 0);
-	}
-	else if (command == "QUIT" || command == "quit"){ //test
-		send(_fds[i].fd, "Thanks to use 42_IRC.\n", 22, 0);
-		cleanFDS(i);
-	}
-	else
-		return false;
-	return true;
-}
-
-// void server::sendMsgToClients(char *buffer, int n){ // a placer dans la partie gerant les channels
-// 	std::stringstream tmp;
-// 	std::string str = "Client ";
-// 	tmp << _vect[n].id << " dit: "; //a changé vers nickname dit
-// 	str.append(tmp.str()); 
-// 	str.append(buffer);
-// 	for (int i = 1; i <= _curFD; i++){
-// 		if (i != n)
-// 			send(_fds[i].fd, str.c_str(), str.length(),0);
-// 	}
-// }
-
-void server::sendWelcomeMsgs(client user)
-{
-
-	std::string msg;
-	msg = "001 " + user.getNickname() + " :Welcome to 42 IRC!\n";
-	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
-	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
-	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
-	msg = "003 RPL_CREATED :The server was created god knows when\n";
-	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
-	msg = "004 RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
-	send(_fds[_curFD - 1].fd, msg.c_str(), msg.length(), 0);
-}
-
-void server::accept_newUser(void)
-{
-	int fd;
-	_curFD = findCurFD();
-	if (_curFD == maxFD){
-		fd = accept(_fds[0].fd, (sockaddr*)&_sock.Addr, &_sock.sizeAddr);
-		if (fd > 0){
-			send(fd, "42_IRC is full please try again later", 37, 0);
-			close(fd);
-			return;
-		}
-	}
-	_fds[_curFD].fd = accept(_fds[0].fd, (sockaddr*)&_sock.Addr, &_sock.sizeAddr);
-	if (_fds[_curFD].fd > 0){
-		_totalFD++;
-		send(_fds[_curFD].fd, "|---------- WELCOME IN 42_IRC ----------|\n", 42, 0);
-		client user(_fds);
-		mapUser.insert(std::make_pair(_fds[_curFD].fd, user));
-		std::cout << "[SERVER: SUCCESS CONNECTION FROM : " << inet_ntoa(_sock.Addr.sin_addr) << "]" << std::endl;
-	}
-}
-
-void server::mainloop()
-{
-	while (true)
-	{
-		_pollResult = poll(_fds, maxFD, 1000);
-		if (_pollResult < 0)
+		std::map<int, client>::iterator it = mapUser.find(fd);
+		if (it != mapUser.end())
 		{
-			std::cout << "[SERVER: POLL CALLING FAILED]" << std::endl;
-			stopServer();
-			return;
-		}
-		else if (_pollResult == 0) // si timeout
-			;
-		accept_newUser();
-		for (int i = 1; i < _totalFD + 1; i++)
-		{
-			if (_fds[i].revents & (POLLIN))
+			client& sender = it->second;
+		
+			std::cout << "in " << channel << ": " << "[" << sender.getNickname() << "]: " << message << std::endl;
+
+			const std::vector<client*>& clients = channels[channel];
+			
+			for (std::vector<client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
 			{
-				_bytesRead = recv(_fds[i].fd, _buffer, bufferSize - 1, MSG_DONTWAIT);
-				if (_bytesRead == -1)
+				if (*it != NULL)
 				{
-					if (errno != EAGAIN && errno != EWOULDBLOCK)
-						;// std::cout << "[CLIENT " <<getUserName(_fds[i].fd) << "]: Incomming message failed" << std::endl; //mettre nickname au lieu de fds
-				}
-				else if (_bytesRead == 0)
-					cleanFDS(i);
-				else if (_bytesRead > 0)
-				{
-					_buffer[_bytesRead] = '\0';
-					if (getUserLevel(_fds[i].fd) == 0)
+					if (*it != &sender)
 					{
-						if (firstMsg(_buffer, _fds[i].fd) == false)
-						{
-							// impossible de traiter le message
-							// ou mot de passe incorrect
-							// deconnecter le client
-							return;
-						}
-						else
-							sendWelcomeMsgs(mapUser.find(_fds[i].fd)->second);
-						// debug();
-						setUserLevel(_fds[i].fd, 1); // choisir quel niveau pour bannir
-					}
-					else if (getUserLevel(_fds[i].fd) == 1)
-					{
-						if (_bytesRead > commandSize)
-							send(_fds[i].fd, "You can't exceeded 60 characters.Please try again\n", 50, 0); // gerer les eventuelles erreur de send
-						else if (_buffer[0] != '/' || selectCommand(&_buffer[1], i) == false)
-							send(_fds[i].fd, "Wrong command.Please try again\n", 31, 0);
-					}
-					else if (getUserLevel(_fds[i].fd) == 2)
-					{
-						// a faire
-						// je pense que les mess channel ne devraient pas s afficher dans le serveur mais plutot
-						// dans les client connectes au channel a discuter
+       					 message = ":" + sender.getNickname() + " PRIVMSG " + channel + " :" + message + "\n";
+						std::cout << "  [Message to " << (*it)->getNickname() << "]: " << message << std::endl;
+						send((*it)->getFD(), message.c_str(), message.size(), 0);
 					}
 				}
-				memset(_buffer, 0, bufferSize);
-				_fds[i].revents = 0;
 			}
-		}
-	}
-}
+		}    
+    }
+
+	/**********************************************/
 
 
-//FONCTION EXIT
+int server::getFD(int i) const { return _fds[i].fd; }
+int server::getPort(void) const { return _port; }
+std::string server::getPassword(void) const { return _password;}
 
-void server::stopServer(void)
-{
-	for (int i = 0; i < maxFD; i++){
-		if (_fds[i].fd > -1)
-			close(_fds[i].fd);
-	}
-	std::cout << "[SERVER: DISCONNECTED]" << std::endl;
-}
+void server::setFD(int i, int val) { _fds[i].fd = val; }
+
+
+
+
+
+

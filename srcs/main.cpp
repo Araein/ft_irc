@@ -2,6 +2,14 @@
 
 server *srv = NULL;
 
+void sig_int(int signum)
+{
+	(void)signum;
+	srv->closeAll();
+	delete srv;
+	exit(0);
+}
+
 static int parsePort(std::string port)
 {
 	int val = 0;
@@ -27,42 +35,23 @@ static int parsePort(std::string port)
 	return val;
 }
 
-// static bool parsePass(std::string pass)
-// {
-// 	if (pass.size() == 0){
-// 		std::cout << "Error\nPassword is empty" << std::endl;
-// 		return false;
-// 	}
-// 	return true;
-// }
-
-void sig_int(int signum)
-{
-	(void)signum;
-	srv->stopServer();
-	delete srv;
-	exit(0);
-}
-
 int main (int ac, char **av)
 {
+	int port;
+	int fd = 0;
+
+	if (ac != 3 || (port = parsePort(av[1])) == false){
+		std::cerr << "Error: invalid argument.\nUsage <./ircserv> <port> <password>" << std::endl;
+		return 1;
+	}
 	signal(SIGINT, sig_int);
 	signal(SIGQUIT, SIG_IGN);
-
-	if (ac != 3 || (av[2] && !av[2][0])){
-		std::cerr << "Error. Argument invalid or missing" << std::endl;
-		return 1;
-	}
-	int port = parsePort(av[1]);
-	if (!port){
-		std::cerr << "Error. Invalid port number" << std::endl;
-		return 1;
-	}
-	srv = new server(port, av[2]);
-	if (srv->initServer() == true)
-		srv->mainloop();
-	else
-		std::cout << "[SERVER: DISCONNECTED]" << std::endl;
+	srv = new server(fd, port, av[2]);
+	if (srv->initSocket() == true)
+		srv->mainLoop();
 	delete srv;
+	return 0;
 }
+
+
 
