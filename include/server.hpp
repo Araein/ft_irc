@@ -32,6 +32,7 @@ class server
 	void parseMessage(std::string buff, int fd);
 
 	void cmdKick();
+	void cmdNick(int fd, std::string buff);
 	void cmdJoin(std::string buff, int fd);
 	void cmdInvite();
 	void cmdTopic();

@@ -166,16 +166,11 @@ void server::parseMessage(std::string buff, int fd)
 		std::cout << "commande recu a traiter: KICK" << std::endl; 
 	}
 	else if (command == "NICK" || command == "nick"){
-		iss >> command;
-		mapUser.find(fd)->second.setNickname(command);
-		send(fd, std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").c_str(), std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").length(), 0);
-		send(fd, std::string("Your new nickname is " + command + "\r\n").c_str(), std::string("Your new nickname is " + command + "\n").length(), 0);
+		cmdNick(fd, buff);
 	}
 	else if (command == "JOIN" || command == "join")
 	{
-		iss >> command;
-		//std::cout << "commande recu a traiter: JOIN  with : " << command << std::endl;		
-		joinChannel(fd, command);
+		cmdJoin(buff, fd);
 	}
 	else if (command == "INVITE" || command == "invite")
 	{
@@ -191,14 +186,7 @@ void server::parseMessage(std::string buff, int fd)
 	}
 	else if (command == "PRIVMSG" || command == "privmsg")
 	{
-		iss >> command;
-		std::string actualChannel = command;
-		// iss >> command;
-		// std::string command;
-
-		std::string message;
-		std::getline(iss, message);
-    	sendMessage(fd, actualChannel, message);
+		cmdPrivmsg(fd, buff);
 	}
 	else if (command == "QUIT" || command == "quit")
 	{
@@ -206,7 +194,11 @@ void server::parseMessage(std::string buff, int fd)
 		closeOne(fd);
 	}
 	else if (command == "PING" || command == "ping"){
-		std::cout << "commande recu a traiter: PING" << std::endl;
+		std::istringstream iss(buff);
+		std::string pingMsg;
+		iss >> pingMsg >> pingMsg; 
+		std::string pongMsg = "PONG " + pingMsg + "\r\n";
+		send(fd,pongMsg.c_str(), pongMsg.size(), 0);
 	}
 	else
 		std::cout << "Message en attente de parsing: " << buff << std::endl;

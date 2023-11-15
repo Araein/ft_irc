@@ -53,6 +53,15 @@ void server::cmdPrivmsg(int fd, std::string buff)
 	vecChannel[i].sendToChannel(mapUser.find(fd)->second, message);
 }
 
+void server::cmdNick(int fd, std::string buff){
+	std::istringstream iss(buff);
+	std::string command;
+	iss >> command;
+	iss >> command;
+	mapUser.find(fd)->second.setNickname(command);
+	send(fd, std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").c_str(), std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").length(), 0);
+	send(fd, std::string("Your new nickname is " + command + "\r\n").c_str(), std::string("Your new nickname is " + command + "\r\n").length(), 0);
+}
 
 void server::cmdInvite()
 {
