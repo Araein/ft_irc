@@ -3,6 +3,7 @@
 server::~server(void) {}
 server::server(int fd, int port, std::string password)
 {
+	_id = 100;
 	_port = port;
 	_password = password;
 	_curPlace = 0;
@@ -51,11 +52,23 @@ bool server::initSocket(void)
 		std::cerr << "Failed to listen to socket" << std::endl;
 		return false;
 	}
-	client us;//**********************************************A COMPLETER
+	client us(_id, _fds[0].fd);//**********************************************A COMPLETER
 	mapUser.insert(std::make_pair(_fds[0].fd, us));
 	std::cout << "[SERVER: LISTENING ON PORT " << _port << "]" << std::endl;
 	_totalPlace++;
 	return true;
+}
+
+void server::createChannel(void)
+{
+	channel chan0("#Minishell");
+	vecChannel.push_back(chan0);
+	channel chan1("#SoLong");
+	vecChannel.push_back(chan1);
+	channel chan2("#PushSwap");
+	vecChannel.push_back(chan2);
+	channel chan3("#Inception");
+	vecChannel.push_back(chan3);
 }
 
 void server::mainLoop(void)
@@ -77,9 +90,9 @@ void server::mainLoop(void)
 		{
 			if (_fds[i].revents & (POLLIN | POLLERR))
 			{
-				if (_fds[i].revents & POLLIN)//surveille les messages recus des clients
+				if (_fds[i].revents & POLLIN)
 					userMessage(_fds[i].fd);//**********************************************A FINIR
-				else if (_fds[i].revents & POLLERR)//surveille les erreurs venant d'une fonction qui crash entre autre
+				else if (_fds[i].revents & POLLERR)
 					errMessage(_fds[i].fd);//**********************************************A FAIRE
 			}
 		}
@@ -110,7 +123,7 @@ void server::acceptNewUser(void)
 	else
 	{
 		_totalPlace++;
-		client us;
+		client us(++_id, _fds[_curPlace].fd);
 		mapUser.insert(std::make_pair(_fds[_curPlace].fd, us));
 	}
 }
@@ -145,9 +158,8 @@ void server::userMessage(int fd)// si POLLIN
 			else
 			{
 				(mapUser.find(fd))->second.setPWD();//definie passeword validate
-				sendWelcomeMsgs(fd);//**********************************************A REGLER (affichae nickname)
 				send(fd, "Password validate\n", 18, 0);
-				// printNewUser(fd);//**********************************************A FAIRE
+				sendWelcomeMsgs(fd);
 			}
 		}
 		else
@@ -164,10 +176,10 @@ void server::parseMessage(std::string buff, int fd)
 	{
 		std::cout << "commande recu a traiter: KICK" << std::endl; 
 	}
+	else if (command == "PRIVMSG" || command == "privmsg")
+		cmdPrivmsg(buff, fd);
 	else if (command == "JOIN" || command == "join")
-	{
-		std::cout << "commande recu a traiter: JOIN" << std::endl;
-	}
+		cmdJoin(buff, fd);
 	else if (command == "INVITE" || command == "invite")
 	{
 		std::cout << "commande recu a traiter: INVITE" << std::endl;
@@ -224,6 +236,17 @@ void server::sendWelcomeMsgs(int fd)
 	if (fd == -1)
 		return;
 	std::string msg;
+	send(fd, "                                                              \n", 63, 0);
+	send(fd, "   **     **  *********  *********   *********      ********* \n", 63, 0);
+	send(fd, "   **     **         **     **       **      **   **          \n", 63, 0);
+	send(fd, "   **     **         **     **       **       ** **           \n", 63, 0);
+	send(fd, "   **     **         **     **       **       ** **           \n", 63, 0);
+	send(fd, "   *********  *********     **       **********  **           \n", 63, 0);
+	send(fd, "          **  **            **       **    **    **           \n", 63, 0);
+	send(fd, "          **  **            **       **     **   **           \n", 63, 0);
+	send(fd, "          **  **            **       **      **   **          \n", 63, 0);
+	send(fd, "          **  *********  *********   **       **    ********* \n", 63, 0);
+	send(fd, "                                                              \n", 63, 0);
 	msg = "001 " + (mapUser.find(fd))->second.getNickname() + " :Welcome to 42 IRC!\n";
 	send(fd, msg.c_str(), msg.length(), 0);
 	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
@@ -232,6 +255,10 @@ void server::sendWelcomeMsgs(int fd)
 	send(fd, msg.c_str(), msg.length(), 0);
 	msg = "004 RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
 	send(fd, msg.c_str(), msg.length(), 0);
+	send(fd, "\nChannels available:\n", 21, 0);
+	send(fd, "  Minishell\n  PushSwap\n  SoLong\n  Inception\n", 44, 0);
+	send(fd, "\nCommands available:\n", 21, 0);
+	send(fd, "  \'KICK\n  \'TOPIC\n  \'MODE\n  \'JOIN\n  \'INVITE\n  \'QUIT\n", 51, 0);
 }
 
 
@@ -252,14 +279,13 @@ int server::findPlace(void)
 
 void server::printFullUser(int fd)
 {
-	send(fd, "|-------------------------------------------------------|\n", 58, 0);
-	send(fd, "|-------------------------------------------------------|\n", 58, 0);
-	send(fd, "|------------------ 42_IRC is full ---------------------|\n", 58, 0);
-	send(fd, "|--------------- Please try again later ----------------|\n", 58, 0);
-	send(fd, "|-------------------------------------------------------|\n", 58, 0);
-	send(fd, "|-------------------------------------------------------|\n", 58, 0);
+	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
+	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
+	send(fd, "|--------------------- 42_IRC is full ------------------------|\n", 64, 0);
+	send(fd, "|------------------ Please try again later -------------------|\n", 64, 0);
+	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
+	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
 }
-
 
 
 
