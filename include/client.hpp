@@ -4,35 +4,35 @@
 
 class client
 {
-
 	int _id;
-	int _level;
-	std::string _password;
-	std::string _nickname;
-	std::string _username;
-	std::string _identity; 
-
-	void fillProfil();
-	std::map<std::string, std::string> _profil;
-
-
+	int _fd;
+	bool _pwd;
+	bool _ban;
+	std::string Identity;
+	std::string Username;
+	std::string Nickname;
+	std::string Password;
 
 	public:
-		client(pollfd *fds);
-		~client();
+	client(int id, int fd);
+	~client();
 
+	void firstMessage(std::string message);
 
+	bool getPWD() const;
+	int getID() const;
+	int getFD() const;
+	std::string getPassword() const;
+	std::string getIdentity() const;
+	std::string getUsername() const;
+	std::string getNickname() const;
 
-		void setLevel(int level);
-		void setPassword(const std::string& password);
-		void setNickname(const std::string& nickname);
-		void setUsername(const std::string& username);
-		void setIdentity(const std::string& identity);
-	
-		int getLevel();
-		std::string getPassword();
-		std::string getNickname();
-		std::string getUsername();
-		std::string getIdentity();
+	void setPWD();
+	void setBAN(void);
+	void setNickname(std::string nick);
 
 };
+	
+
+
+
