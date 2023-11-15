@@ -177,7 +177,7 @@ void server::parseMessage(std::string buff, int fd)
 		std::cout << "commande recu a traiter: KICK" << std::endl; 
 	}
 	else if (command == "PRIVMSG" || command == "privmsg")
-		cmdPrivmsg(buff, fd);
+		cmdPrivmsg(fd, buff);
 	else if (command == "JOIN" || command == "join")
 		cmdJoin(buff, fd);
 	else if (command == "INVITE" || command == "invite")
@@ -192,9 +192,17 @@ void server::parseMessage(std::string buff, int fd)
 	{
 		std::cout << "commande recu a traiter: MODE" << std::endl;
 	}
+	else if (command == "PING" || command == "ping")
+	{
+		std::istringstream iss(buff);
+		std::string pingMsg;
+		iss >> pingMsg >> pingMsg; 
+		std::string pongMsg = "PONG " + pingMsg + "\r\n";
+		send(fd,pongMsg.c_str(), pongMsg.size(), 0);
+	}
 	else if (command == "QUIT" || command == "quit")
 	{
-		std::cout << "Bye " << (mapUser.find(fd))->second.getNickname() << ". Thanks to use 42_IRC." << std::endl;
+		std::cout << "Bye <" << (mapUser.find(fd))->second.getNickname() << "> Thanks to use 42_IRC." << std::endl;
 		closeOne(fd);
 	}
 	else
@@ -236,6 +244,14 @@ void server::sendWelcomeMsgs(int fd)
 	if (fd == -1)
 		return;
 	std::string msg;
+	msg = "001 " + (mapUser.find(fd))->second.getNickname() + " :Welcome to 42 IRC!\n";
+	send(fd, msg.c_str(), msg.length(), 0);
+	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
+	send(fd, msg.c_str(), msg.length(), 0);
+	msg = "003 RPL_CREATED :The server was created god knows when\n";
+	send(fd, msg.c_str(), msg.length(), 0);
+	msg = "004 RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
+	send(fd, msg.c_str(), msg.length(), 0);
 	send(fd, "                                                              \n", 63, 0);
 	send(fd, "   **     **  *********  *********   *********      ********* \n", 63, 0);
 	send(fd, "   **     **         **     **       **      **   **          \n", 63, 0);
@@ -247,14 +263,6 @@ void server::sendWelcomeMsgs(int fd)
 	send(fd, "          **  **            **       **      **   **          \n", 63, 0);
 	send(fd, "          **  *********  *********   **       **    ********* \n", 63, 0);
 	send(fd, "                                                              \n", 63, 0);
-	msg = "001 " + (mapUser.find(fd))->second.getNickname() + " :Welcome to 42 IRC!\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = "003 RPL_CREATED :The server was created god knows when\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = "004 RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
-	send(fd, msg.c_str(), msg.length(), 0);
 	send(fd, "\nChannels available:\n", 21, 0);
 	send(fd, "  Minishell\n  PushSwap\n  SoLong\n  Inception\n", 44, 0);
 	send(fd, "\nCommands available:\n", 21, 0);

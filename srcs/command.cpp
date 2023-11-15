@@ -33,26 +33,22 @@ void server::cmdJoin(std::string buff, int fd)
 	}
 }
 
-void server::cmdPrivmsg(std::string buff, int fd)
+void server::cmdPrivmsg(int fd, std::string buff)
 {
-	std::string m1;
-	std::string name;
-	std::string str;
-	std::string message;
-	std::istringstream iss;
-	iss.str(buff);
-	std::getline(iss, m1, '#');
-	str = buff.substr(m1.size(), buff.size());
+	std::istringstream iss(buff);
+	std::string command;
+	iss >> command;
+	std::string s1 = buff.substr(command.size(), buff.size());
 	iss.clear();
-	iss.str(str);
-	std::getline(iss, name, ' ');
-	message = str.substr(name.size(), str.size());
-
-	std::cout << name << " [" << mapUser.find(fd)->second.getNickname() << "] " << message << std::endl;
-	//jusque la je recupere les info mais je n ai pas encore reussi a a m en servir efficacement
+	iss.str(s1);
+	std::string channelName;
+	iss >> channelName;
+	std::string s2 = s1.substr(channelName.size() + 1, s1.size());
+	std::string message = ":" + (mapUser.find(fd))->second.getNickname() + " PRIVMSG " + channelName + " :" + s2 + "\r\n";
+	std::cout << channelName << " <" << mapUser.find(fd)->second.getNickname() << "> " << s2 << std::endl;
 	
 	size_t i = 0;
-	while (i < vecChannel.size() && vecChannel[i].getChannelName().compare(name) != 0)
+	while (i < vecChannel.size() && vecChannel[i].getChannelName().compare(channelName) != 0)
 		i++;
 	vecChannel[i].sendToChannel(mapUser.find(fd)->second, message);
 }

@@ -29,8 +29,7 @@ class server
 	void cmdInvite();
 	void cmdTopic();
 	void cmdMode();
-	void cmdPrivmsg(std::string buff, int fd);
-	void sendMessage(int fd, const std::string& channel, std::string& message);
+	void cmdPrivmsg(int fd, std::string buff);
 
 	public:
 	server(int fd, int port, std::string password);
@@ -39,7 +38,6 @@ class server
 	int getFD(int i) const;
 	int getPort() const;
 	std::string getPassword() const;
-	// std::string getNickname(client user) const;
 
 	void setFD(int i, int val);
 
