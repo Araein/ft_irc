@@ -3,7 +3,6 @@
 client::~client(void) {}
 client::client(int id, int fd): _id(id), _fd(fd), _pwd(false), _ban(false) { }
 
-
 void client::firstMessage(std::string message)
 {
 	Password = extract(message, "PASS ", "\n");

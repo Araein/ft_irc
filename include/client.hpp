@@ -8,7 +8,6 @@ class client
 	int _fd;
 	bool _pwd;
 	bool _ban;
-	std::string _perm;
 	std::string Identity;
 	std::string Username;
 	std::string Nickname;

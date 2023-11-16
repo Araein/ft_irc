@@ -13,22 +13,18 @@ void sig_int(int signum)
 static int parsePort(std::string port)
 {
 	int val = 0;
-	for (size_t i=0; i < port.size(); i++)
-	{
-		if (isdigit(port[i]) == 0)
-		{
+	for (size_t i=0; i < port.size(); i++){
+		if (isdigit(port[i]) == 0){
 			std::cout << "Invalid port number" << std::endl;
 			return 0;
 		}
 		val = (val * 10) + (port[i] - 48);
-		if (val > maxPort)
-		{
+		if (val > maxPort){
 			std::cout << "Port number is too high\n Between " << minPort << " and " << maxPort << std::endl;
 			return 0;
 		}
 	}
-	if (val < minPort)
-	{
+	if (val < minPort){
 		std::cout << "Port number is too low\n Between " << minPort << " and " << maxPort << std::endl;
 		return 0;
 	}

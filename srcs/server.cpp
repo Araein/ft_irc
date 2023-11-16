@@ -3,6 +3,7 @@
 server::~server(void) {}
 server::server(int fd, int port, std::string password)
 {
+	_id = 100;
 	_port = port;
 	_password = password;
 	_curPlace = 0;
@@ -39,9 +40,6 @@ bool server::initSocket(void)
 		close(_fds[0].fd);
 		return false;
 	}
-	sock.sin_family = AF_INET;
-	sock.sin_addr.s_addr = inet_addr("127.0.0.1"); //INADDR_ANY;
-	sock.sin_port = htons(_port);
 	std::cout << "[SERVER: CONNECTED]" << std::endl;
 	if (bind(_fds[0].fd, (sockaddr *)&sock, sizeof(sock)) < 0)
 	{
@@ -59,6 +57,29 @@ bool server::initSocket(void)
 	std::cout << "[SERVER: LISTENING ON PORT " << _port << "]" << std::endl;
 	_totalPlace++;
 	return true;
+}
+
+int server::findChanbyName(std::string chan) const{
+	int i = 0;
+	for (std::vector<channel>::const_iterator it = vecChannel.begin(); it != vecChannel.end(); it++)
+	{
+		if (chan == it->getChannelName())
+			return i;
+		i++;
+	}
+	return -1;
+}
+
+void server::createChannel(void)
+{
+	channel chan0("#Minishell");
+	vecChannel.push_back(chan0);
+	channel chan1("#SoLong");
+	vecChannel.push_back(chan1);
+	channel chan2("#PushSwap");
+	vecChannel.push_back(chan2);
+	channel chan3("#Inception");
+	vecChannel.push_back(chan3);
 }
 
 void server::mainLoop(void)
@@ -80,9 +101,9 @@ void server::mainLoop(void)
 		{
 			if (_fds[i].revents & (POLLIN | POLLERR))
 			{
-				if (_fds[i].revents & POLLIN)//surveille les messages recus des clients
+				if (_fds[i].revents & POLLIN)
 					userMessage(_fds[i].fd);//**********************************************A FINIR
-				else if (_fds[i].revents & POLLERR)//surveille les erreurs venant d'une fonction qui crash entre autre
+				else if (_fds[i].revents & POLLERR)
 					errMessage(_fds[i].fd);//**********************************************A FAIRE
 			}
 		}
@@ -140,7 +161,6 @@ void server::userMessage(int fd)// si POLLIN
 		if ((mapUser.find(fd))->second.getPWD() == false)// password non encore valide
 		{
 			(mapUser.find(fd))->second.firstMessage(buff);//parsing du message dans la class client
-			mapUser.find(fd)->second.setFD(fd); // a verifier
 			if (((mapUser.find(fd))->second.getPassword()).compare(_password) != 0)//compare les mot de passe
 			{
 				send(fd, "INCORRECT PASSWORD\n You will be disconnected\n", 45, 0);
@@ -149,24 +169,13 @@ void server::userMessage(int fd)// si POLLIN
 			else
 			{
 				(mapUser.find(fd))->second.setPWD();//definie passeword validate
-				sendWelcomeMsgs(fd);//**********************************************A REGLER (affichae nickname)
 				send(fd, "Password validate\n", 18, 0);
-				// printNewUser(fd);//**********************************************A FAIRE
+				sendWelcomeMsgs(fd);
 			}
 		}
 		else
 			parseMessage(buff, fd);//**********************************************A COMPLETER
 	}
-}
-
-int server::findChanbyName(std::string chan) const{
-	int i = 0;
-	for (std::vector<channel>::const_iterator it = vecChannel.begin(); it != vecChannel.end(); it++){
-		if (it->getChannelName() == chan)
-			return (i);
-		i++;
-	}
-	return (-1);
 }
 
 void server::parseMessage(std::string buff, int fd)
@@ -178,43 +187,40 @@ void server::parseMessage(std::string buff, int fd)
 	{
 		std::cout << "commande recu a traiter: KICK" << std::endl; 
 	}
-	else if (command == "NICK" || command == "nick"){
+	else if (command == "NICK" || command == "nick")
 		cmdNick(fd, buff);
-	}
+	else if (command == "PRIVMSG" || command == "privmsg")
+		cmdPrivmsg(fd, buff);
 	else if (command == "JOIN" || command == "join")
-	{
 		cmdJoin(buff, fd);
-	}
 	else if (command == "INVITE" || command == "invite")
 	{
 		std::cout << "commande recu a traiter: INVITE" << std::endl;
 	}
 	else if (command == "TOPIC" || command == "topic")
 	{
-		cmdTopic(fd, buff);
+		std::cout << "commande recu a traiter: TOPIC" << std::endl;
 	}
 	else if (command == "MODE" || command == "mode")
 	{
-		std::cout << "commande recu a traiter: MODE" << std::endl;
+		std::cout << "commande recu a traiter: " << buff << std::endl;
 	}
-	else if (command == "PRIVMSG" || command == "privmsg")
+	else if (command == "PING" || command == "ping")
 	{
-		cmdPrivmsg(fd, buff);
-	}
-	else if (command == "QUIT" || command == "quit")
-	{
-		std::cout << "Bye " << (mapUser.find(fd))->second.getNickname() << ". Thanks to use 42_IRC." << std::endl;
-		closeOne(fd);
-	}
-	else if (command == "PING" || command == "ping"){
 		std::istringstream iss(buff);
 		std::string pingMsg;
 		iss >> pingMsg >> pingMsg; 
 		std::string pongMsg = "PONG " + pingMsg + "\r\n";
 		send(fd,pongMsg.c_str(), pongMsg.size(), 0);
 	}
+	else if (command == "QUIT" || command == "quit")
+	{
+		std::cout << "Bye <" << (mapUser.find(fd))->second.getNickname() << "> Thanks to use 42_IRC." << std::endl;
+		closeOne(fd);
+	}
 	else
 		std::cout << "Message en attente de parsing: " << buff << std::endl;
+
 }
 
 void server::errMessage(int fd)// si POLLERR
@@ -259,19 +265,23 @@ void server::sendWelcomeMsgs(int fd)
 	send(fd, msg.c_str(), msg.length(), 0);
 	msg = "004 RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
 	send(fd, msg.c_str(), msg.length(), 0);
+	send(fd, "                                                              \n", 63, 0);
+	send(fd, "   **     **  *********  *********   *********      ********* \n", 63, 0);
+	send(fd, "   **     **         **     **       **      **   **          \n", 63, 0);
+	send(fd, "   **     **         **     **       **       ** **           \n", 63, 0);
+	send(fd, "   **     **         **     **       **       ** **           \n", 63, 0);
+	send(fd, "   *********  *********     **       **********  **           \n", 63, 0);
+	send(fd, "          **  **            **       **    **    **           \n", 63, 0);
+	send(fd, "          **  **            **       **     **   **           \n", 63, 0);
+	send(fd, "          **  **            **       **      **   **          \n", 63, 0);
+	send(fd, "          **  *********  *********   **       **    ********* \n", 63, 0);
+	send(fd, "                                                              \n", 63, 0);
+	send(fd, "\nChannels available:\n", 21, 0);
+	send(fd, "  Minishell\n  PushSwap\n  SoLong\n  Inception\n", 44, 0);
+	send(fd, "\nCommands available:\n", 21, 0);
+	send(fd, "  \'KICK\n  \'TOPIC\n  \'MODE\n  \'JOIN\n  \'INVITE\n  \'QUIT\n", 51, 0);
 }
 
-void server::createChannel(void)
-{
-	channel chan0("#Minishell");
-	vecChannel.push_back(chan0);
-	channel chan1("#SoLong");
-	vecChannel.push_back(chan1);
-	channel chan2("#PushSwap");
-	vecChannel.push_back(chan2);
-	channel chan3("#Inception");
-	vecChannel.push_back(chan3);
-}
 
 void server::printNewUser(int fd)
 {
@@ -290,57 +300,14 @@ int server::findPlace(void)
 
 void server::printFullUser(int fd)
 {
-	send(fd, "|-------------------------------------------------------|\n", 58, 0);
-	send(fd, "|-------------------------------------------------------|\n", 58, 0);
-	send(fd, "|------------------ 42_IRC is full ---------------------|\n", 58, 0);
-	send(fd, "|--------------- Please try again later ----------------|\n", 58, 0);
-	send(fd, "|-------------------------------------------------------|\n", 58, 0);
-	send(fd, "|-------------------------------------------------------|\n", 58, 0);
+	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
+	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
+	send(fd, "|--------------------- 42_IRC is full ------------------------|\n", 64, 0);
+	send(fd, "|------------------ Please try again later -------------------|\n", 64, 0);
+	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
+	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
 }
 
-
-	/*********communication intra channel**********/
-
-
-    void server::joinChannel(int fd, const std::string& channel)
-	{
-		std::map<int, client>::iterator it = mapUser.find(fd);
-		if (it != mapUser.end())
-        {
-			client& myClient = it->second;
-        	channels[channel].push_back(&myClient); // on remplit le map des channels
-		} //message d'erreur si trouve pas?
-    }
-
-
-
-    void server::sendMessage(int fd, const std::string& channel, std::string& message)
-	{
-		std::map<int, client>::iterator it = mapUser.find(fd);
-		if (it != mapUser.end())
-		{
-			client& sender = it->second;
-		
-			std::cout << "in " << channel << ": " << "[" << sender.getNickname() << "]: " << message << std::endl;
-
-			const std::vector<client*>& clients = channels[channel];
-			
-			for (std::vector<client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
-			{
-				if (*it != NULL)
-				{
-					if (*it != &sender)
-					{
-       					 message = ":" + sender.getNickname() + " PRIVMSG " + channel + " :" + message + "\n";
-						std::cout << "  [Message to " << (*it)->getNickname() << "]: " << message << std::endl;
-						send((*it)->getFD(), message.c_str(), message.size(), 0);
-					}
-				}
-			}
-		}    
-    }
-
-	/**********************************************/
 
 
 int server::getFD(int i) const { return _fds[i].fd; }

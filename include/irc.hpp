@@ -23,7 +23,8 @@
 #define bufferSize 4096
 #define minPort 49152
 #define maxPort 65535
-#define maxFD 5 //inclure le server
+#define maxFD 5
+
 
 class server;
 class client;
@@ -35,8 +36,8 @@ class channel;
 
 
 bool IsNotSpace(int ch);
-	std::string extract(const std::string& message, const std::string& start, const std::string& end);
-	std::string rtrim(const std::string& str);
-	std::string ltrim(const std::string& str);
+std::string extract(const std::string& message, const std::string& start, const std::string& end);
+std::string rtrim(const std::string& str);
+std::string ltrim(const std::string& str);
 
 
