@@ -79,7 +79,68 @@ void server::cmdMode()
 
 }
 
+// gerer les noms de channel qui contiennent ":" ou des "'" ?? est ce possible?
 
+void server::cmdPart(int fd, std::string buff)
+{
+	// std::cout << "buff : " << buff << std::endl;
+    size_t Pos = buff.find(' ');
+    if (Pos != std::string::npos)
+		buff = buff.substr(Pos + 1);
+	
+	// std::cout << "buff2 : " << buff << std::endl;
 
+    std::map<int, client>::iterator it = mapUser.find(fd);
 
+    if (it != mapUser.end())
+	{
+        client& client = it->second;
+        std::istringstream iss(buff);
+        std::string mychannel;
+		size_t mypos = buff.find_first_of(":");
+		std::string message = buff.substr(mypos + 1, buff.length());
+		buff = buff.substr(0, mypos);
 
+        while (1) //tester avec 0 channel en input
+		{
+			size_t mypos = buff.find_first_of(",");
+			if (mypos != std::string::npos) //si il y a une virgule
+			{
+				mychannel = buff.substr(0, mypos);
+				buff = buff.substr(mypos + 1, buff.length());
+				// std::cout << "message : ." << message << "." << std::endl;
+			}
+			else
+			{
+				size_t mypos = buff.find_first_of("#");
+				if (mypos != std::string::npos)
+					mychannel = buff.substr(mypos, buff.length() - 1);
+				else
+					break;
+				buff = "";
+			}
+			// std::cout << "channel : ." << mychannel << "." << std::endl;
+			// std::cout << "buff3 : ." << buff << "." << std::endl;
+			// mychannel = "#" + mychannel;
+			//std::cout << "Channel to leave : " << mychannel << std::endl;
+			std::vector<channel>::iterator it;
+			for (it = vecChannel.begin(); it != vecChannel.end(); ++it) 
+			{
+				if (it->getChannelName() == mychannel) 
+				{			
+					if (it != vecChannel.end())  //on verifie que le channel existe a chaque fois
+					{
+						if(it->getConnected(client))
+						{
+							it->setDisconnect(client);
+							std::cout << "Client " << client.getNickname() << " left channel " << mychannel << ": " << message << std::endl;
+						//a envoyer egalement aux autres membre du channel?
+						}
+					}
+					break;
+				}      
+
+			}
+    	}
+	}
+}

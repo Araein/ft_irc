@@ -194,6 +194,10 @@ void server::parseMessage(std::string buff, int fd)
 	{
 		std::cout << "commande recu a traiter: " << buff << std::endl;
 	}
+	else if (command == "PART" || command == "part")
+	{
+		cmdPart(fd, buff);
+	}
 	else if (command == "PING" || command == "ping")
 	{
 		std::istringstream iss(buff);

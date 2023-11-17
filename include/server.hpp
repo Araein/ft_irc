@@ -30,6 +30,7 @@ class server
 	void cmdInvite();
 	void cmdTopic();
 	void cmdMode();
+	void cmdPart(int fd, std::string buff);
 	void cmdPrivmsg(int fd, std::string buff);
 
 	public:
