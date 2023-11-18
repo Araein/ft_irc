@@ -12,6 +12,10 @@ void server::cmdJoin(std::string buff, int fd)
 	std::string name;
 	iss >> cmd >> name;
 	int join = 0;
+	
+	std::map<int, client>::iterator it = mapUser.find(fd);
+    client& myclient = it->second;
+
 	for (size_t i = 0; i < vecChannel.size(); i++)
 	{
 		if (vecChannel[i].getChannelName().compare(name) == 0) // verifie si le channel existe deja
@@ -21,6 +25,9 @@ void server::cmdJoin(std::string buff, int fd)
 			vecChannel[i].setConnect((mapUser.find(fd))->second);//insert le nouveau clien client dans un vector dans channel
 			if (vecChannel[i].getNbUser() == 1)//si c est le 1er connecte il devient admin
 				vecChannel[i].setAdminTrue((mapUser.find(fd))->second);
+			
+			std::string message = ":" + myclient.getNickname() + "!" + myclient.getUsername() + "@localhost JOIN " + vecChannel[i].getChannelName() + "\r\n";		
+			send(fd, message.c_str(), message.size(), 0);
 		}
 	}
 	if (join == 0)//si le channel n existe pas on le cree
@@ -30,6 +37,8 @@ void server::cmdJoin(std::string buff, int fd)
 		temp.setConnect((mapUser.find(fd))->second);
 		temp.setAdminTrue((mapUser.find(fd))->second);
 		vecChannel.push_back(temp);
+		std::string message = ":" + myclient.getNickname() + "!" + myclient.getUsername() + "@localhost JOIN " + temp.getChannelName() + "\r\n";		
+		send(fd, message.c_str(), message.size(), 0);
 	}
 }
 
@@ -83,13 +92,11 @@ void server::cmdMode()
 
 void server::cmdPart(int fd, std::string buff)
 {
-	// std::cout << "buff : " << buff << std::endl;
-    size_t Pos = buff.find(' ');
+	size_t Pos = buff.find(' ');
     if (Pos != std::string::npos)
 		buff = buff.substr(Pos + 1);
 	
-	// std::cout << "buff2 : " << buff << std::endl;
-
+	// gerer si absence de raison? (no ':')
     std::map<int, client>::iterator it = mapUser.find(fd);
 
     if (it != mapUser.end())
@@ -101,14 +108,13 @@ void server::cmdPart(int fd, std::string buff)
 		std::string message = buff.substr(mypos + 1, buff.length());
 		buff = buff.substr(0, mypos);
 
-        while (1) //tester avec 0 channel en input
+        while (1)
 		{
 			size_t mypos = buff.find_first_of(",");
-			if (mypos != std::string::npos) //si il y a une virgule
+			if (mypos != std::string::npos)
 			{
 				mychannel = buff.substr(0, mypos);
 				buff = buff.substr(mypos + 1, buff.length());
-				// std::cout << "message : ." << message << "." << std::endl;
 			}
 			else
 			{
@@ -119,10 +125,6 @@ void server::cmdPart(int fd, std::string buff)
 					break;
 				buff = "";
 			}
-			// std::cout << "channel : ." << mychannel << "." << std::endl;
-			// std::cout << "buff3 : ." << buff << "." << std::endl;
-			// mychannel = "#" + mychannel;
-			//std::cout << "Channel to leave : " << mychannel << std::endl;
 			std::vector<channel>::iterator it;
 			for (it = vecChannel.begin(); it != vecChannel.end(); ++it) 
 			{
@@ -134,12 +136,13 @@ void server::cmdPart(int fd, std::string buff)
 						{
 							it->setDisconnect(client);
 							std::cout << "Client " << client.getNickname() << " left channel " << mychannel << ": " << message << std::endl;
-						//a envoyer egalement aux autres membre du channel?
+							message = ":" + client.getNickname() + "!" + client.getUsername() + "@localhost PART " + mychannel + " :" + message;
+							it->sendToChannel(client, message);
+							send(fd, message.c_str(), message.size(), 0);
 						}
 					}
 					break;
-				}      
-
+				}
 			}
     	}
 	}
