@@ -6,47 +6,69 @@ class server
 {
 	int _id;
 	int _port;
-	pollfd _fds[maxFD + 1];
-	std::string _password;
 	int _curPlace;
 	int _totalPlace;
+
+	pollfd _fds[maxFD + 1];
+	std::string _password;
+	// std::vector<int> clientList;
 	std::map<int, client> mapUser;
-	std::vector<channel> vecChannel;
+	std::vector<channel> channelList;
 
+	//THEME
+	void sendWelcomMsgs(int) const;
+	void printServerHeader() const;
+	void listChannel(int fd);
+	void printFullUser(int fd) const;
+	void printHome(int fd);
+	void printInfo(int fd) const;
 
-	void acceptNewUser();
-	void userMessage(int fd);
-	void errMessage(int fd);
-	void sendWelcomeMsgs(int fd);
-	int findPlace();
-	void printFullUser(int fd);
-	void printNewUser(int fd);
-	void closeOne(int fd);
-	void parseMessage(std::string buff, int fd);
-
+	//COMMANDE
+	void parseCommand(std::string buff, int fd);
 	void cmdKick();
 	void cmdNick(int fd, std::string buff);
 	void cmdJoin(std::string buff, int fd);
 	void cmdInvite();
 	void cmdTopic();
 	void cmdMode();
+	void cmdNotice(int fd);
+	void cmdPart(int fd, std::string buff);
+	void cmdWHOIS(int fd);
+	void cmdPing(std::string buff, int fd);
 	void cmdPrivmsg(int fd, std::string buff);
 
-	public:
-	server(int fd, int port, std::string password);
+	//SERVER
+	void acceptNewUser();
+	void createChannel();
+	void test();
+
+	//INPUT
+	void receivMessage();
+	void inputMessage(int);
+	void inputError(int);
+	void checkPassword(std::string pass, int fd);
+	void checkNickname(std::string nick, int fd);
+
+
+	//UTILS
+	std::string startServer() const;
+	void closeOne(int);
+	void clearFDStemp(void);
+	int findPlace() const;
+	bool nameChar(std::string name, int index) const;
+	bool nameExist(std::string name);
+	bool checkChannelName(std::string name);
+	std::vector<channel>::iterator selectChannel(std::string name);
+
+
+public:
+	server(int, std::string);
 	~server();
 
-	int getFD(int i) const;
-	int getPort() const;
-	std::string getPassword() const;
-
-	void setFD(int i, int val);
-
-	void closeAll();
+	//SERVER
 	bool initSocket();
 	void mainLoop();
-	void createChannel();
 
-
-
+	//UTILS
+	void closeAll();
 };
