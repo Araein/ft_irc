@@ -17,6 +17,27 @@ bool channel::getConnected(client const &user) const
 	return false;
 }
 
+bool channel::getConnectedFromString(std::string const &user) const
+{
+	for (size_t i = 0; i < connected.size(); i++)
+	{
+		if (connected[i].getNickname() == user)
+			return true;
+	}
+	return false;
+}
+
+client* channel::getClient(const std::string& user)
+{
+    for (size_t i = 0; i < connected.size(); i++)
+    {
+        if (connected[i].getNickname() == user)
+            return &connected[i];
+    }
+    return NULL;
+}
+
+
 bool channel::getAdmin(client const &user) const
 {
 	for (size_t i = 0; i < admin.size(); i++)

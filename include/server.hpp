@@ -24,7 +24,7 @@ class server
 	void closeOne(int fd);
 	void parseMessage(std::string buff, int fd);
 
-	void cmdKick();
+	void cmdKick(int fd, std::string buff);
 	void cmdNick(int fd, std::string buff);
 	void cmdJoin(std::string buff, int fd);
 	void cmdInvite();

@@ -19,9 +19,12 @@ class channel
 
 	std::string getChannelName() const;
 	bool getConnected(client const &) const;
+	bool getConnectedFromString(std::string const &) const;
+
 	bool getAdmin(client const &) const;
 	bool getIsBanned(client const &) const;
 	int getNbUser() const;
+	client *getClient(std::string const &user);
 
 	void setConnect(client const &);
 	void setDisconnect(client const &);

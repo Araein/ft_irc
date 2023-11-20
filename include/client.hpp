@@ -22,6 +22,8 @@ class client
 	bool getPWD() const;
 	int getID() const;
 	int getFD() const;
+
+
 	std::string getPassword() const;
 	std::string getIdentity() const;
 	std::string getUsername() const;

@@ -1,8 +1,81 @@
 #include "irc.hpp"
 
-void server::cmdKick()
-{
 
+
+// << KICK #channel kicked :
+// >> :kicker!~user42@e960-9f99-41d4-84d-6fd8.170.88.ip KICK #channel kicked :kicker
+// 16:02 -!- #channel You're not channel operator
+
+// KICK [<channel>] <nicks> [<reason>]
+
+//multi kick a revoir
+// message de kick a ameliorer
+
+void server::cmdKick(int fd, std::string buff)
+{
+	std::cout << "buff = " << buff << std::endl;
+
+    std::map<int, client>::iterator it = mapUser.find(fd);
+
+    if (it != mapUser.end())
+    {
+        std::string message;
+        client &kicker = it->second;
+		std::istringstream iss(buff);
+		std::string kickCommand, mychannel, nicks, reason;
+		std::vector<channel>::iterator channelIt;
+
+		iss >> kickCommand;
+		iss >> mychannel;
+		iss >> nicks;
+		std::getline(iss, reason);
+		// if (reason.empty())
+
+		std::vector<std::string> nickList;
+		std::istringstream nickStream(nicks);
+		std::string nick;
+		while (std::getline(nickStream, nick, ','))
+		{
+			nickList.push_back(nick);
+		}
+		for (channelIt = vecChannel.begin(); channelIt != vecChannel.end(); ++channelIt)
+		{
+			if (channelIt->getChannelName() == mychannel)
+			{
+
+				std::vector<std::string>::iterator it = nickList.begin();
+				while (it != nickList.end())
+				{
+					if (channelIt->getConnectedFromString(*it))
+					{
+						if (channelIt->getAdmin(kicker))
+						{
+							client *targetClient = channelIt->getClient(*it);
+							if (!targetClient)
+								continue;
+							channelIt->setDisconnect(*targetClient);
+							message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + *it + " :" + kicker.getNickname() + "\r\n";
+							send(targetClient->getFD(), message.c_str(), message.size(), 0);
+							message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + *it + " :Kicked by " + kicker.getNickname() + "\r\n";
+							channelIt->sendToChannel(*targetClient, message);
+						}
+						else
+						{
+							std::cout << "Client " << kicker.getNickname() << " is not an operator and cannot kick users." << std::endl;
+							//16:02 -!- #channel You're not channel operator
+						}
+					}
+					else
+					{
+						std::cout << "Target user " << *it << " not found in channel " << mychannel << std::endl;
+						// verifier message exact
+					}
+					++it;
+				}
+				break;
+			}
+		}
+    }
 }
 
 void server::cmdJoin(std::string buff, int fd)
@@ -25,7 +98,6 @@ void server::cmdJoin(std::string buff, int fd)
 			vecChannel[i].setConnect((mapUser.find(fd))->second);//insert le nouveau clien client dans un vector dans channel
 			if (vecChannel[i].getNbUser() == 1)//si c est le 1er connecte il devient admin
 				vecChannel[i].setAdminTrue((mapUser.find(fd))->second);
-			
 			std::string message = ":" + myclient.getNickname() + "!" + myclient.getUsername() + "@localhost JOIN " + vecChannel[i].getChannelName() + "\r\n";		
 			send(fd, message.c_str(), message.size(), 0);
 		}
@@ -90,13 +162,18 @@ void server::cmdMode()
 
 // gerer les noms de channel qui contiennent ":" ou des "'" ?? est ce possible?
 
+
+//quand /PART sansa rg -> on leave le current channel 
+// si PART avec juste message -> on leave avec le message
+
+// PART [<channels>] [<message>]
+
 void server::cmdPart(int fd, std::string buff)
 {
 	size_t Pos = buff.find(' ');
     if (Pos != std::string::npos)
 		buff = buff.substr(Pos + 1);
 	
-	// gerer si absence de raison? (no ':')
     std::map<int, client>::iterator it = mapUser.find(fd);
 
     if (it != mapUser.end())
@@ -130,7 +207,7 @@ void server::cmdPart(int fd, std::string buff)
 			{
 				if (it->getChannelName() == mychannel) 
 				{			
-					if (it != vecChannel.end())  //on verifie que le channel existe a chaque fois
+					if (it != vecChannel.end())
 					{
 						if(it->getConnected(client))
 						{

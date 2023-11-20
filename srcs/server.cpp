@@ -174,7 +174,7 @@ void server::parseMessage(std::string buff, int fd)
 	iss >> command;
 	if (command == "KICK" || command == "kick")
 	{
-		std::cout << "commande recu a traiter: KICK" << std::endl; 
+		cmdKick(fd, buff);
 	}
 	else if (command == "NICK" || command == "nick")
 		cmdNick(fd, buff);
