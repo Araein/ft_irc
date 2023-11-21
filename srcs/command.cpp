@@ -1,81 +1,64 @@
 #include "irc.hpp"
 
-
-
-// << KICK #channel kicked :
-// >> :kicker!~user42@e960-9f99-41d4-84d-6fd8.170.88.ip KICK #channel kicked :kicker
-// 16:02 -!- #channel You're not channel operator
-
 // KICK [<channel>] <nicks> [<reason>]
-
-//multi kick a revoir
-// message de kick a ameliorer
 
 void server::cmdKick(int fd, std::string buff)
 {
-	std::cout << "buff = " << buff << std::endl;
+	std::istringstream iss1(buff);
+	std::string buff2;
+	while (std::getline(iss1, buff2))
+	{
+		buff2 = buff2 + "\n";
+		std::map<int, client>::iterator it = mapUser.find(fd);
 
-    std::map<int, client>::iterator it = mapUser.find(fd);
-
-    if (it != mapUser.end())
-    {
-        std::string message;
-        client &kicker = it->second;
-		std::istringstream iss(buff);
-		std::string kickCommand, mychannel, nicks, reason;
-		std::vector<channel>::iterator channelIt;
-
-		iss >> kickCommand;
-		iss >> mychannel;
-		iss >> nicks;
-		std::getline(iss, reason);
-		// if (reason.empty())
-
-		std::vector<std::string> nickList;
-		std::istringstream nickStream(nicks);
-		std::string nick;
-		while (std::getline(nickStream, nick, ','))
+		if (it != mapUser.end())
 		{
-			nickList.push_back(nick);
-		}
-		for (channelIt = vecChannel.begin(); channelIt != vecChannel.end(); ++channelIt)
-		{
-			if (channelIt->getChannelName() == mychannel)
+			client &kicker = it->second;
+			std::istringstream iss(buff2);
+			std::string message, kickCommand, mychannel, nicks, reason;
+			std::vector<channel>::iterator channelIt;
+			iss >> kickCommand;
+			iss >> mychannel;
+			iss >> nicks;
+			std::getline(iss, reason);
+			if (reason == " :\r")
+				reason = " :" + kicker.getNickname() + "\r";
+			for (channelIt = vecChannel.begin(); channelIt != vecChannel.end(); ++channelIt)
 			{
-
-				std::vector<std::string>::iterator it = nickList.begin();
-				while (it != nickList.end())
+				if (channelIt->getChannelName() == mychannel)
 				{
-					if (channelIt->getConnectedFromString(*it))
+					if (channelIt->getConnectedFromString(nicks))
 					{
+						client *targetClient = channelIt->getClient(nicks);
+						if (!targetClient)
+							continue;
 						if (channelIt->getAdmin(kicker))
 						{
-							client *targetClient = channelIt->getClient(*it);
-							if (!targetClient)
-								continue;
+
 							channelIt->setDisconnect(*targetClient);
-							message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + *it + " :" + kicker.getNickname() + "\r\n";
+							message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
 							send(targetClient->getFD(), message.c_str(), message.size(), 0);
-							message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + *it + " :Kicked by " + kicker.getNickname() + "\r\n";
+							message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
 							channelIt->sendToChannel(*targetClient, message);
 						}
 						else
 						{
-							std::cout << "Client " << kicker.getNickname() << " is not an operator and cannot kick users." << std::endl;
 							//16:02 -!- #channel You're not channel operator
+							message = ":" + mychannel + "You're not channel operator\r\n"; //ne passe pas // mauvaise synthaxe
+							send(kicker.getFD(), message.c_str(), message.size(), 0);
+
+							std::cout << "Client " << kicker.getNickname() << " is not an operator and cannot kick users." << std::endl;
 						}
 					}
 					else
 					{
-						std::cout << "Target user " << *it << " not found in channel " << mychannel << std::endl;
-						// verifier message exact
+						std::cout << "Target user " << nicks << " not found in channel " << mychannel << std::endl;
 					}
-					++it;
+					break;
 				}
-				break;
 			}
 		}
-    }
+	}
 }
 
 void server::cmdJoin(std::string buff, int fd)
