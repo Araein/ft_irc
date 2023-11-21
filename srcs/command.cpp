@@ -21,6 +21,9 @@ void server::cmdJoin(std::string buff, int fd)
 			vecChannel[i].setConnect((mapUser.find(fd))->second);//insert le nouveau clien client dans un vector dans channel
 			if (vecChannel[i].getNbUser() == 1)//si c est le 1er connecte il devient admin
 				vecChannel[i].setAdminTrue((mapUser.find(fd))->second);
+			if (vecChannel[i].getTopic().empty() == false){
+				send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 332 " + mapUser.find(fd)->second.getNickname() + " " + vecChannel[i].getChannelName() + " " + vecChannel[i].getTopic() + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 332 " + vecChannel[i].getChannelName() + " " + mapUser.find(fd)->second.getNickname() + " " + vecChannel[i].getTopic() + "\r\n").length(), 0);
+			}
 		}
 	}
 	if (join == 0)//si le channel n existe pas on le cree
@@ -74,49 +77,43 @@ void server::cmdTopic(int fd, std::string buff)
 	std::string channel;
 	std::istringstream iss(buff);
 	int index;
-	(void)fd;
 
 	iss >> tmp;
 	iss >> channel;
-	std::cout << "wtf = " << channel << std::endl;
 	if (findChanbyName(channel) == -1){
-		std::cout << findChanbyName(channel) << " test" << std::endl;
-		send(fd, std::string("403 " + channel + ":no such channel\r\n").c_str(), std::string("403 " + channel + ":no such channel\r\n").length(), 0);
+		send(fd, std::string("403" + channel + ":no such channel\r\n").c_str(), std::string("403 " + channel + ":no such channel\r\n").length(), 0);
 		return ;
 	}
 	index = findChanbyName(channel);
-	iss >> tmp;
-	iss >> tmp;
-	std::cout << "topic = " << tmp << std::endl;
+	tmp = iss.str().substr(6 + channel.length() + 1, buff.length() - (6 + channel.length() + 1));
 	if (vecChannel[index].getConnected(mapUser.find(fd)->second) == true){
 		if (tmp.empty() == true && vecChannel[index].getTopic().empty() == true){
-			send(fd, std::string("331 " + channel + " :No topic is set\r\n").c_str(), std::string("331 " + channel + " :No topic is set\r\n").length(), 0);
-			std::cout << "ça devrait pas = " << vecChannel[index].getTopic() << std::endl;
+			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 331 " + mapUser.find(fd)->second.getNickname() + " " + channel + " :No topic is set\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 331 " + mapUser.find(fd)->second.getNickname() + " " + channel + " :No topic is set\r\n").length(), 0);
 			return ;
 		}
 		else if (tmp.empty() == true && vecChannel[index].getTopic().empty() == false){
-			send(fd, std::string("332 " + channel + " :" + vecChannel[index].getTopic() + "\r\n").c_str(), std::string("332 " + channel + " :" + vecChannel[index].getTopic() + "\r\n").length(), 0);
+			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 332 " + mapUser.find(fd)->second.getNickname() + " " + channel + " :" + vecChannel[index].getTopic() + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 332 " + mapUser.find(fd)->second.getNickname() + " " + channel + " :" + vecChannel[index].getTopic() + "\r\n").length(), 0);
 			return ;
 		}
 		else if (tmp.empty() == false && vecChannel[index].isTopicRestricted() == true && vecChannel[index].getAdmin(mapUser.find(fd)->second) == false){
-			send(fd, std::string("482 " + channel + " :You do not have permission to change the topic\r\n").c_str(), std::string("482 " + channel + " :You do not have permission to change the topic\r\n").length(), 0);
+			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 482 " + mapUser.find(fd)->second.getNickname() + " " + channel + ":You do not have permission to change the topic\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 482 " + mapUser.find(fd)->second.getNickname() + " " + channel + ":You do not have permission to change the topic\r\n").length(), 0);
 			return ;
 		}
 		else if (tmp.empty() == false && vecChannel[index].isTopicRestricted() == true && vecChannel[index].getAdmin(mapUser.find(fd)->second) == true){
 			vecChannel[index].setTopic(tmp);
-			send(fd, std::string("TOPIC " + channel + tmp + "\r\n").c_str(), std::string(channel + tmp + "\r\n").length(), 0);
+			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").length(), 0);
+			vecChannel[index].sendToChannel(mapUser.find(fd)->second, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").c_str());
 			return ;
 		}
 		else if (tmp.empty() == false && vecChannel[index].isTopicRestricted() == false){
 			vecChannel[index].setTopic(tmp);
-			std::cout << "On est entré" << std::endl;
-			send(fd, std::string("TOPIC " + channel + tmp + "\r\n").c_str(), std::string(channel + tmp + "\r\n").length(), 0);
-			std::cout << "ça devrait pas = " << vecChannel[index].getTopic().empty() << std::endl;
+			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").length(), 0);
+			vecChannel[index].sendToChannel(mapUser.find(fd)->second, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").c_str());
 			return ;
 		}
 	}
 	else{
-		send(fd, std::string("442 " + channel + " :You are not part of this channel\r\n").c_str(), std::string("442 " + channel + " :You are not part of this channel\r\n").length(), 0);
+		send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 442 " + channel + ":You are not part of this channel\n").c_str(), std::string("442 " + channel + ":You are not part of this channel\n").length(), 0);
 		return ;
 	}
 }

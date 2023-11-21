@@ -160,6 +160,7 @@ void server::userMessage(int fd)// si POLLIN
 	{
 		if ((mapUser.find(fd))->second.getPWD() == false)// password non encore valide
 		{
+			std::cout << "buff = " << buff << std::endl;
 			(mapUser.find(fd))->second.firstMessage(buff);//parsing du message dans la class client
 			if (((mapUser.find(fd))->second.getPassword()).compare(_password) != 0)//compare les mot de passe
 			{
@@ -199,7 +200,9 @@ void server::parseMessage(std::string buff, int fd)
 	}
 	else if (command == "TOPIC" || command == "topic")
 	{
-		std::cout << "commande recu a traiter: TOPIC" << std::endl;
+		std::cout << "Message en attente de parsing: " << command << std::endl;
+		// vecChannel[findChanbyName("#Minishell")].sendToChannel(mapUser.find(fd)->second, "TA MERE LA PUTE\n");
+		cmdTopic(fd, buff);
 	}
 	else if (command == "MODE" || command == "mode")
 	{

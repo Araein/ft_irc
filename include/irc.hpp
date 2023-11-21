@@ -20,6 +20,9 @@
 #include <algorithm>
 #include <cctype>
 
+# define RPL_TOPIC(cli, chan, topic) (":localhost 332 " + cli + " #" + chan + " " + topic + "\r\n")
+
+
 #define bufferSize 4096
 #define minPort 49152
 #define maxPort 65535
