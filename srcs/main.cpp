@@ -2,7 +2,7 @@
 
 server *srv = NULL;
 
-void sig_int(int signum)
+void sig_int(int signum)//********** GESTION DES SIGNAUX
 {
 	(void)signum;
 	srv->closeAll();
@@ -10,7 +10,7 @@ void sig_int(int signum)
 	exit(0);
 }
 
-static int parsePort(std::string port)
+static int parsePort(std::string port)//********** CONTROLE DU NUMERO DE PORT
 {
 	int val = 0;
 	for (size_t i=0; i < port.size(); i++){

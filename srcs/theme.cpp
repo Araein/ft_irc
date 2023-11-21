@@ -1,7 +1,7 @@
 #include "irc.hpp"
 
 
-void server::sendWelcomMsgs(int fd) const
+void server::sendWelcomMsgs(int fd) const//********** MESSAGE ENVOYE AU CLIENT A LA CONNEXION
 {
 	std::string msg;
 	std::string start = startServer();
@@ -10,13 +10,15 @@ void server::sendWelcomMsgs(int fd) const
 	msg += "003 RPL_CREATED :The server was created ";
 	msg += start;
 	msg += "\n";
-	msg += "004 RPL_MYINFO :ircserv 0.1 level0\n";
+	msg += "004 RPL_MYINFO :ircserv 0.1 level0 +itkol\n";
+	msg += ":ircserv CAP * LS : \r\n";
 	msg += "...............................................................\n";
 	msg += "Connexion via 'nc' : <PASS> <PASSWORD>\n";
 	send(fd, msg.c_str(), msg.length(), 0);
 }
 
-void server::printServerHeader(void) const
+
+void server::printServerHeader(void) const//********** MESSAGE ENTETE AU LANCEMENT DU SERVER
 {
 	std::cout << BLUE << BOLD << "________________________________________________________________" << NONE << std::endl;
 	std::cout << RED << "                                                                " << NONE << std::endl;
@@ -43,7 +45,7 @@ void server::printServerHeader(void) const
 	std::cout << BLUE << "                                                      'tlebouvi'" << NONE << std::endl;
 }
 
-void server::printFullUser(int fd) const
+void server::printFullUser(int fd) const//********** MESSAGE SI NOMBRE MAX DE CLIENTS ATTEINT
 {
 	std::string message = "";
 	message += "|-------------------------------------------------------------|\n";
@@ -53,16 +55,7 @@ void server::printFullUser(int fd) const
 	send(fd, message.c_str(), message.size(), 0);
 }
 
-void server::printInfo(int fd) const
-{
-	std::string msg;
-	msg = "...............................................................\n";
-	msg += "Connexion via 'nc' : <PASS> <PASSWORD>\n";
-	msg += "...............................................................\n";
-	send(fd, msg.c_str(), msg.size(), 0);
-}
-
-void server::printHome(int fd)
+void server::printHome(int fd)//********** MESSAGE ENTETE CLIENT SI PASSWORD OK
 {
 	std::string msg = "";
 	msg += "________________________________________________________________\n";
@@ -94,7 +87,7 @@ void server::printHome(int fd)
 	listChannel(fd);
 }
 
-void server::listChannel(int fd)
+void server::listChannel(int fd)//********** ACTUALISE LA LISTE DES CHANNEL
 {
 	
 	std::string msg = "";
@@ -125,9 +118,7 @@ void server::listChannel(int fd)
 			msg += "\n";
 		}
 	}
-	msg += "               \n";
 	msg += "Enjoy...\n";
-	msg += "               \n";
 	msg += "               \n";
 	send(fd, msg.c_str(), msg.size(), 0);
 }

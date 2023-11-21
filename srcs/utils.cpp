@@ -14,9 +14,9 @@ void server::closeAll(void)
 {
 	for (int i = 0; i < maxFD; i++)
 	{
+		shutdown(_fds[i].fd, SHUT_RDWR);
 		if (_fds[i].fd > -1)
 		{
-			shutdown(_fds[i].fd, SHUT_RDWR);
 			close(_fds[i].fd);
 		}
 	}
@@ -30,6 +30,7 @@ void server::closeOne(int fd)
 		if (it->second.getFD() == fd)
 		{
 			mapUser.erase(it);
+			shutdown(it->second.getFD(), SHUT_RDWR);
 			break;
 		}
 	}
@@ -112,6 +113,27 @@ std::vector<channel>::iterator server::selectChannel(std::string name)
 	}
 	return it;
 }
+
+bool server::checkNickname(std::string nick, int fd)
+{
+	std::string msg = "";
+	if (nick.size() == 0)
+		msg = "  \nYour nickname is empty\n";
+	else if (nick.size() > 30)
+		msg = "  \nYour nickname is too long\n";
+	else if (nameChar(nick, 0) == false)
+		msg = "  \nYour nickname contains invalid character\n";
+	else if (nameExist(nick) == false)
+		msg = "  \nYour nickname already exist\n";
+	if (msg.size() > 0)
+	{
+		msg += "Your name is unchanged\n";
+		send(fd, msg.c_str(), msg.size(), 0);
+		return false;
+	}
+	return true;
+}
+
 
 
 

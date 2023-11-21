@@ -17,14 +17,13 @@ typedef struct chanData{
 	std::vector<client> chanOp;
 	std::vector<client> invited;
 	std::vector<client> connected;
+	std::vector<client> excluded;
 }channelData;
 
 class channel
 {
 
 	channelData chan;
-	std::vector<client>::iterator it;
-	std::string msg;
 
 	void serverChannel();
 	std::vector<client>::iterator findUser(client const &user, std::string vec);
@@ -40,6 +39,7 @@ class channel
 	bool getIsChanOp(int id);
 	bool getIsConnected(int id);
 	bool getIsInvited(int id);
+	bool getIsExcluded(int id);
 	bool getMode(char c) const;
 	std::string getPassword() const;
 	std::string getChannelName() const;
@@ -55,13 +55,14 @@ class channel
 	void setUserConnect(client const &user);
 	void setUserDisconnect(client const &user);
 	void setUserInvited(client const &user);
+	void setUserExcluded(client const &user, bool value);
 	void setUserChanOp(client const &user);
 
 
 	void sendToChannel(client const &user, std::string message);
 	void welcomeMessage(client const &user);
 	bool userCanWrite(client const &user);
-	bool userCanJoin(client const &user, std::string password);
+	void userCanJoin(client const &user, std::string password);
 
 
 };

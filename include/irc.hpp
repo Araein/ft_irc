@@ -26,7 +26,7 @@
 #define bufferSize 4096
 #define minPort 49152
 #define maxPort 65535
-#define maxFD 3
+#define maxFD 15
 
 #define BLACK  "\033[30m"
 #define RED  "\033[31m"

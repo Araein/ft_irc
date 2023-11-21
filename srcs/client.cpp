@@ -6,8 +6,10 @@ client::client(int id, int fd): _fd(fd), _id(id), _status(0)
 	std::ostringstream oss;
 	oss << _id;
 	_nickname = "user" + oss.str();
+	_username = _nickname;
 	if (_id == -1)
-		_nickname = "SuperAdmin";
+		_nickname = "SuperAdmin";//********** ADMIN DES CHANNEL DE DEMARRAGE
+std::cout << "DEBUG new client FD: "<< _fd << "nick: " << _nickname << std::endl;//********** A SUPPRIMER
 }
 
 

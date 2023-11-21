@@ -1,6 +1,6 @@
 #include "irc.hpp"
 
-void server::receivMessage(void)
+void server::receivMessage(void)//********** VERIFIE SI UN CLIENT A RECU UN MESSAGE
 {
 	for (int i = 1; i < maxFD + 1; i++)
 	{
@@ -15,21 +15,22 @@ void server::receivMessage(void)
 	}
 }
 
-void server::inputError(int fd)// si POLLERR
+void server::inputError(int fd)//********** RECEPTION D'UN MESSAGE D'ERREUR
 {
 	(void)fd;
-	std::cout << " errMessage en cours" << std::endl;
+	std::cout << "DEBUG errMessage en cours" << std::endl;//********** A SUPPRIMER
 }
 
-void server::inputMessage(int fd)
+void server::inputMessage(int fd)//********** RECEPTION D'UN MESSAGE CLIENT
 {
 	std::string msg;
 	int size;
 	char buff[bufferSize];
 	memset(&buff, 0, bufferSize);
 	size = recv(fd, buff, bufferSize - 1, MSG_DONTWAIT);
-	std::cout << "BUFF: " << buff << std::endl;//********************************a supprimer
-	if (size < 0)
+	
+	std::cout << "DEBUG : " << fd << " " << mapUser.find(fd)->second.getNickname() << " BUFF: " << buff;//********** A SUPPRIMER
+	if (size < 0)//********** MESSAGE VIDE OU MAL RECEPTIONNE
 	{
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
 		{
@@ -37,7 +38,7 @@ void server::inputMessage(int fd)
 			send(fd, msg.c_str(), msg.size(), 0);
 		}
 	}
-	else if (size == 0)
+	else if (size == 0)//********** MESSAGE INDIQUANT LA DECONNEXION D'UN CLIENT
 	{
 		std::cout << "[SERVER: USER DISCONNECTED]: " << mapUser.find(fd)->second.getNickname() << std::endl;
 		closeOne(fd);
@@ -46,24 +47,20 @@ void server::inputMessage(int fd)
 	{
 		std::istringstream iss(buff);
 		std::string command;
+		std::string msg;
 		iss >> command;
-		if (mapUser.find(fd)->second.getStatus() > 1 || command == "QUIT" || command == "PING")
+		if (mapUser.find(fd)->second.getStatus() > 0 || command == "QUIT" || command == "PING")
 			parseCommand(buff, fd);
 		if (mapUser.find(fd)->second.getStatus() == 0)
 		{
-			std::string msg;
-			if (command == "CAP")
-			{
-				msg = ":ircserv CAP * LS :Soon available service\r\n";
-				send(fd, msg.c_str(), msg.size(), 0);
-			}
+	std::cout << "DEBUG password " << fd << " " << mapUser.find(fd)->second.getNickname() << std::endl;//********** A SUPPRIMER
+			msg = ":ircserv 393 " + mapUser.find(fd)->second.getNickname() + " :Your username is validated\r\n";
+			send(fd, msg.c_str(), msg.size(), 0);
 			std::string password = extract(buff, "PASS ", "\n");
 			checkPassword(password, fd);
-		}
-		if (mapUser.find(fd)->second.getStatus() == 1 || mapUser.find(fd)->second.getStatus() == 2)
-		{
-			// std::string nickname = extract(buff, "NICK ", "\n");
-			checkNickname(mapUser.find(fd)->second.getNickname(), fd);
+			std::cout << "[SERVER: USER CONNECTED]:" << mapUser.find(fd)->second.getNickname() << std::endl;
+			if (mapUser.find(fd)->second.getStatus() == 1)
+				printHome(fd);
 		}
 	}
 }
@@ -89,33 +86,8 @@ void server::checkPassword(std::string pass, int fd)
 	send(_fds[maxFD].fd, msg.c_str(), msg.size(), 0);
 }
 
-void server::checkNickname(std::string nick, int fd)
-{
-	std::string msg = "";
-	if (nick.size() == 0)
-		msg = "  \nYour nickname is empty\n";
-	else if (nick.size() > 30)
-		msg = "  \nYour nickname is too long\n";
-	else if (nameChar(nick, 0) == false)
-		msg = "  \nYour nickname contains invalid character\n";
-	// else if (nameExist(nick) == false)
-	// 	msg = "  \nYour nickname already exist\n";
-	if (msg.size() > 0)
-	{
-		msg += "Please set a new nickname with the command: NICK <nickname>\n";
-		send(fd, msg.c_str(), msg.size(), 0);
-	}
-	else
-	{
-		mapUser.find(fd)->second.setStatus();
-		std::string mess = "NICK " + nick;
-		cmdNick(fd, mess);
-		if (mapUser.find(fd)->second.getUsername().size() == 0)
-			mapUser.find(fd)->second.setUsername(nick);
-		std::cout << "[SERVER: USER CONNECTED]:" << mapUser.find(fd)->second.getNickname() << std::endl;
-		printHome(fd);
-	}
-}
+
+
 
 
 

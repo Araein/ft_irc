@@ -18,6 +18,8 @@ channel::channel(std::string name)
 
 }
 
+//**********************************//GETTER//**********************************//
+
 int channel::getNbConnectedUser(void) const { return chan.nbConnectedUser; }
 int channel::getNeedPass(void) const { return chan.needPass; }
 int channel::getMaxConnectedUser(void) const { return chan.maxConnectedUser; }
@@ -27,7 +29,7 @@ std::string channel::getPassword() const { return chan.password; }
 
 bool channel::getIsChanOp(int id)
 {
-	for(it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
+	for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
 	{
 		if (it->getID() == id)
 			return true;
@@ -37,7 +39,7 @@ bool channel::getIsChanOp(int id)
 
 bool channel::getIsConnected(int id)
 {
-	for(it = chan.connected.begin(); it != chan.connected.end(); it++)
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
 	{
 		if (it->getID() == id)
 			return true;
@@ -47,7 +49,7 @@ bool channel::getIsConnected(int id)
 
 bool channel::getIsInvited(int id)
 {
-	for(it = chan.invited.begin(); it != chan.invited.end(); it++)
+	for (std::vector<client>::iterator it = chan.invited.begin(); it != chan.invited.end(); it++)
 	{
 		if (it->getID() == id)
 			return true;
@@ -55,11 +57,19 @@ bool channel::getIsInvited(int id)
 	return false;
 }
 
+bool channel::getIsExcluded(int id)
+{
+	for (std::vector<client>::iterator it = chan.excluded.begin(); it != chan.excluded.end(); it++)
+		if (it->getID() == id)
+			return true;
+	return false;
+}
+
 std::string channel::getAllChanOp(void)
 {
-	msg = "";
+	std::string msg = "";
 
-	for(it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
+	for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
 		msg += it->getNickname() + " ";
 	msg += " \n";
 	return msg;
@@ -67,8 +77,8 @@ std::string channel::getAllChanOp(void)
 
 std::string channel::getAllConnected(void)
 {
-	msg = "";
-	for(it = chan.connected.begin(); it != chan.chanOp.end(); it++)
+	std::string msg = "";
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.chanOp.end(); it++)
 		msg += it->getNickname() + " ";
 	msg += " \n";
 	return msg;
@@ -76,8 +86,8 @@ std::string channel::getAllConnected(void)
 
 std::string channel::getAllInvited(void)
 {
-	msg = "";
-	for(it = chan.invited.begin(); it != chan.chanOp.end(); it++)
+	std::string msg = "";
+	for (std::vector<client>::iterator it = chan.invited.begin(); it != chan.chanOp.end(); it++)
 		msg += it->getNickname() + " ";
 	msg += " \n";
 	return msg;
@@ -98,64 +108,87 @@ bool channel::getMode(char c) const
 	return false;
 }
 
+//**********************************//SETTER//**********************************//
 
 void channel::setNeedPass(bool value) { chan.needPass = value; }
 void channel::setMaxConnectedUser(int value) { chan.maxConnectedUser = value; }
 void channel::setPassword(std::string password) { chan.password = password; }
 void channel::setTopicMessage(std::string message) { chan.topicMessage = message; }
 
-void channel::setUserConnect(client const &user)
+void channel::setUserConnect(client const &user)//********** CONNECTE UN CLIENT AU CANAL
 {
 	if (getIsConnected(user.getID()) == true)
-	{
-		msg = user.getNickname() + "is already connected to " + chan.name + " \n";
 		return;
-	}
-	if (chan.nbConnectedUser >= chan.maxConnectedUser)
-	{
-		msg = chan.name + " is full. Try later\n";
-		return;
-	}
 	chan.connected.push_back(user);
 	chan.nbConnectedUser++;
-	if (chan.nbConnectedUser == 1)
-		setUserChanOp(user);
-	welcomeMessage(user);
-	sendToChannel(user, "is connected");
+	if (getIsExcluded(user.getID()) == false)
+	{
+		if (chan.nbConnectedUser == 1)
+			setUserChanOp(user);
+		welcomeMessage(user);
+		sendToChannel(user, "is connected");
+	}
 }
 
-void channel::setUserDisconnect(client const &user)
+void channel::setUserDisconnect(client const &user)//********** DECONNECTE UN CLIENT DU CANAL
 {
 	if (getIsConnected(user.getID()) == true)
 	{
 		chan.connected.erase(findUser(user, "connected"));
 		chan.nbConnectedUser--;
 		sendToChannel(user, "disconnected");
-		msg = "You are disconnected to " + chan.name + " \n";
-		send(user.getFD(), msg.c_str(), msg.size(), 0);
+		std::string msg = "" + chan.name + " \n";
+		if (getIsExcluded(user.getID()) == false)
+			send(user.getFD(), msg.c_str(), msg.size(), 0);
 	}
+	if (getIsExcluded(user.getID()) == true)
+		setUserExcluded(user, false);
 }
 
-void channel::setUserInvited(client const &user)
+void channel::setUserInvited(client const &user)//********** INSCRIT UN CLIENT COMME INVITE
 {
 	if (getIsInvited(user.getID()) == false)
 		chan.invited.push_back(user);
 }
 
-void channel::setUserChanOp(client const &user)
+void channel::setUserChanOp(client const &user)//********** INSCRIT UN CLIENT COMME CHANNEL OPERATOR(CHANOP)
 {
 	if (getIsChanOp(user.getID()) == false)
-		chan.invited.push_back(user);
+		chan.chanOp.push_back(user);
+}
+
+void channel::setUserExcluded(client const &user, bool value)//********** INSCRIT/DESINSCRIT UN CLIENT COMME EXCLU(BANNI)
+{
+	if (value == true)
+	{
+		if (getIsExcluded(user.getID()) == false)
+			chan.excluded.push_back(user);
+	}
+	else if (value == false)
+	{
+		if (getIsExcluded(user.getID()) == true)
+		{
+			for (std::vector<client>::iterator it = chan.excluded.begin(); it != chan.excluded.end(); it++)
+			{
+				if (it->getID() == user.getID())
+				{
+					chan.excluded.erase(it);
+					break;
+				}
+			}
+		}
+	}
 }
 
 
+//**********************************//FUNCTION//**********************************//
 
-void channel::welcomeMessage(client const &user)
+void channel::welcomeMessage(client const &user)//********** MESSAGE D'ACCUEIL EN ENTRANT DANS UN CANAL(A REVOIR)
 {
 	std::ostringstream oss;
 	oss << chan.nbConnectedUser;
 	std::string txt;
-	msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost JOIN " + chan.name +  "\n";
+	std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost JOIN " + chan.name +  "\n";
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
 	txt = "Welcome to the channel " + chan.name + "\n";
 	msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + txt + " \r\n";
@@ -166,26 +199,28 @@ void channel::welcomeMessage(client const &user)
 	txt = "User(s) connected : " + oss.str() + " \n";
 	msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + txt + " \r\n";
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
-	msg = ":ircserv 332 " + user.getNickname() + " :" + chan.topicMessage + " \r\n";
-	send(user.getFD(), msg.c_str(), msg.size(), 0);
-
+	// msg = ":ircserv 332 " + user.getNickname() + " :" + chan.topicMessage + " \r\n";
+	// send(user.getFD(), msg.c_str(), msg.size(), 0);
 }
 
-void channel::sendToChannel(client const &user, std::string message)
+void channel::sendToChannel(client const &user, std::string message)//********** COPIE LE MESSAGE D'UN CLIENT VERS TOUT LES CLIENT DANS LE CHANNEL
 {
-	std::string txt;
-	for(it = chan.connected.begin(); it != chan.connected.end(); it++)
+	if (getIsExcluded(user.getID()) == true)
+		return;
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
 	{
-		if (it->getID() != user.getID())
+		if (it->getFD() > 0 &&  it->getID() != user.getID())
 		{
-			// msg = "PRIVMSG " + chan.name + " :<" + user.getNickname() + "> " + message + " \r\n";
-			msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + message + " \r\n";
-			send(it->getFD(), msg.c_str(), msg.size(), 0);
+			std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + message + " \r\n";
+			if (getIsExcluded(it->getID()) == false)
+				send(it->getFD(), msg.c_str(), msg.size(), 0);
 		}
 	}
 }
 
-void channel::serverChannel()
+
+
+void channel::serverChannel()//********** CREE LES CHANNEL DE DEMARRAGE
 {
 	client admin(-1, -1);
 	if (chan.name == "#Piscine")
@@ -226,7 +261,7 @@ void channel::serverChannel()
 
 }
 
-std::vector<client>::iterator channel::findUser(client const &user, std::string vec)
+std::vector<client>::iterator channel::findUser(client const &user, std::string vec)//********** TROUVE UN CLIENT DANS UNE DES BASES
 {
 	std::vector<client>::iterator it1;
 	std::vector<client>::iterator it2;
@@ -245,38 +280,46 @@ std::vector<client>::iterator channel::findUser(client const &user, std::string 
 		it1 = chan.invited.begin();
 		it2 = chan.invited.end();
 	}
-	for(it = it1; it != it2; it++)
+	for (std::vector<client>::iterator it = it1; it != it2; it++)
 	{
 		if (it->getID() == user.getID())
 			return it;
 	}
-	return it;
+	return it2;
 }
 
-bool channel::userCanWrite(client const &user)
+bool channel::userCanWrite(client const &user)//********** INDIQUE SI LE CLIENT A LE DROIT D'ECRIRE
 {
-	if (getIsConnected(user.getID()) == false)
+	if (getIsConnected(user.getID()) == false || getIsExcluded(user.getID()) == true)
 		return false;
 	if (chan.i_Mode == true && getIsInvited(user.getID()) == false)
 		return false;
 	return true;
 }
 
-bool channel::userCanJoin(client const &user, std::string password)
+void channel::userCanJoin(client const &user, std::string password)//********** EXCLU UN CLIENT QUI N A PAS LE DROIT DE REJOINDRE UN CANAL
 {
 	if (chan.i_Mode == true && getIsInvited(user.getID()) == false)
 	{
-		msg = "You are not on the guest list of " + chan.name + " \n";
+		setUserExcluded(user, true);
+		std::string msg = "You are not on the guest list of " + chan.name + " \n";
 		send(user.getFD(), msg.c_str(), msg.size(), 0);
-		return false;
+		return;
 	}
 	if (chan.needPass == true && chan.password != password)
 	{
-		msg = chan.name + " password invalid\n";
+		setUserExcluded(user, true);
+		std::string msg = chan.name + " invalid password\n";
 		send(user.getFD(), msg.c_str(), msg.size(), 0);
-		return false;
+		return;
 	}
-	return true;
+	if (chan.nbConnectedUser == chan.maxConnectedUser)
+	{
+		setUserExcluded(user, true);
+		std::string msg = chan.name + " is full\n";
+		send(user.getFD(), msg.c_str(), msg.size(), 0);
+		return;
+	}
 }
 
 

@@ -86,7 +86,6 @@ void server::acceptNewUser(void)
 	tmp.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
 	if (tmp.fd == -1)
 		return;
-	sendWelcomMsgs(tmp.fd);
 	_curPlace = findPlace();
 	_fds[_curPlace].fd = tmp.fd;
 	_fds[_curPlace].events = tmp.events;
@@ -99,6 +98,7 @@ void server::acceptNewUser(void)
 	_totalPlace++;
 	client us( ++_id, _fds[_curPlace].fd);
 	mapUser.insert(std::make_pair(_fds[_curPlace].fd, us));
+	sendWelcomMsgs(tmp.fd);
 }
 
 void server::createChannel(void)

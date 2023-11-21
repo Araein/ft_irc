@@ -16,8 +16,6 @@ class client
 	client(int id, int fd);
 	~client();
 
-
-
 	int getID() const;
 	int getFD() const;
 	int getStatus() const;

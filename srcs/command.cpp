@@ -4,11 +4,14 @@ void server::parseCommand(std::string buff, int fd)
 {
 	std::istringstream iss(buff);
 	std::string command;
+	std::string param;
 	std::string msg;
-	iss >> command;
+	iss >> command >> param;
+	if (command == "CAP" || command == "WHOIS")
+		return;
 	if (command == "KICK")
 	{
-		std::cout << "commande recu a traiter: KICK" << std::endl; 
+		std::cout << "DEBUG commande recu a traiter: KICK" << std::endl; //********** A SUPPRIMER
 	}
 	else if (command == "NICK")
 	{
@@ -24,15 +27,15 @@ void server::parseCommand(std::string buff, int fd)
 	}
 	else if (command == "INVITE")
 	{
-		std::cout << "commande recu a traiter: INVITE" << std::endl;
+		std::cout << "DEBUG commande recu a traiter: INVITE" << std::endl;//********** A SUPPRIMER
 	}
 	else if (command == "TOPIC")
 	{
-		std::cout << "commande recu a traiter: TOPIC" << std::endl;
+		std::cout << "DEBUG commande recu a traiter: TOPIC" << std::endl;//********** A SUPPRIMER
 	}
 	else if (command == "MODE")
 	{
-		std::cout << "commande recu a traiter: " << buff << std::endl;
+		// cmdMode();
 	}
 	else if (command == "PART")
 	{
@@ -42,17 +45,13 @@ void server::parseCommand(std::string buff, int fd)
 	{
 		cmdPing(buff, fd);
 	}
-	else if (command == "WHOIS")
-	{
-		cmdWHOIS(fd);
-	}
 	else if (command == "QUIT")
 	{
 		std::cout << "[SERVER: USER DISCONNECTED]: " << mapUser.find(fd)->second.getNickname() << std::endl;
 		closeOne(fd);
 	}
 	else
-		std::cout << "Message en attente de parsing: " << buff;
+		std::cout << "DEBUGMessage en attente de parsing: " << buff;//********** A SUPPRIMER
 }
 
 void server::cmdKick(void) {}
@@ -63,9 +62,12 @@ void server::cmdNick(int fd, std::string buff)
 	std::string command;
 	iss >> command;
 	iss >> command;
-	mapUser.find(fd)->second.setNickname(command);
-	send(fd, std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").c_str(), std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").length(), 0);
-	send(fd, std::string("Your new nickname is " + command + "\r\n").c_str(), std::string("Your new nickname is " + command + "\r\n").length(), 0);
+	if (checkNickname(command, fd) == true)
+	{
+		mapUser.find(fd)->second.setNickname(command);
+		send(fd, std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").c_str(), std::string("001 " + mapUser.find(fd)->second.getNickname() + "\r\n").length(), 0);
+		send(fd, std::string("Your new nickname is " + command + "\r\n").c_str(), std::string("Your new nickname is " + command + "\r\n").length(), 0);
+	}
 }
 
 void server::cmdPrivmsg(int fd, std::string buff)
@@ -87,6 +89,11 @@ void server::cmdPrivmsg(int fd, std::string buff)
 			it->sendToChannel(mapUser.find(fd)->second, commandText);
 			std::cout << channelName << " <" << mapUser.find(fd)->second.getNickname() << "> " << commandText << std::endl;
 		}
+		else
+		{
+			std::string msg = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost PRIVMSG " + channelName + " :You are not allowed to write in this channel \r\n";
+			send(fd, msg.c_str(), msg.size(), 0);
+		}
 	}
 	else
 	{
@@ -106,25 +113,24 @@ void server::cmdJoin(std::string buff, int fd)
 	iss >> command >> channelName >> std::ws >> password;
 	if ((it = selectChannel(channelName)) != channelList.end())//channel existant
 	{
-		if (it->userCanJoin(mapUser.find(fd)->second, password) == true)
+			it->userCanJoin(mapUser.find(fd)->second, password);
 			it->setUserConnect(mapUser.find(fd)->second);
-		return;
+			return;
 	}
-	if (checkChannelName(channelName) == false)//nom de channel a checker
-	{
-		msg = channelName + " is invalid and cannot be create\n";
-		send(fd, msg.c_str(), msg.size(), 0);
-		return;
-	}
-	channel temp(channelName);//si nouveau channel
-	temp.setUserConnect((mapUser.find(fd))->second);
-	if (password.size() > 0)
+	// if (checkChannelName(channelName) == false)//voir comment faire
+	// {
+	// 	msg = channelName + " is invalid and cannot be create\n";
+	// 	return;
+	// }
+		channel temp(channelName);//si nouveau channel
+		temp.setUserConnect((mapUser.find(fd))->second);
+		if (password.size() > 0)
 	{
 		temp.setNeedPass(true);
-		temp.setPassword(password);
+		temp.setPassword(password);// voir si query
 	}
-	channelList.push_back(temp);
-}
+		channelList.push_back(temp);
+	}
 
 
 void server::cmdInvite(void) {}
@@ -140,13 +146,7 @@ void server::cmdPing(std::string buff, int fd)
 	iss >> pingMsg >> pingMsg; 
 	std::string pongMsg = "PONG " + pingMsg + "\r\n";
 	send(fd,pongMsg.c_str(), pongMsg.size(), 0);
-}
-
-void server::cmdWHOIS(int fd)
-{
-	std::string msg;
-	msg = ":ircserv 318 mapUser.find(fd)->second.getNickname() :End of WHOIS list\n";
-	send(fd, msg.c_str(), msg.size(), 0);
+	std::cout << "DEBUG PONG" << std::endl;//********** A SUPPRIMER
 }
 
 void server::cmdPart(int fd, std::string buff)
@@ -197,7 +197,8 @@ void server::cmdPart(int fd, std::string buff)
 							std::cout << "<" << client.getNickname() << "> left channel : " << mychannel << std::endl;
 							message = ":" + client.getNickname() + "!" + client.getUsername() + "@localhost PART " + mychannel + " :" + message;
 							it->sendToChannel(mapUser.find(fd)->second, message);
-							send(fd, message.c_str(), message.size(), 0);
+							if (it->getIsExcluded(client.getID() == false))
+								send(fd, message.c_str(), message.size(), 0);
 						}
 					}
 					break;
@@ -206,5 +207,6 @@ void server::cmdPart(int fd, std::string buff)
     	}
 	}
 }
+
 
 
