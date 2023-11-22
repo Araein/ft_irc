@@ -1,6 +1,6 @@
 #include "irc.hpp"
 
-// KICK [<channel>] <nicks> [<reason>]
+//    Parameters: <channel> *( "," <channel> ) <user> *( "," <user> )  [<comment>]
 
 // pas reussi a trigger :
 // ERR_NEEDMOREPARAMS
@@ -8,7 +8,6 @@
 
 void server::cmdKick(int fd, std::string buff)
 {
-	//std::cout << "buff = " << buff << std::endl;
 	std::istringstream iss1(buff);
 	std::string buff2;
 	std::map<int, client>::iterator it = mapUser.find(fd);
@@ -59,7 +58,6 @@ void server::cmdKick(int fd, std::string buff)
 				{
 					if  (countchannel < channels.size())
 					{
-						std::cout << "countchannel = " << countchannel << " size = " << channels.size() << std::endl;
 						message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 403 " + kicker.getUsername() + " " + mychannel + " :No such channel\r\n";
 						send(kicker.getFD(), message.c_str(), message.size(), 0);
 					}
@@ -187,69 +185,61 @@ void server::cmdMode()
 
 }
 
-// gerer les noms de channel qui contiennent ":" ou des "'" ?? est ce possible?
+//    Parameters: <channel> *( "," <channel> ) [ <Part Message> ]
 
-
-//quand /PART sansa rg -> on leave le current channel 
-// si PART avec juste message -> on leave avec le message
-
-// PART [<channels>] [<message>]
-
-// PART renvois au precedent channel non quitté
-
+//pas reussi a trigger ERR_NEEDMOREPARAMS
 void server::cmdPart(int fd, std::string buff)
 {
-	size_t Pos = buff.find(' ');
-    if (Pos != std::string::npos)
-		buff = buff.substr(Pos + 1);
-
-    std::map<int, client>::iterator it = mapUser.find(fd);
-
-    if (it != mapUser.end())
+	std::istringstream iss(buff);
+	std::map<int, client>::iterator it = mapUser.find(fd);
+	if (it != mapUser.end())
 	{
-        client& client = it->second;
-        std::istringstream iss(buff);
-        std::string mychannel;
-		size_t mypos = buff.find_first_of(":");
-		std::string message = buff.substr(mypos + 1, buff.length());
-		buff = buff.substr(0, mypos);
-
-        while (1)
+		client &parter = it->second;
+		std::string message, partCommand, mychannel, reason;
+		std::vector<channel>::iterator channelIt;
+		iss >> partCommand;
+		iss >> mychannel;
+		std::vector<std::string> channels;
+		std::istringstream iss3(mychannel);
+		std::string channel;
+		while (std::getline(iss3, channel, ','))
+			channels.push_back(channel);
+		std::getline(iss, reason);
+		if (reason == " :\r")
+			reason = " :" + parter.getNickname() + "\r"; //voir ce qu'il y a dans ce cas
+		std::vector<std::string>::iterator actualChannel;
+		for (actualChannel = channels.begin(); actualChannel != channels.end(); ++actualChannel)
 		{
-			size_t mypos = buff.find_first_of(",");
-			if (mypos != std::string::npos)
+			bool nochannel = false;
+			bool notmember = false;	
+			mychannel = *actualChannel;
+
+			for (channelIt = vecChannel.begin(); channelIt != vecChannel.end(); ++channelIt)
 			{
-				mychannel = buff.substr(0, mypos);
-				buff = buff.substr(mypos + 1, buff.length());
-			}
-			else
-			{
-				size_t mypos = buff.find_first_of("#");
-				if (mypos != std::string::npos)
-					mychannel = buff.substr(mypos, buff.length() - 1);
-				else
-					break;
-				buff = "";
-			}
-			std::vector<channel>::iterator it;
-			for (it = vecChannel.begin(); it != vecChannel.end(); ++it) 
-			{
-				if (it->getChannelName() == mychannel) 
-				{			
-					if (it != vecChannel.end())
-					{
-						if(it->getConnected(client))
-						{
-							it->setDisconnect(client);
-							std::cout << "Client " << client.getNickname() << " left channel " << mychannel << ": " << message << std::endl;
-							message = ":" + client.getNickname() + "!" + client.getUsername() + "@localhost PART " + mychannel + " :" + message;
-							it->sendToChannel(client, message);
-							send(fd, message.c_str(), message.size(), 0);
-						}
-					}
+				if (channelIt->getChannelName() == mychannel)
+				{
+					nochannel = true;
+					if (channelIt->getConnected(parter))
+						notmember = true;
 					break;
 				}
 			}
-    	}
+			if (!nochannel) // si channel n'existe pas
+			{
+				message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost 403 " + parter.getUsername() + " " + mychannel + " :No such channel\r\n";
+				send(parter.getFD(), message.c_str(), message.size(), 0);
+				continue ;
+			}
+			else if (!notmember) //si  pas membre
+			{
+				message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost 442 " + parter.getUsername() + " " + mychannel + " :You're not on that channel\r\n";
+				send(parter.getFD(), message.c_str(), message.size(), 0);
+				continue ;
+			}
+			channelIt->setDisconnect(parter);
+			message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost PART " + mychannel + reason + "\n";
+			channelIt->sendToChannel(parter, message);
+			send(fd, message.c_str(), message.size(), 0);
+		}
 	}
 }
