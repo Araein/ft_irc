@@ -4,17 +4,15 @@
 
 class client
 {
-	int _id;
-	int _fd;
-	bool _pwd;
-	bool _ban;
-	std::string Identity;
-	std::string Username;
-	std::string Nickname;
-	std::string Password;
 
 	std::string rtrim(const std::string& str);
 	std::string ltrim(const std::string& str);
+	int  _fd;
+	int  _id;
+	int _status;
+	std::string _nickname;
+	std::string _username;
+	std::string _password;
 
 	public:
 	client(int id, int fd);
@@ -26,18 +24,15 @@ class client
 
 	bool getPWD() const;
 	int getID() const;
+	int getFD() const;
+	int getStatus() const;
 	std::string getPassword() const;
-	std::string getIdentity() const;
 	std::string getUsername() const;
 	std::string getNickname() const;
-	int			getFD() const;
-	void setFD(int myfd);
-	void setPWD();
-	void setBAN(void);
-	void setNickname(std::string nick);
+
+	void setPassword(std::string pass);
+	void setUsername(std::string username);
+	void setNickname(std::string nickname);
+	void setStatus();
 
 };
-	
-
-
-

@@ -1,22 +1,22 @@
 #include "client.hpp"
 
 client::~client(void) {}
-client::client(int id, int fd): _id(id), _fd(fd), _pwd(false), _ban(false) { }
-
-void client::firstMessage(std::string message)
+client::client(int id, int fd): _fd(fd), _id(id), _status(0)
 {
-	Password = extract(message, "PASS ", "\n");
-	Nickname = extract(message, "NICK ", "\n");
-	Username = extract(message, "USER ", " ");
-	Identity = extract(message, ":", "\n");
+	std::ostringstream oss;
+	oss << _id;
+	_nickname = "user" + oss.str();
+	_username = _nickname;
+	if (_id == -1)
+		_nickname = "SuperAdmin";//********** ADMIN DES CHANNEL DE DEMARRAGE
+std::cout << "DEBUG new client FD: "<< _fd << "nick: " << _nickname << std::endl;//********** A SUPPRIMER
 }
 
 void client::fillProfil(std::string message)
 {
-	Password = extract(message, "PASS ", "\n");
-	Nickname = extract(message, "NICK ", "\n");
-	Username = extract(message, "USER ", " ");
-	Identity = extract(message, ":", "\n");
+	_password = extract(message, "PASS ", "\n");
+	_nickname = extract(message, "NICK ", "\n");
+	_username = extract(message, "USER ", " ");
 }
 
 std::string client::ltrim(const std::string& str)
@@ -44,20 +44,15 @@ std::string client::extract(const std::string& message, const std::string& start
 	return "";
 }
 
-bool client::getPWD(void) const { return _pwd; }
 int client::getID(void) const { return _id; }
-std::string client::getPassword(void) const { return Password;}
-std::string client::getIdentity(void) const { return Identity;}
-std::string client::getNickname(void) const { return Nickname;}
-std::string client::getUsername(void) const { return Username;}
-int			client::getFD(void) const {return _fd;}
-
-void client::setFD(int myfd) { _fd = myfd; }
-void client::setPWD(void) { _pwd = true; }
-void client::setBAN(void) { _ban = true; }
-void client::setNickname(std::string nick) { Nickname = nick; }
+int client::getFD(void) const { return _fd; }
+int client::getStatus(void) const { return _status; }
+std::string client::getPassword(void) const { return _password;}
+std::string client::getNickname(void) const { return _nickname;}
+std::string client::getUsername(void) const { return _username;}
 
 
-
-
-
+void client::setPassword(std::string pass) { _password = pass; }
+void client::setUsername(std::string username) { _username = username; }
+void client::setStatus(void) { _status++; }
+void client::setNickname(std::string nickname) { _nickname = nickname; }
