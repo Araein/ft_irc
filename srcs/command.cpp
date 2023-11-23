@@ -118,9 +118,9 @@ void server::cmdTopic(int fd, std::string buff)
 	}
 }
 
-void server::cmdMode()
+void server::cmdMode(int fd, std::string buff)
 {
-
+	std::istringstream iss(buff);
 }
 
 
