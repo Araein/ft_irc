@@ -51,6 +51,9 @@ class channel
 	std::string getAllChanOp();
 	std::string getAllConnected();
 	std::string getAllInvited();
+	bool getConnectedFromString(std::string const &) const;
+		client *getClient(std::string const &user);
+
 
 	void setConnect(client const &);
 	void setDisconnect(client const &);

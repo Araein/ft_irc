@@ -54,10 +54,8 @@ void server::parseCommand(std::string buff, int fd)
 		std::cout << "DEBUGMessage en attente de parsing: " << buff;//********** A SUPPRIMER
 }
 
-void server::cmdKick(void) {}
 
-void server::cmdNick(int fd, std::string buff)
-{
+void server::cmdNick(int fd, std::string buff){
 	std::istringstream iss(buff);
 	std::string command;
 	iss >> command;
@@ -70,6 +68,139 @@ void server::cmdNick(int fd, std::string buff)
 	}
 }
 
+void server::cmdKick(int fd, std::string buff)
+{
+	std::istringstream iss1(buff);
+	std::string buff2;
+	std::map<int, client>::iterator it = mapUser.find(fd);
+	unsigned int countchannel = 0;
+	if (it != mapUser.end())
+	{
+		client &kicker = it->second;
+		while (std::getline(iss1, buff2))
+		{
+			buff2 = buff2 + "\n";
+			std::istringstream iss(buff2);
+			std::string message, kickCommand, mychannel, nicks, reason;
+			std::vector<channel>::iterator channelIt;
+			iss >> kickCommand;
+			iss >> mychannel;
+			std::vector<std::string> channels;
+			std::istringstream iss3(mychannel);
+			std::string channel;
+			while (std::getline(iss3, channel, ','))
+				channels.push_back(channel);
+			iss >> nicks;
+			std::getline(iss, reason);
+			if (reason == " :\r")
+				reason = " :" + kicker.getNickname() + "\r";
+			std::vector<std::string>::iterator actualChannel;
+			for (actualChannel = channels.begin(); actualChannel != channels.end(); ++actualChannel)
+			{
+				bool notadmin = false;
+				bool nochannel = false;
+				bool notmember = false;	
+				mychannel = *actualChannel;
+
+				for (channelIt = channelList.begin(); channelIt != channelList.end(); ++channelIt)
+				{
+					if (channelIt->getChannelName() == mychannel)
+					{
+						nochannel = true;
+						if (channelIt->getConnected(kicker))
+						{
+							notmember = true;
+							if (channelIt->getAdmin(kicker))
+								notadmin = true;
+						}
+						break;
+					}
+				}
+				if (!nochannel) // si channel n'existe pas
+				{
+					if  (countchannel < channels.size())
+					{
+						message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 403 " + kicker.getUsername() + " " + mychannel + " :No such channel\r\n";
+						send(kicker.getFD(), message.c_str(), message.size(), 0);
+					}
+					countchannel++;
+					continue ;
+				}
+				else if (!notmember) //si kicker pas membre
+				{
+					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 442 " + kicker.getUsername() + " " + mychannel + " :You're not on that channel\r\n";
+					send(kicker.getFD(), message.c_str(), message.size(), 0);
+					countchannel++;
+					continue ;
+				}
+				else if (!notadmin) //si kicker pas admin
+				{
+					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 482 " + kicker.getUsername() + " " + mychannel + " :You're not channel operator\r\n";
+					send(kicker.getFD(), message.c_str(), message.size(), 0);
+					countchannel++;
+					continue ;
+				}
+				if (channelIt->getConnectedFromString(nicks))
+				{
+					client *targetClient = channelIt->getClient(nicks);
+					if (!targetClient)
+					{
+						countchannel++;
+						continue;
+					}
+					channelIt->setDisconnect(*targetClient);
+					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
+					send(targetClient->getFD(), message.c_str(), message.size(), 0);
+					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
+					channelIt->sendToChannel(*targetClient, message);
+				}
+				else //si le membre n'est pas sur le channel
+				{
+					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 401 " + kicker.getUsername() + " " + nicks + " :No such nick/channel\r\n";
+					send(kicker.getFD(), message.c_str(), message.size(), 0);
+				}
+				countchannel++;
+			}
+		}
+	}
+}
+
+// void server::cmdJoin(std::string buff, int fd)
+// {
+// 	std::istringstream iss(buff);
+// 	std::string cmd;
+// 	std::string name;
+// 	iss >> cmd >> name;
+// 	int join = 0;
+	
+// 	std::map<int, client>::iterator it = mapUser.find(fd);
+//     client& myclient = it->second;
+
+// 	for (size_t i = 0; i < channelList.size(); i++)
+// 	{
+// 		if (channelList[i].getChannelName().compare(name) == 0) // verifie si le channel existe deja
+// 		{
+// 			join = 1;
+// 			channelList[i].setNbUserUp();//incremente le nombre de connectes
+// 			channelList[i].setConnect((mapUser.find(fd))->second);//insert le nouveau clien client dans un vector dans channel
+// 			if (channelList[i].getNbUser() == 1)//si c est le 1er connecte il devient admin
+// 				channelList[i].setAdminTrue((mapUser.find(fd))->second);
+// 			std::string message = ":" + myclient.getNickname() + "!" + myclient.getUsername() + "@localhost JOIN " + channelList[i].getChannelName() + "\r\n";		
+// 			send(fd, message.c_str(), message.size(), 0);
+// 		}
+// 	}
+// 	if (join == 0)//si le channel n existe pas on le cree
+// 	{
+// 		channel temp(name);
+// 		temp.setNbUserUp();
+// 		temp.setConnect((mapUser.find(fd))->second);
+// 		temp.setAdminTrue((mapUser.find(fd))->second);
+// 		channelList.push_back(temp);
+// 		std::string message = ":" + myclient.getNickname() + "!" + myclient.getUsername() + "@localhost JOIN " + temp.getChannelName() + "\r\n";		
+// 		send(fd, message.c_str(), message.size(), 0);
+// 	}
+// }
+	
 void server::cmdPrivmsg(int fd, std::string buff)
 {
 	std::vector<channel>::iterator it;
@@ -195,64 +326,62 @@ void server::cmdPing(std::string buff, int fd)
 	std::cout << "DEBUG PONG" << std::endl;//********** A SUPPRIMER
 }
 
+
+//    Parameters: <channel> *( "," <channel> ) [ <Part Message> ]
+
+//pas reussi a trigger ERR_NEEDMOREPARAMS
 void server::cmdPart(int fd, std::string buff)
 {
-	size_t Pos = buff.find(' ');
-    if (Pos != std::string::npos)
-		buff = buff.substr(Pos + 1);
-	
-	// gerer si absence de raison? (no ':')
-    std::map<int, client>::iterator it = mapUser.find(fd);
-
-    if (it != mapUser.end())
+	std::istringstream iss(buff);
+	std::map<int, client>::iterator it = mapUser.find(fd);
+	if (it != mapUser.end())
 	{
-        client& client = it->second;
-        std::istringstream iss(buff);
-        std::string mychannel;
-		size_t mypos = buff.find_first_of(":");
-		std::string message = buff.substr(mypos + 1, buff.length());
-		buff = buff.substr(0, mypos);
-
-        while (1)
+		client &parter = it->second;
+		std::string message, partCommand, mychannel, reason;
+		std::vector<channel>::iterator channelIt;
+		iss >> partCommand;
+		iss >> mychannel;
+		std::vector<std::string> channels;
+		std::istringstream iss3(mychannel);
+		std::string channel;
+		while (std::getline(iss3, channel, ','))
+			channels.push_back(channel);
+		std::getline(iss, reason);
+		if (reason == " :\r")
+			reason = " :" + parter.getNickname() + "\r"; //voir ce qu'il y a dans ce cas
+		std::vector<std::string>::iterator actualChannel;
+		for (actualChannel = channels.begin(); actualChannel != channels.end(); ++actualChannel)
 		{
-			size_t mypos = buff.find_first_of(",");
-			if (mypos != std::string::npos)
+			bool nochannel = false;
+			bool notmember = false;	
+			mychannel = *actualChannel;
+
+			for (channelIt = channelList.begin(); channelIt != channelList.end(); ++channelIt)
 			{
-				mychannel = buff.substr(0, mypos);
-				buff = buff.substr(mypos + 1, buff.length());
-			}
-			else
-			{
-				size_t mypos = buff.find_first_of("#");
-				if (mypos != std::string::npos)
-					mychannel = buff.substr(mypos, buff.length() - 1);
-				else
-					break;
-				buff = "";
-			}
-			std::vector<channel>::iterator it;
-			for (it = channelList.begin(); it != channelList.end(); ++it) 
-			{
-				if (it->getChannelName() == mychannel) 
-				{			
-					if (it != channelList.end())  //on verifie que le channel existe a chaque fois
-					{
-						if(it->getIsConnected(client.getID()))
-						{
-							it->setUserDisconnect(client);
-							std::cout << "<" << client.getNickname() << "> left channel : " << mychannel << std::endl;
-							message = ":" + client.getNickname() + "!" + client.getUsername() + "@localhost PART " + mychannel + " :" + message;
-							it->sendToChannel(mapUser.find(fd)->second, message);
-							if (it->getIsExcluded(client.getID() == false))
-								send(fd, message.c_str(), message.size(), 0);
-						}
-					}
+				if (channelIt->getChannelName() == mychannel)
+				{
+					nochannel = true;
+					if (channelIt->getConnected(parter))
+						notmember = true;
 					break;
 				}
 			}
-    	}
+			if (!nochannel) // si channel n'existe pas
+			{
+				message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost 403 " + parter.getUsername() + " " + mychannel + " :No such channel\r\n";
+				send(parter.getFD(), message.c_str(), message.size(), 0);
+				continue ;
+			}
+			else if (!notmember) //si  pas membre
+			{
+				message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost 442 " + parter.getUsername() + " " + mychannel + " :You're not on that channel\r\n";
+				send(parter.getFD(), message.c_str(), message.size(), 0);
+				continue ;
+			}
+			channelIt->setDisconnect(parter);
+			message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost PART " + mychannel + reason + "\n";
+			channelIt->sendToChannel(parter, message);
+			send(fd, message.c_str(), message.size(), 0);
+		}
 	}
 }
-
-
-

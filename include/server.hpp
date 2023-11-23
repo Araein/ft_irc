@@ -14,13 +14,6 @@ class server
 	std::map<int, client> mapUser;
 	std::vector<channel> channelList;
 
-	/*********communication intra channel**********/
-	
-    std::map<std::string, std::vector<client*> > channels; // string = nom du channel  // vector = membres du channel
-	//il faudra ajouter la suppression des channels lorsque personne est dedans ?
-
-	
-	/**********************************************/
 
 	void acceptNewUser();
 	void userMessage(int fd);
@@ -41,7 +34,7 @@ class server
 
 //**********************************/COMMANDE//**********************************/
 	void parseCommand(std::string buff, int fd);
-	void cmdKick();
+	void cmdKick(int fd, std::string buff);
 	void cmdNick(int fd, std::string buff);
 	void cmdJoin(std::string buff, int fd);
 	void cmdInvite();
@@ -52,19 +45,10 @@ class server
 	void cmdPrivmsg(int fd, std::string buff);
 
 
-	/*********communication intra channel**********/
-	
-    void joinChannel(int fd, const std::string& channel);
-    void sendMessage(int fd, const std::string& channel, std::string& message);
-
-	
-	/**********************************************/
-
 	int getFD(int i) const;
 	int getPort() const;
 	std::string getPassword() const;
 //**********************************/SERVER//**********************************/
-	void createChannel();
 
 
 //**********************************/INPUT//**********************************/
@@ -92,6 +76,8 @@ public:
 //**********************************/SERVER//**********************************/
 	bool initSocket();
 	void mainLoop();
+	void createChannel();
+
 
 //**********************************/UTILS//**********************************/
 	void closeAll();

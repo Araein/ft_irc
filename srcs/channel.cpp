@@ -327,5 +327,119 @@ void channel::userCanJoin(client const &user, std::string password)//********** 
 }
 
 
+bool channel::getConnected(client const &user) const
+{
+	for (size_t i = 0; i < chan.connected.size(); i++)
+	{
+		if (chan.connected[i].getID() == user.getID())
+			return true;
+	}
+	return false;
+}
 
+bool channel::getConnectedFromString(std::string const &user) const
+{
+	for (size_t i = 0; i < chan.connected.size(); i++)
+	{
+		if (chan.connected[i].getNickname() == user)
+			return true;
+	}
+	return false;
+}
+
+client* channel::getClient(const std::string& user)
+{
+    for (size_t i = 0; i < chan.connected.size(); i++)
+    {
+        if (chan.connected[i].getNickname() == user)
+            return &chan.connected[i];
+    }
+    return NULL;
+}
+
+
+bool channel::getAdmin(client const &user) const
+{
+	for (size_t i = 0; i < chan.chanOp.size(); i++)
+	{
+		if (chan.chanOp[i].getID() == user.getID())
+			return true;
+	}
+	return false;
+}
+
+bool channel::getIsBanned(client const &user) const
+{
+	for (size_t i = 0; i < chan.excluded.size(); i++)
+	{
+		if (chan.excluded[i].getID() == user.getID())
+			return true;
+	}
+	return false;
+}
+
+int channel::getNbUser(void) const
+{ return chan.nbConnectedUser; }
+
+
+void channel::setConnect(client const &user)
+{
+	for (size_t i = 0; i < chan.connected.size(); i++)
+	{
+		if (chan.connected[i].getID() == user.getID())
+			return;
+	}
+	chan.connected.push_back(user);
+}
+
+void channel::setDisconnect(client const &user)
+{
+	for (size_t i = 0; i < chan.connected.size(); i++)
+	{
+		if (chan.connected[i].getID() == user.getID())
+			chan.connected.erase(chan.connected.begin() + i);
+	}
+}
+
+
+void channel::setAdminTrue(client const &user)
+{
+	for (size_t i = 0; i < chan.chanOp.size(); i++)
+	{
+		if (chan.chanOp[i].getID() == user.getID())
+			return;
+	}
+	chan.chanOp.push_back(user);
+}
+
+void channel::setAdminFalse(client const &user)
+{
+	for (size_t i = 0; i < chan.chanOp.size(); i++)
+	{
+		if (chan.chanOp[i].getID() == user.getID())
+			chan.chanOp.erase(chan.chanOp.begin() + i);
+	}
+}
+
+void channel::setBannedTrue(client const &user)
+{
+	for (size_t i = 0; i < chan.excluded.size(); i++)
+	{
+		if (chan.excluded[i].getID() == user.getID())
+			return;
+	}
+	chan.excluded.push_back(user);
+}
+
+void channel::setBannedFalse(client const &user)
+{
+	for (size_t i = 0; i < chan.excluded.size(); i++)
+	{
+		if (chan.excluded[i].getID() == user.getID())
+			chan.excluded.erase(chan.excluded.begin() + i);
+	}
+}
+
+void channel::setNbUserUp(void) { chan.nbConnectedUser++; }
+void channel::setNbUserDown(void) { chan.nbConnectedUser--; }
 
