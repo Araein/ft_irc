@@ -233,7 +233,6 @@ void server::cmdInvite(int fd, std::string buff)
 		}
 		// if (channelIt->private() && !(channelIt->getAdmin(inviter))) //-> si channel privé et user pas operator de ce channel
 		// {
-		// 	//    ERR_CHANOPRIVSNEEDED
 		// 	message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 482 " + inviter.getUsername() + " " + mychannel + " :You're not channel operator\r\n";
 		// 	channelIt->sendToChannel(inviter, message);
 		// 	return ;
@@ -243,7 +242,10 @@ void server::cmdInvite(int fd, std::string buff)
 		message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 341 " + inviter.getUsername() + " " + user + " " + mychannel + "\r\n";
 		send(inviter.getFD(), message.c_str(), message.size(), 0);
 		std::cout << message << std::endl;
-		// envoyer un message directement a l'user?  envoyer une notice? afficher sur le channel de l'inviter egalement?
+		message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost NOTICE @" + mychannel + " :" + inviter.getUsername() + " invited " + user + " into channel  " + mychannel + "\r\n";
+		send(inviter.getFD(), message.c_str(), message.size(), 0);
+		message = ":" + it2->second.getNickname() + "!" + it2->second.getUsername() + "@localhost NOTICE @" + mychannel + " :" + inviter.getUsername() + " invited " + user + " into channel  " + mychannel + "\r\n";
+		send(it2->second.getFD() , message.c_str(), message.size(), 0);
 	}
 }
 
