@@ -184,6 +184,8 @@ void server::parseMessage(std::string buff, int fd)
 		cmdJoin(buff, fd);
 	else if (command == "INVITE" || command == "invite")
 	{
+		cmdInvite(fd, buff);
+
 		std::cout << "commande recu a traiter: INVITE" << std::endl;
 	}
 	else if (command == "TOPIC" || command == "topic")

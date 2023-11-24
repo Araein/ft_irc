@@ -27,7 +27,7 @@ class server
 	void cmdKick(int fd, std::string buff);
 	void cmdNick(int fd, std::string buff);
 	void cmdJoin(std::string buff, int fd);
-	void cmdInvite();
+	void cmdInvite(int fd, std::string buff);
 	void cmdTopic();
 	void cmdMode();
 	void cmdPart(int fd, std::string buff);
