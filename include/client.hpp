@@ -7,7 +7,8 @@ class client
 
 	int  _fd;
 	int  _id;
-	int _status;
+	int _log;
+	clock_t _netcat;
 	std::string _nickname;
 	std::string _username;
 	std::string _password;
@@ -18,7 +19,8 @@ class client
 
 	int getID() const;
 	int getFD() const;
-	int getStatus() const;
+	int getLog() const;
+	int getNetcat() const;
 	std::string getPassword() const;
 	std::string getUsername() const;
 	std::string getNickname() const;
@@ -26,6 +28,7 @@ class client
 	void setPassword(std::string pass);
 	void setUsername(std::string username);
 	void setNickname(std::string nickname);
-	void setStatus();
+	void setLog();
+	void setNetcat(int value);
 
 };

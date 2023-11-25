@@ -18,19 +18,20 @@ class server
 //**********************************//THEME//**********************************//
 	void sendWelcomMsgs(int) const;
 	void printServerHeader() const;
-	void listChannel(int fd);
-	void printFullUser(int fd) const;
+	std::string printChannel();
 	void printHome(int fd);
 
 
 //**********************************/COMMANDE//**********************************/
 	void parseCommand(std::string buff, int fd);
-	void cmdKick();
-	void cmdNick(int fd, std::string buff);
+	void cmdKick(int fd, std::string buff);
+	void cmdNick(int fd, std::string nickname);
 	void cmdJoin(std::string buff, int fd);
 	void cmdInvite();
-	void cmdTopic();
+	void cmdTopic(int fd, std::string buff);
 	void cmdMode();
+	void cmdPass(std::string password, int fd);
+	// void cmdWhois(int fd, std::string buff);
 	void cmdPart(int fd, std::string buff);
 	void cmdPing(std::string buff, int fd);
 	void cmdPrivmsg(int fd, std::string buff);
@@ -38,26 +39,27 @@ class server
 
 //**********************************/SERVER//**********************************/
 	void acceptNewUser();
+	void userNetcat();
 	void createChannel();
 
 
 //**********************************/INPUT//**********************************/
 	void receivMessage();
+	void configureNewUser(std::string const &buff, int fd);
 	void inputMessage(int);
 	void inputError(int);
-	void checkPassword(std::string pass, int fd);
 
 
 //**********************************/UTILS//**********************************/
 	std::string startServer() const;
 	void closeOne(int);
-	void clearFDStemp(void);
 	int findPlace() const;
-	bool nameChar(std::string name, int index) const;
+	bool nameUserCheck(std::string name) const;
 	bool nameExist(std::string name);
 	bool checkChannelName(std::string name);
-	bool checkNickname(std::string nick, int fd);
 	std::vector<channel>::iterator selectChannel(std::string name);
+	int findChanbyName(std::string chan) const;
+	std::map<std::string, std::string> splitCommandJoin(std::string buff);
 
 
 public:
