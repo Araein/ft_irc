@@ -24,7 +24,6 @@ class channel
 {
 
 	channelData chan;
-	// std::vector<client>::iterator findUser(client const &user, std::string vec);
 
 
 	public:
@@ -68,6 +67,7 @@ class channel
 	void welcomeMessage(client const &user) const;
 	bool userCanWrite(client *user);
 	bool userCanJoin(client *user, std::string password);
+	void switchUser(client *user);
 	std::string userList() const;
 
 };

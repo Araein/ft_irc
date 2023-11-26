@@ -3,7 +3,7 @@
 #include "irc.hpp"
 
 class server
-{
+{ 
 	int _id;
 	int _port;
 	int _curPlace;
@@ -62,6 +62,7 @@ class server
 	int findChanbyName(std::string chan);
 	std::map<std::string, std::string> splitCommandJoin(std::string buff);
 	std::vector<std::string> splitCommandNick(std::string buff);
+	void userUpDate(client *user);
 
 public:
 	server(int, std::string);

@@ -167,5 +167,18 @@ std::vector<std::string> server::splitCommandNick(std::string buff)
 	return vec;
 }
 
-
+void server::userUpDate(client *user)
+{
+	for (std::vector<channel>::iterator it = user->getConnectBegin(); it != user->getConnectEnd(); it++)
+	{
+		for (std::vector<channel>::iterator itchan = channelList.begin(); itchan != channelList.end(); itchan++)
+		{
+			if (itchan->getChannelName() == it->getChannelName())
+			{
+				itchan->switchUser(user);
+				break;
+			}
+		}
+	}
+}
 

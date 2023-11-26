@@ -99,8 +99,9 @@ void server::acceptNewUser(void)
 	_fds[_curPlace].revents = tmp.revents;
 	if (_curPlace == maxFD)
 	{
-		std::string msg = RED;
-		msg += "Too many connections in progress. Please try again later";
+		std::string msg = "ircserv:";
+		msg += RED;
+		msg += " Too many connections in progress. Please try again later";
 		msg += NONE;
 		msg += "\r\n";
 		send(tmp.fd, msg.c_str(), msg.size(), 0);
@@ -117,7 +118,9 @@ void server::userNetcat(void)
 	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
 	{
 		std::string msg;
-		if (it->second.getNetcat() == 0)
+		if (it->second.getLog() == 0)
+			it->second.setNetcat();
+		if (it->second.getNetcat() == 2 && it->second.getLog() == 0)
 		{
 			it->second.setNetcat(-1);
 			msg = "Please enter your password to connect to 42IRC\n";

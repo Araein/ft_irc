@@ -327,4 +327,31 @@ std::string channel::userList(void) const
 	return txt;
 }
 
+void channel::switchUser(client *user)
+{
+	for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
+	{
+		if (it->getID() == user->getID())
+		{
+			chan.chanOp.erase(it);
+			chan.chanOp.push_back(*user);
+		}
+	}
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
+	{
+		if (it->getID() == user->getID())
+		{
+			chan.connected.erase(it);
+			chan.connected.push_back(*user);
+		}
+	}
+	for (std::vector<client>::iterator it = chan.invited.begin(); it != chan.invited.end(); it++)
+	{
+		if (it->getID() == user->getID())
+		{
+			chan.invited.erase(it);
+			chan.invited.push_back(*user);
+		}
+	}
+}
 

@@ -156,26 +156,28 @@ void server::cmdKick(int fd, std::string buff)
 		}
 	}
 }
+
 void server::cmdNick(int fd, std::string buff)
 {
+std::cout << "BUFF:" << std::endl;
 	std::vector<std::string> vec = splitCommandNick(buff);
 	std::string msg;
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
 	if (vec.size() == 1)
 	{
-		msg = CLIENT + "431 :" + mapUser.find(fd)->second.getNickname() +  "\r\n";
+		msg = CLIENT + "431 " + mapUser.find(fd)->second.getNickname() + " :" + mapUser.find(fd)->second.getNickname() + "\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
 	else if (nameUserCheck(vec[1]) == false)
 	{
-		msg = CLIENT + "432 :" + mapUser.find(fd)->second.getNickname() +  "\r\n";
+		msg = CLIENT + "432 " + mapUser.find(fd)->second.getNickname() + " :" + mapUser.find(fd)->second.getNickname() + "\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
 	else if (nameExist(vec[1]) == false)
 	{
-		msg = CLIENT + "433 " + mapUser.find(fd)->second.getNickname() +  "\r\n";
+		msg = CLIENT + "433 " + mapUser.find(fd)->second.getNickname() + " :" + mapUser.find(fd)->second.getNickname() + "\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
@@ -183,13 +185,14 @@ void server::cmdNick(int fd, std::string buff)
 		mapUser.find(fd)->second.setNickname(vec[1].substr(0, 29));
 	else
 		mapUser.find(fd)->second.setNickname(vec[1]);
-	if (vec.size() < 4 || (nameUserCheck(vec[3]) == false))
+	if (vec.size() < 3 || (nameUserCheck(vec[2]) == false))
 		mapUser.find(fd)->second.setUsername(mapUser.find(fd)->second.getNickname());
 	else
-		mapUser.find(fd)->second.setUsername(vec[3]);
+		mapUser.find(fd)->second.setUsername(vec[2]);
 	mapUser.find(fd)->second.chanUpDate();
+	userUpDate(&mapUser.find(fd)->second);
 	CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
-	msg = CLIENT + "Your new nickname is " + mapUser.find(fd)->second.getNickname() + "\r\n";
+	msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + " :Your new nickname is " + mapUser.find(fd)->second.getNickname() + "\r\n";
 	send(fd, msg.c_str(), msg.size(), 0);
 }
 
@@ -253,9 +256,9 @@ void server::cmdJoin(std::string buff, int fd)
 					channelName = it_chanPass->first.substr(0, 49);
 				else
 					channelName = it_chanPass->first;
-				channel *temp = new channel(channelName);
-				temp->setUserConnect(&mapUser.find(fd)->second);
-				channelList.push_back(*temp);
+				channel temp(channelName);
+				temp.setUserConnect(&mapUser.find(fd)->second);
+				channelList.push_back(temp);
 			}
 		}
 		it_chanPass++;
@@ -455,9 +458,10 @@ void server::cmdPart(int fd, std::string buff)
 void server::cmdPass(std::string password, int fd)
 {
 	std::string msg;
+	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
 	if (mapUser.find(fd)->second.getLog() > 0)
 	{
-		msg = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost You have already logged in\r\n";
+		msg = CLIENT + " 100 You have already logged in\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
@@ -475,15 +479,5 @@ void server::cmdPass(std::string password, int fd)
 }
 
 
-// void server::cmdWhois(int fd, std::string buff)
-// {
-// 	std::istringstream iss(buff);
-// 	std::string command;
-// 	std::string name;
-// 	std::string msg;
-// 	iss >> command >> name;
-// 	// std::map<int, client>::iterator it = selectUser(name);
-// 	if (it != mapUser.end())
-// 	{
-// 		// ERR_NOSUCHNICK (401): Le pseudo spécifié n'existe pas.
+
 

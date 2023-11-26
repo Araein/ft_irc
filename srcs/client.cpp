@@ -22,6 +22,8 @@ int client::getNetcat(void) const { return _netcat; }
 std::string client::getPassword(void) const { return _password;}
 std::string client::getNickname(void) const { return _nickname;}
 std::string client::getUsername(void) const { return _username;}
+std::vector<channel>::iterator client::getConnectBegin() { return channelConnected.begin(); }
+std::vector<channel>::iterator client::getConnectEnd() { return channelConnected.end(); }
 
 
 void client::setPassword(std::string pass) { _password = pass; }
@@ -29,6 +31,11 @@ void client::setUsername(std::string username) { _username = username; }
 void client::setLog(void) { _log++; }
 void client::setNetcat(int value) { _netcat = value; }
 void client::setNickname(std::string nickname) { _nickname = nickname; }
+void client::setNetcat(void)
+{
+	if (_netcat > -1)
+		_netcat++;
+}
 
 
 void client::addChannel(channel *chan) { channelConnected.push_back(*chan); }

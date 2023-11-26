@@ -55,17 +55,16 @@ void server::printHome(int fd)//********** MESSAGE ENTETE CLIENT SI PASSWORD OK
 	msg += "          **  *********    *********   **       **    ********* \n";
 	msg += "****************************************************************\n";
 	msg += " \n";
-	msg += " AVAILABLE COMMANDS\n";
-	msg += "   Commands  Parameters \n";
-	msg += "   -PASS:     <password>\n";
-	msg += "   -NICK:     <nickname> \n";
-	msg += "   -JOIN:     <channel1>,<channel2> [<key>],[<key>]\n";
-	msg += "   -PART:     <channel> [ <Part Message> ] \n";
-	msg += "   -QUIT:     [<Quit Message>]\n";
-	msg += "   -KICK:     <channel> <user> [<comment>]\n";
-	msg += "   -MODE:     <channel> <-/+ modes> <modeparams>\n";
-	msg += "   -INVITE:   <nickname> <channel>\n";
-	msg += "   -TOPIC:    <channel> [<topic>]\n";
+	msg += "AVAILABLE COMMANDS\n";
+	msg += "   -PASS:   <password>\n";
+	msg += "   -NICK:   <nickname> \n";
+	msg += "   -JOIN:   <channel1>,<channel2> [<key>],[<key>]\n";
+	msg += "   -PART:   <channel> [ <Part Message> ] \n";
+	msg += "   -QUIT:   [<Quit Message>]\n";
+	msg += "   -KICK:   <channel> <user> [<comment>]\n";
+	msg += "   -MODE:   <channel> <-/+ modes> <modeparams>\n";
+	msg += "   -INVITE: <nickname> <channel>\n";
+	msg += "   -TOPIC:  <channel> [<topic>]\n";
 	msg += " \n";
 	msg += printChannel();
 	msg += " \n";
@@ -76,24 +75,24 @@ std::string server::printChannel(void)
 {
 	std::string msg = "";
 	int i = 0;
-	msg += " AVAILABLE CHANNELS\n";
-	msg += " Public\n";
+	msg += "AVAILABLE CHANNELS\n";
+	msg += "Free access to all\n";
 	for (std::vector<channel>::iterator it = channelList.begin(); it != channelList.end(); it++)
 	{
 		i++;
-		if (i == 3)
+		if (i == 5)
 		{
 			msg += " \n";
 			i = 0;
 		}
-		if (it->getMode('i') == false)
-			msg += "    " + it->getChannelName();
+		if (it->getMode('i') == false && it->getNeedPass() == false)
+			msg += "  " + it->getChannelName();
 	}
 	msg += " \n";
-	msg += " Private\n";
+	msg += "Access with password and/or invitation\n";
 	for (std::vector<channel>::iterator it = channelList.begin(); it != channelList.end(); it++)
 	{
-		if (it->getMode('i') == true)
+		if (it->getMode('i') == true || it->getNeedPass() == true)
 			msg += "  " + it->getChannelName();
 	}
 	msg += " \n";
