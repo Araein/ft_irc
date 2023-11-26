@@ -9,6 +9,8 @@ class server
 	int _curPlace;
 	int _totalPlace;
 
+	client *admin;
+	channel *chan;
 	pollfd _fds[maxFD + 1];
 	std::string _password;
 	std::map<int, client> mapUser;
@@ -27,11 +29,10 @@ class server
 	void cmdKick(int fd, std::string buff);
 	void cmdNick(int fd, std::string nickname);
 	void cmdJoin(std::string buff, int fd);
-	void cmdInvite();
+	void cmdInvite(int fd, std::string buff);
 	void cmdTopic(int fd, std::string buff);
 	void cmdMode();
 	void cmdPass(std::string password, int fd);
-	// void cmdWhois(int fd, std::string buff);
 	void cmdPart(int fd, std::string buff);
 	void cmdPing(std::string buff, int fd);
 	void cmdPrivmsg(int fd, std::string buff);
@@ -58,9 +59,9 @@ class server
 	bool nameExist(std::string name);
 	bool checkChannelName(std::string name);
 	std::vector<channel>::iterator selectChannel(std::string name);
-	int findChanbyName(std::string chan) const;
+	int findChanbyName(std::string chan);
 	std::map<std::string, std::string> splitCommandJoin(std::string buff);
-
+	std::vector<std::string> splitCommandNick(std::string buff);
 
 public:
 	server(int, std::string);

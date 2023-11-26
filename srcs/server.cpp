@@ -13,7 +13,11 @@ _id(100), _port(port), _curPlace(0), _totalPlace(0), _password(password)
 	}
 	_fds[maxFD].fd = -2;
 }
-server::~server(void) {}
+server::~server(void)
+{
+	delete admin;
+	delete [] chan;
+}
 
 bool server::initSocket(void)
 {
@@ -125,56 +129,58 @@ void server::userNetcat(void)
 
 void server::createChannel(void)
 {
-	client admin(-1, -1);
-	channel chan0("#Libft");
-	chan0.setUserChanOp(admin);
-	chan0.setTopic("Discute around the Libft and how to create your first library");
-	channel chan1("#get_next_line");
-	chan1.setUserChanOp(admin);
-	chan1.setTopic("Discute around get_next_line and how to read a file");
-	channel chan2("#BornToBeRoot");
-	chan2.setUserChanOp(admin);
-	chan2.setTopic("Discute around the virtual Machine and Linux");
-	channel chan3("#soLong");
-	chan3.setUserChanOp(admin);
-	chan3.setTopic("Discute around the minilibx");
-	channel chan4("#minishell");
-	chan4.setUserChanOp(admin);
-	chan4.setTopic("Discute around the Shell");
-	channel chan5("#philosopher");
-	chan5.setUserChanOp(admin);
-	chan5.setTopic("Discute around the threads");
-	channel chan6("#Evaluation");
-	chan6.setUserChanOp(admin);
-	chan6.setMaxConnectedUser(2);
-	chan6.setTopic("Evaluate or get evaluated");
-	chan6.setPassword("stud42");
-	channel chan7("#Promo");
-	chan7.setUserChanOp(admin);
-	chan7.setTopic("Discuss with students from your promo");
-	chan7.setPassword("stud42");
-	channel chan8("#Staff");
-	chan8.setUserChanOp(admin);
-	chan8.setMaxConnectedUser(5);
-	chan8.setTopic("Participate in the development of future student projects. On invitation by a staff member\n");
-	chan8.setMode('i', true);
-	chan8.setUserInvited(admin);
-	chan8.setPassword("stud42");
-	channel chan9("#API");
-	chan9.setUserChanOp(admin);
-	chan9.setTopic("Welcome to the discussion forum reserved for tutors. On invitation by a tutor or staff\n");
-	chan9.setPassword("stud42");
-	chan9.setMode('i', true);
-	chan9.setUserInvited(admin);
-	channelList.push_back(chan0);
-	channelList.push_back(chan1);
-	channelList.push_back(chan2);
-	channelList.push_back(chan3);
-	channelList.push_back(chan4);
-	channelList.push_back(chan5);
-	channelList.push_back(chan6);
-	channelList.push_back(chan7);
-	channelList.push_back(chan8);
-	channelList.push_back(chan9);
+	admin = new client(0, 0);
+	chan = new channel[10];
+	chan[0].setChannelName("#Libft");
+	chan[0].setUserChanOp(admin);
+	chan[0].setTopic("Discuss around the Libft and how to create your first library");
+	chan[1].setChannelName("#get_next_line");
+	chan[1].setUserChanOp(admin);
+	chan[1].setTopic("Discute around get_next_line and how to read a file");
+	chan[2].setChannelName("#BornToBeRoot");
+	chan[2].setUserChanOp(admin);
+	chan[2].setTopic("Discuss around the virtual Machine and Linux");
+	chan[3].setChannelName("#soLong");
+	chan[3].setUserChanOp(admin);
+	chan[3].setTopic("Discuss around the minilibx");
+	chan[4].setChannelName("#minishell");
+	chan[4].setUserChanOp(admin);
+	chan[4].setTopic("Discuss around the Shell");
+	chan[5].setChannelName("#philosopher");
+	chan[5].setUserChanOp(admin);
+	chan[5].setTopic("Discuss around the threads");
+	chan[6].setChannelName("#Evaluation");
+	chan[6].setUserChanOp(admin);
+	chan[6].setMaxConnectedUser(2);
+	chan[6].setTopic("Evaluate or get evaluated");
+	chan[6].setPassword("stud42");
+	chan[7].setChannelName("#Promo");
+	chan[7].setUserChanOp(admin);
+	chan[7].setNeedPass(true);
+	chan[7].setTopic("Discuss with students from your promo");
+	chan[7].setPassword("stud42");
+	chan[8].setChannelName("#Staff");
+	chan[8].setUserChanOp(admin);
+	chan[8].setMaxConnectedUser(5);
+	chan[8].setTopic("Participate in the development of future student projects. On invitation by a staff member\n");
+	chan[8].setMode('i', true);
+	chan[8].setUserInvited(admin);
+	chan[8].setPassword("stud42");
+	chan[9].setChannelName("#API");
+	chan[9].setUserChanOp(admin);
+	chan[9].setTopic("Welcome to the discussion forum reserved for tutors. On invitation by a tutor or staff\n");
+	chan[9].setPassword("stud42");
+	chan[9].setMode('i', true);
+	chan[9].setUserInvited(admin);
+	channelList.push_back(chan[0]);
+	channelList.push_back(chan[1]);
+	channelList.push_back(chan[2]);
+	channelList.push_back(chan[3]);
+	channelList.push_back(chan[4]);
+	channelList.push_back(chan[5]);
+	channelList.push_back(chan[6]);
+	channelList.push_back(chan[7]);
+	channelList.push_back(chan[8]);
+	channelList.push_back(chan[9]);
 }
 

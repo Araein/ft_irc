@@ -12,6 +12,7 @@ class client
 	std::string _nickname;
 	std::string _username;
 	std::string _password;
+	std::vector<channel> channelConnected;
 
 	public:
 	client(int id, int fd);
@@ -30,5 +31,9 @@ class client
 	void setNickname(std::string nickname);
 	void setLog();
 	void setNetcat(int value);
+	void addChannel(channel *chan);
+	void deleteChannel(channel const &chan);
+	void chanUpDate();
+
 
 };

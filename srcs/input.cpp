@@ -1,6 +1,6 @@
 #include "irc.hpp"
 
-void server::receivMessage(void)//********** VERIFIE SI UN CLIENT A RECU UN MESSAGE
+void server::receivMessage(void)
 {
 	for (int i = 1; i < maxFD + 1; i++)
 	{
@@ -15,13 +15,13 @@ void server::receivMessage(void)//********** VERIFIE SI UN CLIENT A RECU UN MESS
 	}
 }
 
-void server::inputError(int fd)//********** RECEPTION D'UN MESSAGE D'ERREUR
+void server::inputError(int fd)
 {
 	(void)fd;
-	std::cout << "DEBUG errMessage en cours" << std::endl;//********** A SUPPRIMER
+	std::cout << "DEBUG errMessage en cours" << std::endl;
 }
 
-void server::inputMessage(int fd)//********** RECEPTION D'UN MESSAGE CLIENT
+void server::inputMessage(int fd)
 {
 	std::string msg;
 	int size;
@@ -78,11 +78,12 @@ void server::configureNewUser(std::string const &buff, int fd)
 		if (mapUser.find(fd)->second.getLog() == 1)
 		{
 			mapUser.find(fd)->second.setLog();
-			cmdNick(fd, nickname);
-			if (username.size() == 0 || nameUserCheck(username) == false || nameExist(username) == false)
-				mapUser.find(fd)->second.setUsername(mapUser.find(fd)->second.getNickname());
-			else 
-				mapUser.find(fd)->second.setUsername(username);
+			std::string str = "NICK " + nickname + " " + username;
+			cmdNick(fd, str);
+			// if (username.size() == 0 || nameUserCheck(username) == false || nameExist(username) == false)
+			// 	mapUser.find(fd)->second.setUsername(mapUser.find(fd)->second.getNickname());
+			// else 
+			// 	mapUser.find(fd)->second.setUsername(username);
 			printHome(fd);
 			std::cout << GREEN << BOLD << "[42_IRC:  USER LOGGED IN] "<< mapUser.find(fd)->second.getNickname() << NONE << std::endl;
 		}

@@ -12,11 +12,10 @@ std::string server::startServer(void) const
 
 void server::closeAll(void)
 {
-	for (int i = 0; i < maxFD; i++)
+	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
 	{
-		shutdown(_fds[i].fd, SHUT_RDWR);
-		if (_fds[i].fd > -1)
-			close(_fds[i].fd);
+		shutdown(it->second.getFD() , SHUT_RDWR);
+		close(it->second.getFD());
 	}
 	std::cout << std::endl << RED << BOLD << "[42_IRC:  DISCONNECTED] " << NONE << "Hope you enjoyed it"  << std::endl;
 }
@@ -92,6 +91,8 @@ bool server::checkChannelName(std::string name)
 
 std::vector<channel>::iterator server::selectChannel(std::string name)
 {
+	if (name.size() == 0)
+		return channelList.end();
 	std::vector<channel>::iterator it;
 	for (it = channelList.begin(); it != channelList.end();  it++)
 	{
@@ -100,19 +101,6 @@ std::vector<channel>::iterator server::selectChannel(std::string name)
 	}
 	return it;
 }
-
-
-int server::findChanbyName(std::string chan) const{
-	int i = 0;
-	for (std::vector<channel>::const_iterator it = channelList.begin(); it != channelList.end(); it++)
-	{
-		if (chan == it->getChannelName())
-			return i;
-		i++;
-	}
-	return -1;
-}
-
 
 std::map<std::string, std::string> server::splitCommandJoin(std::string buff)
 {
@@ -163,7 +151,21 @@ std::map<std::string, std::string> server::splitCommandJoin(std::string buff)
 	return chanPass;
 }
 
-
+std::vector<std::string> server::splitCommandNick(std::string buff)
+{
+	std::istringstream iss(buff);
+	std::string str;
+	std::vector<std::string> vec;
+	while (std::getline(iss, str, ' '))
+	{
+		if (str[str.size() - 1] == '\n' && str[str.size() - 2] == '\r')
+			str = str.substr(0, str.size() - 2);
+		else if (str[str.size() - 1] == '\n' || str[str.size() - 1] == '\r')
+			str = str.substr(0, str.size() - 1);
+		vec.push_back(str);
+	}
+	return vec;
+}
 
 
 

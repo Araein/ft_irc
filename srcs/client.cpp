@@ -7,8 +7,11 @@ client::client(int id, int fd): _fd(fd), _id(id), _log(0), _netcat(0)
 	oss << _id;
 	_nickname = "user_" + oss.str();
 	_username = "user" + oss.str();
-	if (_id == -1)
+	if (_id == 0)
+	{
 		_nickname = "chanOp_42stud";//********** ADMIN DES CHANNEL DE DEMARRAGE
+		_netcat = -1;
+	}
 }
 
 
@@ -26,3 +29,30 @@ void client::setUsername(std::string username) { _username = username; }
 void client::setLog(void) { _log++; }
 void client::setNetcat(int value) { _netcat = value; }
 void client::setNickname(std::string nickname) { _nickname = nickname; }
+
+
+void client::addChannel(channel *chan) { channelConnected.push_back(*chan); }
+
+void client::deleteChannel(channel const &chan)
+{
+	for (std::vector<channel>::iterator it = channelConnected.begin(); it != channelConnected.end(); it++)
+	{
+		if (it->getChannelName() == chan.getChannelName())
+		{
+			channelConnected.erase(it);
+			break;
+		}	
+	}
+}
+
+void client::chanUpDate(void)
+{
+	// for (std::vector<channel>::iterator it = channelConnected.begin(); it != channelConnected.end(); it++)
+	// {
+	// 	(*it)->
+	// }
+}
+
+
+
+

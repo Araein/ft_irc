@@ -24,36 +24,31 @@ class channel
 {
 
 	channelData chan;
-
-	std::vector<client>::iterator findUser(client const &user, std::string vec);
-
-
-//**********************************/CHANNEL_FAKE//**********************************/
-
-	void initTopic();
-	void fillChannel();
+	// std::vector<client>::iterator findUser(client const &user, std::string vec);
 
 
 	public:
+	channel();
 	channel(std::string name);
 	~channel();
 
+	int index;
 
 	int getNbConnectedUser() const;
 	int getNeedPass() const;
 	int getMaxConnectedUser() const;
-	bool getIsChanOp(int id);
-	bool getIsConnected(int id);
-	bool getIsInvited(int id);
-	bool getIsExcluded(int id);
+	bool getIsChanOp(int id) const;
+	bool getIsConnected(int id) const;
+	bool getIsInvited(int id) const;
+	bool getIsExcluded(int id) const;
 	bool getMode(char c) const;
 	std::string getAllMode(void) const;
 	std::string getPassword() const;
 	std::string getChannelName() const;
 	std::string getTopic() const;
-	std::string getAllChanOp();
-	std::string getAllConnected();
-	std::string getAllInvited();
+	std::string getAllChanOp() const;
+	std::string getAllConnected() const;
+	std::string getAllInvited() const;
 	bool getConnectedFromString(std::string const &user) const;
 	client* getClient(const std::string& user);
 
@@ -61,17 +56,18 @@ class channel
 	void setMaxConnectedUser(int value);
 	void setPassword(std::string password);
 	void setTopic(std::string message);
-	void setUserConnect(client const &user);
-	void setUserDisconnect(client const &user);
-	void setUserInvited(client const &user);
-	void setUserExcluded(client const &user, bool value);
-	void setUserChanOp(client const &user);
+	void setUserConnect(client *user);
+	void setUserDisconnect(client *user);
+	void setUserInvited(client *user);
+	void setUserExcluded(client *user, bool value);
+	void setUserChanOp(client *user);
 	void setMode(char c, bool value);
+	void setChannelName(std::string name);
 
 	void sendToChannel(client const &user, std::string message);
-	void welcomeMessage(client const &user);
-	bool userCanWrite(client const &user);
-	bool userCanJoin(client const &user, std::string password);
-	std::string userList();
+	void welcomeMessage(client const &user) const;
+	bool userCanWrite(client *user);
+	bool userCanJoin(client *user, std::string password);
+	std::string userList() const;
 
 };
