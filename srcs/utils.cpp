@@ -12,15 +12,12 @@ std::string server::startServer(void) const
 
 void server::closeAll(void)
 {
-	for (int i = 0; i < maxFD; i++)
+	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
 	{
-		shutdown(_fds[i].fd, SHUT_RDWR);
-		if (_fds[i].fd > -1)
-		{
-			close(_fds[i].fd);
-		}
+		shutdown(it->second.getFD() , SHUT_RDWR);
+		close(it->second.getFD());
 	}
-	std::cout << "[SERVER: DISCONNECTED]" << std::endl;
+	std::cout << std::endl << RED << BOLD << "[42_IRC:  DISCONNECTED] " << NONE << "Hope you enjoyed it"  << std::endl;
 }
 
 void server::closeOne(int fd)
@@ -29,8 +26,8 @@ void server::closeOne(int fd)
 	{
 		if (it->second.getFD() == fd)
 		{
-			mapUser.erase(it);
 			shutdown(it->second.getFD(), SHUT_RDWR);
+			mapUser.erase(it);
 			break;
 		}
 	}
@@ -49,16 +46,6 @@ void server::closeOne(int fd)
 	_totalPlace--;
 }
 
-void server::clearFDStemp(void)
-{
-	if (_fds[maxFD].fd > 0)
-	{
-		close(_fds[maxFD].fd);
-		_fds[maxFD].fd = -2;
-		_fds[maxFD].revents = 0;
-	}
-}
-
 int server::findPlace(void) const
 {
 	for (int i = 1; i < maxFD; i++)
@@ -69,17 +56,16 @@ int server::findPlace(void) const
 	return maxFD;
 }
 
-bool server::nameChar(std::string name, int index) const
+bool server::nameUserCheck(std::string name) const
 {
+	if (isalpha(name[0]) == 0)
+		return false;
 	for (size_t i = 0; i < name.size(); i++)
 	{
-		if (isalnum(name[i]) == 0)
-		{
-			if (index == 0 && name[i] != '_')
-				return false;
-			if (index == 1 && name[i] != '_' && name[i] != ' ')
-				return false;
-		}
+		if (isascii(name[i]) == 0)
+			return false;
+		if (name[i] == ':' || name[i] == ',' || name[i] == '!' || name[i] == '@' || name[i] == '#' || name[i] == ' ')
+			return false;
 	}
 	return true;
 }
@@ -105,70 +91,95 @@ bool server::checkChannelName(std::string name)
 
 std::vector<channel>::iterator server::selectChannel(std::string name)
 {
+	if (name.size() == 0)
+		return channelList.end();
 	std::vector<channel>::iterator it;
 	for (it = channelList.begin(); it != channelList.end();  it++)
 	{
-		if (it->getChannelName() == name)
+		if (it->getChannelName().compare(name) == 0)
 			return it;
 	}
 	return it;
 }
 
-bool server::checkNickname(std::string nick, int fd)
+std::map<std::string, std::string> server::splitCommandJoin(std::string buff)
 {
-	std::string msg = "";
-	if (nick.size() == 0)
-		msg = "  \nYour nickname is empty\n";
-	else if (nick.size() > 30)
-		msg = "  \nYour nickname is too long\n";
-	else if (nameChar(nick, 0) == false)
-		msg = "  \nYour nickname contains invalid character\n";
-	else if (nameExist(nick) == false)
-		msg = "  \nYour nickname already exist\n";
-	if (msg.size() > 0)
+	std::istringstream iss(buff);
+	std::string str;
+	std::vector<std::string> vec;
+	std::vector<std::string> chan;
+	std::vector<std::string> pass;
+	std::map<std::string, std::string> chanPass;
+	std::vector<std::string>::iterator it1 = vec.begin() + 1;//sans join
+	std::vector<std::string>::iterator it2;
+
+	while (std::getline(iss, str, ' '))//JOIN CHANNELS PASS
 	{
-		msg += "Your name is unchanged\n";
-		send(fd, msg.c_str(), msg.size(), 0);
-		return false;
+		if (str[str.size() - 1] == '\n' && str[str.size() - 2] == '\r')
+			str = str.substr(0, str.size() - 2);
+		else if (str[str.size() - 1] == '\n' || str[str.size() - 1] == '\r')
+			str = str.substr(0, str.size() - 1);
+		vec.push_back(str);
 	}
-	return true;
-}
-
-std::string client::ltrim(const std::string& str)
-{
-	std::string::const_iterator it = std::find_if(str.begin(), str.end(), IsNotSpace);
-	return std::string(it, str.end());
-}
-
-std::string client::rtrim(const std::string& str)
-{
-	std::string::const_reverse_iterator it = std::find_if(str.rbegin(), str.rend(), IsNotSpace);
-	return std::string(str.begin(), it.base());
-}
-
-std::string ltrim(const std::string& str)
-{
-	std::string::const_iterator it = std::find_if(str.begin(), str.end(), IsNotSpace);
-	return std::string(it, str.end());
-}
-
-std::string rtrim(const std::string& str)
-{
-	std::string::const_reverse_iterator it = std::find_if(str.rbegin(), str.rend(), IsNotSpace);
-	return std::string(str.begin(), it.base());
-}
-
-std::string extract(const std::string& message, const std::string& start, const std::string& end)
-{
-	size_t startPos = message.find(start);
-	size_t endPos = message.find(end, startPos + start.length());
-
-	if (startPos != std::string::npos && endPos != std::string::npos)
+	if (vec.size() == 1)
 	{
-		return rtrim(ltrim(message.substr(startPos + start.length(), endPos - startPos - start.length())));
+		chanPass.insert(std::make_pair("", ""));
+		return chanPass;
 	}
+	iss.clear();
+	iss.str(vec[1]);
+	while (std::getline(iss, str, ','))//SEPARE LES CHANNELS
+		chan.push_back(str);
+	iss.clear();
+	if (vec.size() > 2)
+		iss.str(vec[2]);
+	while (std::getline(iss, str, ','))//SEPARE LES PASS
+		pass.push_back(str);
+	if (pass.size() < chan.size())
+	{
+		while (pass.size() < chan.size())
+			pass.push_back("");
+	}
+	it1 = chan.begin();
+	it2 = pass.begin();
+	while (it1 != chan.end())
+	{
+		chanPass.insert(std::make_pair(*it1, *it2));
+		it1++;
+		it2++;
+	}
+	return chanPass;
+}
 
-	return "";
+std::vector<std::string> server::splitCommandNick(std::string buff)
+{
+	std::istringstream iss(buff);
+	std::string str;
+	std::vector<std::string> vec;
+	while (std::getline(iss, str, ' '))
+	{
+		if (str[str.size() - 1] == '\n' && str[str.size() - 2] == '\r')
+			str = str.substr(0, str.size() - 2);
+		else if (str[str.size() - 1] == '\n' || str[str.size() - 1] == '\r')
+			str = str.substr(0, str.size() - 1);
+		vec.push_back(str);
+	}
+	return vec;
+}
+
+void server::userUpDate(client *user)
+{
+	for (std::vector<channel>::iterator it = user->getConnectBegin(); it != user->getConnectEnd(); it++)
+	{
+		for (std::vector<channel>::iterator itchan = channelList.begin(); itchan != channelList.end(); itchan++)
+		{
+			if (itchan->getChannelName() == it->getChannelName())
+			{
+				itchan->switchUser(user);
+				break;
+			}
+		}
+	}
 }
 
 std::string client::extract(const std::string& message, const std::string& start, const std::string& end)

@@ -1,23 +1,14 @@
 #include "irc.hpp"
 
-
 void server::sendWelcomMsgs(int fd) const//********** MESSAGE ENVOYE AU CLIENT A LA CONNEXION
 {
 	std::string msg;
 	std::string start = startServer();
-	msg = "001 " + (mapUser.find(fd))->second.getNickname() + " :Welcome to 42 IRC!\r\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\r\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = "003 RPL_CREATED :The server was created ";
-	msg += start;
-	msg += "\r\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = "004 RPL_MYINFO :ircserv 0.1 level0 +itkol\r\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = ":ircserv CAP * LS : \r\n";
-	msg += "...............................................................\n";
-	msg += "Connexion via 'nc' : <PASS> <PASSWORD>\n";
+	msg = "001 " + mapUser.find(fd)->second.getNickname() + " :Welcome to 42 IRC!\n";
+	msg += "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
+	msg += "003 RPL_CREATED :The server was created " + start + "\n";
+	msg += "004 RPL_MYINFO :ircserv 0.1 level0 +itkol\n";
+	msg += ":ircserv CAP * LS : \r\n";
 	send(fd, msg.c_str(), msg.length(), 0);
 }
 
@@ -49,21 +40,12 @@ void server::printServerHeader(void) const//********** MESSAGE ENTETE AU LANCEME
 	std::cout << BLUE << "                                                      'tlebouvi'" << NONE << std::endl;
 }
 
-void server::printFullUser(int fd) const//********** MESSAGE SI NOMBRE MAX DE CLIENTS ATTEINT
-{
-	std::string message = "";
-	message += "|-------------------------------------------------------------|\n";
-	message += "|--------------------- 42_IRC is full ------------------------|\n";
-	message += "|------------------ Please try again later -------------------|\n";
-	message += "|-------------------------------------------------------------|\n";
-	send(fd, message.c_str(), message.size(), 0);
-}
-
 void server::printHome(int fd)//********** MESSAGE ENTETE CLIENT SI PASSWORD OK
 {
-	std::string msg = "";
-	msg += "________________________________________________________________\n";
-	msg += "                                                                \n";
+	std::string msg = "001 " + mapUser.find(fd)->second.getNickname() + " :";
+	msg += "  \n";
+	msg += " \n";
+	msg += "****************************************************************\n";
 	msg += "   **     **  *********    *********   *********      ********* \n";
 	msg += "   **     **         **       **       **      **   **          \n";
 	msg += "   **     **         **       **       **       ** **           \n";
@@ -71,48 +53,54 @@ void server::printHome(int fd)//********** MESSAGE ENTETE CLIENT SI PASSWORD OK
 	msg += "          **  **              **       **    **    **           \n";
 	msg += "          **  **              **       **      **   **          \n";
 	msg += "          **  *********    *********   **       **    ********* \n";
-	msg += "________________________________________________________________\n";
-	msg += "                                                                \n";
-	msg += "\n";
-	msg += "*** AVAILABLE COMMANDS\n";
-	msg += "    > Users\n";
-	msg += "    - PASS:   Set password\n";
-	msg += "    - NICK:   Set nickname\n";
-	msg += "    - JOIN:   Join a channel\n";
-	msg += "    - QUIT:   Disconnect from the server\n";
-	msg += "\n";
-	msg += "    > Operators\n";
-	msg += "    - KICK:   Ejecte un client d'un canal\n";
-	msg += "    - MODE:   Changer le mode d'un canal\n";
-	msg += "    - INVITE: Inviter un client sur un channel a acces sur invitation\n";
-	msg += "    - TOPIC:  Change le titre d'un canal\n";
-	msg += "\n";
+	msg += "****************************************************************\n";
+	msg += " \n";
+	msg += "AVAILABLE COMMANDS\n";
+	msg += "   -PASS:   <password>\n";
+	msg += "   -NICK:   <nickname> \n";
+	msg += "   -JOIN:   <channel1>,<channel2> [<key>],[<key>]\n";
+	msg += "   -PART:   <channel> [ <Part Message> ] \n";
+	msg += "   -QUIT:   [<Quit Message>]\n";
+	msg += "   -KICK:   <channel> <user> [<comment>]\n";
+	msg += "   -MODE:   <channel> <-/+ modes> <modeparams>\n";
+	msg += "   -INVITE: <nickname> <channel>\n";
+	msg += "   -TOPIC:  <channel> [<topic>]\n";
+	msg += " \n";
+	msg += printChannel();
+	msg += " \n";
 	send(fd, msg.c_str(), msg.size(), 0);
-	listChannel(fd);
 }
 
-void server::listChannel(int fd)//********** ACTUALISE LA LISTE DES CHANNEL
+std::string server::printChannel(void)
 {
-	
 	std::string msg = "";
-	msg += "\n";
-	msg += "               \n";
-	msg += "*** AVAILABLE CHANNELS\n";
-	msg += "    > Public\n";
+	int i = 0;
+	msg += "AVAILABLE CHANNELS\n";
+	msg += "Free access to all\n";
 	for (std::vector<channel>::iterator it = channelList.begin(); it != channelList.end(); it++)
 	{
-		if (it->getMode('i') == false)
+		i++;
+		if (i == 5)
 		{
+<<<<<<< HEAD
 			msg += "      ";
 			msg += it->getChannelName();
 			msg += ":  ";
 			msg += it->getTopic();
 			msg += "\n";
+=======
+			msg += " \n";
+			i = 0;
+>>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 		}
+		if (it->getMode('i') == false && it->getNeedPass() == false)
+			msg += "  " + it->getChannelName();
 	}
-	msg += "    > Private\n";
+	msg += " \n";
+	msg += "Access with password and/or invitation\n";
 	for (std::vector<channel>::iterator it = channelList.begin(); it != channelList.end(); it++)
 	{
+<<<<<<< HEAD
 		if (it->getMode('i') == true)
 		{
 			msg += "      ";
@@ -121,8 +109,11 @@ void server::listChannel(int fd)//********** ACTUALISE LA LISTE DES CHANNEL
 			msg += it->getTopic();
 			msg += "\n";
 		}
+=======
+		if (it->getMode('i') == true || it->getNeedPass() == true)
+			msg += "  " + it->getChannelName();
+>>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 	}
-	msg += "Enjoy...\n";
-	msg += "               \n";
-	send(fd, msg.c_str(), msg.size(), 0);
+	msg += " \n";
+	return msg;
 }

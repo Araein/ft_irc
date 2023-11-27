@@ -1,6 +1,19 @@
 #include "irc.hpp"
 
 channel::~channel(void) {}
+channel::channel(void)
+{
+	chan.i_Mode = false;
+	chan.k_Mode = false;
+	chan.l_Mode = false;
+	chan.t_Mode = false;
+	chan.o_Mode = false;
+	chan.maxConnectedUser = 1000;
+	chan.nbConnectedUser = 0;
+	chan.needPass = false;
+	index = 1;
+}
+
 channel::channel(std::string name)
 {
 	chan.name = name;
@@ -14,8 +27,7 @@ channel::channel(std::string name)
 	chan.needPass = false;
 	chan.password = "";
 	chan.topicMessage = "";
-	serverChannel();
-
+	index = 0;
 }
 
 //**********************************//GETTER//**********************************//
@@ -24,6 +36,7 @@ int channel::getNbConnectedUser(void) const { return chan.nbConnectedUser; }
 int channel::getNeedPass(void) const { return chan.needPass; }
 int channel::getMaxConnectedUser(void) const { return chan.maxConnectedUser; }
 std::string channel::getChannelName() const { return chan.name; }
+<<<<<<< HEAD
 std::string channel::getPassword() const { return chan.password; }
 
 std::string channel::getTopic(void)const { return chan.topicMessage; }
@@ -31,8 +44,14 @@ std::string channel::getTopic(void)const { return chan.topicMessage; }
 bool channel::isTopicRestricted(void) const { return chan.t_Mode; }
 
 bool channel::getIsChanOp(int id)
+=======
+std::string channel::getTopic() const { return chan.topicMessage; }
+std::string channel::getPassword() const { return chan.password; }
+
+bool channel::getIsChanOp(int id) const
+>>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 {
-	for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
+	for (std::vector<client>::const_iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
 	{
 		if (it->getID() == id)
 			return true;
@@ -40,9 +59,9 @@ bool channel::getIsChanOp(int id)
 	return false;
 }
 
-bool channel::getIsConnected(int id)
+bool channel::getIsConnected(int id) const
 {
-	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
+	for (std::vector<client>::const_iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
 	{
 		if (it->getID() == id)
 			return true;
@@ -50,9 +69,9 @@ bool channel::getIsConnected(int id)
 	return false;
 }
 
-bool channel::getIsInvited(int id)
+bool channel::getIsInvited(int id) const
 {
-	for (std::vector<client>::iterator it = chan.invited.begin(); it != chan.invited.end(); it++)
+	for (std::vector<client>::const_iterator it = chan.invited.begin(); it != chan.invited.end(); it++)
 	{
 		if (it->getID() == id)
 			return true;
@@ -60,37 +79,37 @@ bool channel::getIsInvited(int id)
 	return false;
 }
 
-bool channel::getIsExcluded(int id)
+bool channel::getIsExcluded(int id) const
 {
-	for (std::vector<client>::iterator it = chan.excluded.begin(); it != chan.excluded.end(); it++)
+	for (std::vector<client>::const_iterator it = chan.excluded.begin(); it != chan.excluded.end(); it++)
 		if (it->getID() == id)
 			return true;
 	return false;
 }
 
-std::string channel::getAllChanOp(void)
+std::string channel::getAllChanOp(void) const
 {
 	std::string msg = "";
 
-	for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
+	for (std::vector<client>::const_iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
 		msg += it->getNickname() + " ";
 	msg += " \n";
 	return msg;
 }
 
-std::string channel::getAllConnected(void)
+std::string channel::getAllConnected(void) const
 {
 	std::string msg = "";
-	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.chanOp.end(); it++)
+	for (std::vector<client>::const_iterator it = chan.connected.begin(); it != chan.chanOp.end(); it++)
 		msg += it->getNickname() + " ";
 	msg += " \n";
 	return msg;
 }
 
-std::string channel::getAllInvited(void)
+std::string channel::getAllInvited(void) const
 {
 	std::string msg = "";
-	for (std::vector<client>::iterator it = chan.invited.begin(); it != chan.chanOp.end(); it++)
+	for (std::vector<client>::const_iterator it = chan.invited.begin(); it != chan.chanOp.end(); it++)
 		msg += it->getNickname() + " ";
 	msg += " \n";
 	return msg;
@@ -111,64 +130,125 @@ bool channel::getMode(char c) const
 	return false;
 }
 
+std::string channel::getAllMode(void) const
+{
+	std::string txt= "";
+	if (chan.i_Mode == true)
+		txt += 'i';
+	if (chan.t_Mode == true)
+		txt += 't';
+	if (chan.k_Mode == true)
+		txt += 'k';
+	if (chan.o_Mode == true)
+		txt += 'o';
+	if (chan.l_Mode == true)
+		txt += 'l';
+	return txt;
+}
+
+bool channel::getConnectedFromString(std::string const &user) const
+{
+	for (std::vector<client>::const_iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
+	{
+		if (it->getNickname() == user)
+			return true;
+	}
+	return false;
+}
+
+client* channel::getClient(const std::string& user)
+{
+	for (size_t i = 0; i < chan.connected.size(); i++)
+	{
+		if (chan.connected[i].getNickname() == user)
+			return &chan.connected[i];
+	}
+	return NULL;
+}
+
+
+
 //**********************************//SETTER//**********************************//
 
 void channel::setNeedPass(bool value) { chan.needPass = value; }
 void channel::setMaxConnectedUser(int value) { chan.maxConnectedUser = value; }
 void channel::setPassword(std::string password) { chan.password = password; }
-
-void channel::setUserConnect(client const &user)//********** CONNECTE UN CLIENT AU CANAL
+<<<<<<< HEAD
+=======
+void channel::setTopic(std::string message) { chan.topicMessage = message; }
+void channel::setMode(char c, bool value)
 {
-	if (getIsConnected(user.getID()) == true)
+	if (c == 'i')
+		chan.i_Mode = value;
+	if (c == 't')
+		chan.t_Mode = value;
+	if (c == 'k')
+		chan.k_Mode = value;
+	if (c == 'o')
+		chan.o_Mode = value;
+	if (c == 'l')
+		chan.l_Mode = value;
+}
+>>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
+
+void channel::setUserConnect(client *user)
+{
+	if (getIsConnected(user->getID()) == true)
 		return;
-	chan.connected.push_back(user);
+	chan.connected.push_back(*user);
 	chan.nbConnectedUser++;
-	if (getIsExcluded(user.getID()) == false)
+	if (chan.chanOp.size() == 0)
+		chan.chanOp.push_back(*user);
+	user->addChannel(this);
+	welcomeMessage(*user);
+	sendToChannel(*user, "has logged in");
+}
+
+void channel::setUserDisconnect(client *user)
+{
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
 	{
-		if (chan.nbConnectedUser == 1)
-			setUserChanOp(user);
-		welcomeMessage(user);
-		sendToChannel(user, "is connected");
+		if (it->getID() == user->getID())
+		{
+			chan.connected.erase(it);
+			user->deleteChannel(*this);
+			chan.nbConnectedUser--;
+			sendToChannel(*user, "has left");
+			break;
+		}
 	}
 }
 
-void channel::setUserDisconnect(client const &user)//********** DECONNECTE UN CLIENT DU CANAL
+void channel::setUserInvited(client *user)//********** INSCRIT UN CLIENT COMME INVITE
 {
-	if (getIsConnected(user.getID()) == true)
-	{
-		chan.connected.erase(findUser(user, "connected"));
-		chan.nbConnectedUser--;
-		sendToChannel(user, "disconnected");
-		std::string msg = "" + chan.name + " \n";
-		if (getIsExcluded(user.getID()) == false)
-			send(user.getFD(), msg.c_str(), msg.size(), 0);
-	}
-	if (getIsExcluded(user.getID()) == true)
-		setUserExcluded(user, false);
+	if (getIsInvited(user->getID()) == false)
+		chan.invited.push_back(*user);
 }
 
-void channel::setUserInvited(client const &user)//********** INSCRIT UN CLIENT COMME INVITE
-{
-	if (getIsInvited(user.getID()) == false)
-		chan.invited.push_back(user);
-}
-
+<<<<<<< HEAD
 void channel::setTopic(std::string topic){ chan.topicMessage = topic; }
+=======
+void channel::setUserChanOp(client *user)//********** INSCRIT UN CLIENT COMME CHANNEL OPERATOR(CHANOP)
+{
+	if (getIsChanOp(user->getID()) == false)
+		chan.chanOp.push_back(*user);
+}
+>>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 
-void channel::setUserExcluded(client const &user, bool value)//********** INSCRIT/DESINSCRIT UN CLIENT COMME EXCLU(BANNI)
+void channel::setUserExcluded(client *user, bool value)//********** INSCRIT/DESINSCRIT UN CLIENT COMME EXCLU(BANNI)
 {
 	if (value == true)
 	{
-		if (getIsExcluded(user.getID()) == false)
-			chan.excluded.push_back(user);
+		if (getIsExcluded(user->getID()) == false)
+			chan.excluded.push_back(*user);
 	}
 	else if (value == false)
 	{
-		if (getIsExcluded(user.getID()) == true)
+		if (getIsExcluded(user->getID()) == true)
 		{
 			for (std::vector<client>::iterator it = chan.excluded.begin(); it != chan.excluded.end(); it++)
 			{
-				if (it->getID() == user.getID())
+				if (it->getID() == user->getID())
 				{
 					chan.excluded.erase(it);
 					break;
@@ -178,114 +258,80 @@ void channel::setUserExcluded(client const &user, bool value)//********** INSCRI
 	}
 }
 
+void channel::setChannelName(std::string name) { chan.name = name; }
+
 
 //**********************************//FUNCTION//**********************************//
 
-void channel::welcomeMessage(client const &user)//********** MESSAGE D'ACCUEIL EN ENTRANT DANS UN CANAL(A REVOIR)
+void channel::welcomeMessage(client const &user) const
 {
+	std::time_t currentTime = std::time(0);
 	std::ostringstream oss;
-	oss << chan.nbConnectedUser;
-	std::string txt;
-	std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost JOIN " + chan.name +  "\n";
+	oss << currentTime;
+	std::string msg;
+	std::string CLIENT = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost ";
+	msg = CLIENT + "JOIN " + chan.name + "\n";
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
-	txt = "Welcome to the channel " + chan.name + "\n";
-	msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + txt + " \r\n";
+	if (chan.topicMessage.size() > 0)
+	{
+		msg = CLIENT + "332 " + user.getNickname()+ " " + chan.name + " :" + chan.topicMessage + "\r\n";
+		send(user.getFD(), msg.c_str(), msg.size(), 0);
+	}
+	msg = CLIENT + "353 " + user.getNickname() + " = " + chan.name + " :" + userList() + "\r\n";
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
-	txt = "Administrator : " + getAllChanOp();
-	msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + txt + " \r\n";
+	msg = CLIENT + "366 " + user.getNickname() + " " + chan.name + " :End of NAMES list\r\n";
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
-	txt = "User(s) connected : " + oss.str() + " \n";
-	msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + txt + " \r\n";
+	msg = CLIENT + "329 " + user.getNickname() + " " + chan.name + " " + oss.str() +"\r\n";
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
-	// msg = ":ircserv 332 " + user.getNickname() + " :" + chan.topicMessage + " \r\n";
-	// send(user.getFD(), msg.c_str(), msg.size(), 0);
+	msg = CLIENT + "324 " + user.getNickname() + " " + chan.name + " " + getAllMode() +"\r\n";
+	send(user.getFD(), msg.c_str(), msg.size(), 0);
 }
 
-void channel::sendToChannel(client const &user, std::string message)//********** COPIE LE MESSAGE D'UN CLIENT VERS TOUT LES CLIENT DANS LE CHANNEL
+void channel::sendToChannel(client const &user, std::string message)
 {
-	if (getIsExcluded(user.getID()) == true)
-		return;
 	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
 	{
 		if (it->getFD() > 0 &&  it->getID() != user.getID())
 		{
 			std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + message + " \r\n";
-			if (getIsExcluded(it->getID()) == false)
-				send(it->getFD(), msg.c_str(), msg.size(), 0);
+			send(it->getFD(), msg.c_str(), msg.size(), 0);
 		}
 	}
 }
 
-
-
-void channel::serverChannel()//********** CREE LES CHANNEL DE DEMARRAGE
+bool channel::userCanWrite(client *user)
 {
-	client admin(-1, -1);
-	if (chan.name == "#Piscine")
-	{
-		chan.needPass = true;
-		chan.topicMessage = "Exchange with the students of your promo";
-		chan.maxConnectedUser = 1000;
-		chan.password = "stud42";
-		chan.chanOp.push_back(admin);
-		chan.invited.push_back(admin);
-	}
-	else if (chan.name == "#Minilibix")
-	{
-		chan.needPass = false;
-		chan.topicMessage = "Exchange around 'Solong' and 'Cub3D' projects";
-		chan.maxConnectedUser = 1000;
-		chan.chanOp.push_back(admin);
-		chan.invited.push_back(admin);
-	}
-	else if (chan.name == "#Shell")
-	{
-		chan.needPass = false;
-		chan.topicMessage = "Exchange around the shell commands";
-		chan.maxConnectedUser = 1000;
-		chan.chanOp.push_back(admin);
-		chan.invited.push_back(admin);
-	}
-	else if (chan.name == "#Staff")
-	{
-		chan.needPass = true;
-		chan.topicMessage = "Be evaluated by the staff";
-		chan.maxConnectedUser = 2;
-		chan.password = "stud42";
-		chan.chanOp.push_back(admin);
-		chan.invited.push_back(admin);
-		chan.i_Mode = true;
-	}
-
+	if (getIsConnected(user->getID()) == false)
+		return false;
+	if (chan.i_Mode == true && getIsInvited(user->getID()) == false)
+		return false;
+	return true;
 }
 
-std::vector<client>::iterator channel::findUser(client const &user, std::string vec)//********** TROUVE UN CLIENT DANS UNE DES BASES
+bool channel::userCanJoin(client *user, std::string password)//********** EMPECHE UN CLIENT NON AUTORISE A ENTRER DANS UN CHANNEL
 {
-	std::vector<client>::iterator it1;
-	std::vector<client>::iterator it2;
-	if (vec == "chanOp")
+	if (chan.i_Mode == true && getIsInvited(user->getID()) == false)
 	{
-		it1 = chan.chanOp.begin();
-		it2 = chan.chanOp.end();
+		std::string msg = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost 473 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
+		send(user->getFD(), msg.c_str(), msg.size(), 0);
+		return false;
 	}
-	else if (vec == "connected")
+	if (chan.needPass == true && chan.password != password)
 	{
-		it1 = chan.connected.begin();
-		it2 = chan.connected.end();
+		std::string msg = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost 475 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
+		send(user->getFD(), msg.c_str(), msg.size(), 0);
+		return false;
 	}
-	else if (vec == "invited")
+	if (chan.nbConnectedUser == chan.maxConnectedUser)
 	{
-		it1 = chan.invited.begin();
-		it2 = chan.invited.end();
+		std::string msg = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost 471 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
+		send(user->getFD(), msg.c_str(), msg.size(), 0);
+		return false;
 	}
-	for (std::vector<client>::iterator it = it1; it != it2; it++)
-	{
-		if (it->getID() == user.getID())
-			return it;
-	}
-	return it2;
+	return true;
 }
 
+<<<<<<< HEAD
 void channel::setUserChanOp(client const &user)//********** INSCRIT UN CLIENT COMME CHANNEL OPERATOR(CHANOP)
 {
 	if (getIsChanOp(user.getID()) == false)
@@ -293,153 +339,46 @@ void channel::setUserChanOp(client const &user)//********** INSCRIT UN CLIENT CO
 }
 
 bool channel::userCanWrite(client const &user)//********** INDIQUE SI LE CLIENT A LE DROIT D'ECRIRE
+=======
+std::string channel::userList(void) const
+>>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 {
-	if (getIsConnected(user.getID()) == false || getIsExcluded(user.getID()) == true)
-		return false;
-	if (chan.i_Mode == true && getIsInvited(user.getID()) == false)
-		return false;
-	return true;
+	std::string txt = "";
+	for (std::vector<client>::const_iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
+	{
+		if (getIsChanOp(it->getID()) == false)
+			txt += it->getNickname() + " ";
+	}
+	for (std::vector<client>::const_iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
+		txt += "@" + it->getNickname() + " ";
+	return txt;
 }
 
-void channel::userCanJoin(client const &user, std::string password)//********** EXCLU UN CLIENT QUI N A PAS LE DROIT DE REJOINDRE UN CANAL
+void channel::switchUser(client *user)
 {
-	if (chan.i_Mode == true && getIsInvited(user.getID()) == false)
+	for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
 	{
-		setUserExcluded(user, true);
-		std::string msg = "You are not on the guest list of " + chan.name + " \n";
-		send(user.getFD(), msg.c_str(), msg.size(), 0);
-		return;
+		if (it->getID() == user->getID())
+		{
+			chan.chanOp.erase(it);
+			chan.chanOp.push_back(*user);
+		}
 	}
-	if (chan.needPass == true && chan.password != password)
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
 	{
-		setUserExcluded(user, true);
-		std::string msg = chan.name + " invalid password\n";
-		send(user.getFD(), msg.c_str(), msg.size(), 0);
-		return;
+		if (it->getID() == user->getID())
+		{
+			chan.connected.erase(it);
+			chan.connected.push_back(*user);
+		}
 	}
-	if (chan.nbConnectedUser == chan.maxConnectedUser)
+	for (std::vector<client>::iterator it = chan.invited.begin(); it != chan.invited.end(); it++)
 	{
-		setUserExcluded(user, true);
-		std::string msg = chan.name + " is full\n";
-		send(user.getFD(), msg.c_str(), msg.size(), 0);
-		return;
+		if (it->getID() == user->getID())
+		{
+			chan.invited.erase(it);
+			chan.invited.push_back(*user);
+		}
 	}
 }
-
-
-bool channel::getConnected(client const &user) const
-{
-	for (size_t i = 0; i < chan.connected.size(); i++)
-	{
-		if (chan.connected[i].getID() == user.getID())
-			return true;
-	}
-	return false;
-}
-
-bool channel::getConnectedFromString(std::string const &user) const
-{
-	for (size_t i = 0; i < chan.connected.size(); i++)
-	{
-		if (chan.connected[i].getNickname() == user)
-			return true;
-	}
-	return false;
-}
-
-client* channel::getClient(const std::string& user)
-{
-    for (size_t i = 0; i < chan.connected.size(); i++)
-    {
-        if (chan.connected[i].getNickname() == user)
-            return &chan.connected[i];
-    }
-    return NULL;
-}
-
-
-bool channel::getAdmin(client const &user) const
-{
-	for (size_t i = 0; i < chan.chanOp.size(); i++)
-	{
-		if (chan.chanOp[i].getID() == user.getID())
-			return true;
-	}
-	return false;
-}
-
-bool channel::getIsBanned(client const &user) const
-{
-	for (size_t i = 0; i < chan.excluded.size(); i++)
-	{
-		if (chan.excluded[i].getID() == user.getID())
-			return true;
-	}
-	return false;
-}
-
-int channel::getNbUser(void) const
-{ return chan.nbConnectedUser; }
-
-
-void channel::setConnect(client const &user)
-{
-	for (size_t i = 0; i < chan.connected.size(); i++)
-	{
-		if (chan.connected[i].getID() == user.getID())
-			return;
-	}
-	chan.connected.push_back(user);
-}
-
-void channel::setDisconnect(client const &user)
-{
-	for (size_t i = 0; i < chan.connected.size(); i++)
-	{
-		if (chan.connected[i].getID() == user.getID())
-			chan.connected.erase(chan.connected.begin() + i);
-	}
-}
-
-
-void channel::setAdminTrue(client const &user)
-{
-	for (size_t i = 0; i < chan.chanOp.size(); i++)
-	{
-		if (chan.chanOp[i].getID() == user.getID())
-			return;
-	}
-	chan.chanOp.push_back(user);
-}
-
-void channel::setAdminFalse(client const &user)
-{
-	for (size_t i = 0; i < chan.chanOp.size(); i++)
-	{
-		if (chan.chanOp[i].getID() == user.getID())
-			chan.chanOp.erase(chan.chanOp.begin() + i);
-	}
-}
-
-void channel::setBannedTrue(client const &user)
-{
-	for (size_t i = 0; i < chan.excluded.size(); i++)
-	{
-		if (chan.excluded[i].getID() == user.getID())
-			return;
-	}
-	chan.excluded.push_back(user);
-}
-
-void channel::setBannedFalse(client const &user)
-{
-	for (size_t i = 0; i < chan.excluded.size(); i++)
-	{
-		if (chan.excluded[i].getID() == user.getID())
-			chan.excluded.erase(chan.excluded.begin() + i);
-	}
-}
-
-void channel::setNbUserUp(void) { chan.nbConnectedUser++; }
-void channel::setNbUserDown(void) { chan.nbConnectedUser--; }
 

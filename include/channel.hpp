@@ -24,61 +24,49 @@ class channel
 {
 
 	channelData chan;
-	void serverChannel();
-	std::vector<client>::iterator findUser(client const &user, std::string vec);
 
 	public:
+	channel();
 	channel(std::string name);
 	~channel();
 
+	int index;
 
 	int getNbConnectedUser() const;
 	int getNeedPass() const;
 	int getMaxConnectedUser() const;
-	bool getIsChanOp(int id);
-	bool getIsConnected(int id);
-	bool getIsInvited(int id);
-	bool getIsExcluded(int id);
+	bool getIsChanOp(int id) const;
+	bool getIsConnected(int id) const;
+	bool getIsInvited(int id) const;
+	bool getIsExcluded(int id) const;
 	bool getMode(char c) const;
+	std::string getAllMode(void) const;
 	std::string getPassword() const;
 	std::string getChannelName() const;
-	bool getConnected(client const &) const;
-	bool getAdmin(client const &) const;
-	bool getIsBanned(client const &) const;
-	bool isTopicRestricted(void) const;
-	std::string getTopic(void) const;
-	int getNbUser() const;
-	std::string getAllChanOp();
-	std::string getAllConnected();
-	std::string getAllInvited();
-	bool getConnectedFromString(std::string const &) const;
-		client *getClient(std::string const &user);
-
-
-	void setConnect(client const &);
-	void setDisconnect(client const &);
-	void setAdminTrue(client const &);
-	void setAdminFalse(client const &);
-	void setBannedTrue(client const &);
-	void setBannedFalse(client const &);
-	void setTopicRestriction();
-	void setTopic(std::string topic);
-	void setNbUserUp();
-	void setNbUserDown();
-	
+	std::string getTopic() const;
+	std::string getAllChanOp() const;
+	std::string getAllConnected() const;
+	std::string getAllInvited() const;
+	bool getConnectedFromString(std::string const &user) const;
+	client* getClient(const std::string& user);
 
 	void setNeedPass(bool value);
 	void setMaxConnectedUser(int value);
 	void setPassword(std::string password);
-	void setUserConnect(client const &user);
-	void setUserDisconnect(client const &user);
-	void setUserInvited(client const &user);
-	void setUserExcluded(client const &user, bool value);
-	void setUserChanOp(client const &user);
+	void setTopic(std::string message);
+	void setUserConnect(client *user);
+	void setUserDisconnect(client *user);
+	void setUserInvited(client *user);
+	void setUserExcluded(client *user, bool value);
+	void setUserChanOp(client *user);
+	void setMode(char c, bool value);
+	void setChannelName(std::string name);
 
 	void sendToChannel(client const &user, std::string message);
-	void welcomeMessage(client const &user);
-	bool userCanWrite(client const &user);
-	void userCanJoin(client const &user, std::string password);
+	void welcomeMessage(client const &user) const;
+	bool userCanWrite(client *user);
+	bool userCanJoin(client *user, std::string password);
+	void switchUser(client *user);
+	std::string userList() const;
 
 };
