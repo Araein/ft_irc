@@ -80,14 +80,14 @@ bool server::nameExist(std::string name)
 	return true;
 }
 
-bool server::checkChannelName(std::string name)
-{
-	if (name[0] != '#')
-		return false;
-	if (name.size() == 0 || name.size() > 128)
-		return false;
-	return true;
-}
+// bool server::checkChannelName(std::string name)
+// {
+// 	if (name[0] != '#')
+// 		return false;
+// 	if (name.size() == 1 || name.size() > 128)
+// 		return false;
+// 	return true;
+// }
 
 std::vector<channel>::iterator server::selectChannel(std::string name)
 {

@@ -69,14 +69,6 @@ bool channel::getIsInvited(int id) const
 	return false;
 }
 
-bool channel::getIsExcluded(int id) const
-{
-	for (std::vector<client>::const_iterator it = chan.excluded.begin(); it != chan.excluded.end(); it++)
-		if (it->getID() == id)
-			return true;
-	return false;
-}
-
 std::string channel::getAllChanOp(void) const
 {
 	std::string msg = "";
@@ -157,7 +149,6 @@ client* channel::getClient(const std::string& user)
 }
 
 
-
 //**********************************//SETTER//**********************************//
 
 void channel::setNeedPass(bool value) { chan.needPass = value; }
@@ -197,8 +188,8 @@ void channel::setUserDisconnect(client *user)
 	{
 		if (it->getID() == user->getID())
 		{
-			chan.connected.erase(it);
 			user->deleteChannel(*this);
+			chan.connected.erase(it);
 			chan.nbConnectedUser--;
 			sendToChannel(*user, "has left");
 			break;
@@ -206,39 +197,16 @@ void channel::setUserDisconnect(client *user)
 	}
 }
 
-void channel::setUserInvited(client *user)//********** INSCRIT UN CLIENT COMME INVITE
+void channel::setUserInvited(client *user)
 {
 	if (getIsInvited(user->getID()) == false)
 		chan.invited.push_back(*user);
 }
 
-void channel::setUserChanOp(client *user)//********** INSCRIT UN CLIENT COMME CHANNEL OPERATOR(CHANOP)
+void channel::setUserChanOp(client *user)
 {
 	if (getIsChanOp(user->getID()) == false)
 		chan.chanOp.push_back(*user);
-}
-
-void channel::setUserExcluded(client *user, bool value)//********** INSCRIT/DESINSCRIT UN CLIENT COMME EXCLU(BANNI)
-{
-	if (value == true)
-	{
-		if (getIsExcluded(user->getID()) == false)
-			chan.excluded.push_back(*user);
-	}
-	else if (value == false)
-	{
-		if (getIsExcluded(user->getID()) == true)
-		{
-			for (std::vector<client>::iterator it = chan.excluded.begin(); it != chan.excluded.end(); it++)
-			{
-				if (it->getID() == user->getID())
-				{
-					chan.excluded.erase(it);
-					break;
-				}
-			}
-		}
-	}
 }
 
 void channel::setChannelName(std::string name) { chan.name = name; }
@@ -266,8 +234,6 @@ void channel::welcomeMessage(client const &user) const
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
 	msg = CLIENT + "329 " + user.getNickname() + " " + chan.name + " " + oss.str() +"\r\n";
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
-	msg = CLIENT + "324 " + user.getNickname() + " " + chan.name + " " + getAllMode() +"\r\n";
-	send(user.getFD(), msg.c_str(), msg.size(), 0);
 }
 
 void channel::sendToChannel(client const &user, std::string message)
@@ -291,23 +257,30 @@ bool channel::userCanWrite(client *user)
 	return true;
 }
 
-bool channel::userCanJoin(client *user, std::string password)//********** EMPECHE UN CLIENT NON AUTORISE A ENTRER DANS UN CHANNEL
+bool channel::userCanJoin(client *user, std::string password)
 {
+	std::string CLIENT = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost ";
 	if (chan.i_Mode == true && getIsInvited(user->getID()) == false)
 	{
-		std::string msg = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost 473 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
+		std::string msg = CLIENT + "473 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
 	if (chan.needPass == true && chan.password != password)
 	{
-		std::string msg = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost 475 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
+		std::string msg = CLIENT + "475 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
 	if (chan.nbConnectedUser == chan.maxConnectedUser)
 	{
-		std::string msg = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost 471 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
+		std::string msg = CLIENT + "471 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
+		send(user->getFD(), msg.c_str(), msg.size(), 0);
+		return false;
+	}
+	if (user->getHowManyChannel() == 10)//SANS EFFET
+	{
+		std::string msg = CLIENT + "405 " + user->getUsername() + chan.name +  " :Too many channels joined\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}

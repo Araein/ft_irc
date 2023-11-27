@@ -57,7 +57,7 @@ class server
 	int findPlace() const;
 	bool nameUserCheck(std::string name) const;
 	bool nameExist(std::string name);
-	bool checkChannelName(std::string name);
+	// bool checkChannelName(std::string name);
 	std::vector<channel>::iterator selectChannel(std::string name);
 	int findChanbyName(std::string chan);
 	std::map<std::string, std::string> splitCommandJoin(std::string buff);

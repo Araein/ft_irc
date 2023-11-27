@@ -22,6 +22,7 @@ class client
 	int getFD() const;
 	int getLog() const;
 	int getNetcat() const;
+	size_t getHowManyChannel() const;
 	std::string getPassword() const;
 	std::string getUsername() const;
 	std::string getNickname() const;
@@ -36,7 +37,6 @@ class client
 	void setNetcat();
 	void addChannel(channel *chan);
 	void deleteChannel(channel const &chan);
-	void chanUpDate();
 
 
 };

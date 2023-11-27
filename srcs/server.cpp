@@ -19,6 +19,8 @@ server::~server(void)
 	delete [] chan;
 }
 
+//**********************************//SOCKET//**********************************//
+
 bool server::initSocket(void)
 {
 	int opt = 1;
@@ -113,6 +115,9 @@ void server::acceptNewUser(void)
 	_totalPlace++;
 }
 
+
+//**********************************//GESTION DE NETCAT//**********************************//
+
 void server::userNetcat(void)
 {
 	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
@@ -129,6 +134,9 @@ void server::userNetcat(void)
 		}
 	}
 }
+
+
+//**********************************//CANAUX DE BASE//**********************************//
 
 void server::createChannel(void)
 {

@@ -14,17 +14,20 @@ client::client(int id, int fd): _fd(fd), _id(id), _log(0), _netcat(0)
 	}
 }
 
+//**********************************//GETTER//**********************************//
 
 int client::getID(void) const { return _id; }
 int client::getFD(void) const { return _fd; }
 int client::getLog(void) const { return _log; }
 int client::getNetcat(void) const { return _netcat; }
+size_t client::getHowManyChannel(void) const { return channelConnected.size(); }
 std::string client::getPassword(void) const { return _password;}
 std::string client::getNickname(void) const { return _nickname;}
 std::string client::getUsername(void) const { return _username;}
 std::vector<channel>::iterator client::getConnectBegin() { return channelConnected.begin(); }
 std::vector<channel>::iterator client::getConnectEnd() { return channelConnected.end(); }
 
+//**********************************//SETTER//**********************************//
 
 void client::setPassword(std::string pass) { _password = pass; }
 void client::setUsername(std::string username) { _username = username; }
@@ -37,6 +40,7 @@ void client::setNetcat(void)
 		_netcat++;
 }
 
+//**********************************//FONCTIONS//**********************************//
 
 void client::addChannel(channel *chan) { channelConnected.push_back(*chan); }
 
@@ -50,14 +54,6 @@ void client::deleteChannel(channel const &chan)
 			break;
 		}	
 	}
-}
-
-void client::chanUpDate(void)
-{
-	// for (std::vector<channel>::iterator it = channelConnected.begin(); it != channelConnected.end(); it++)
-	// {
-	// 	(*it)->
-	// }
 }
 
 
