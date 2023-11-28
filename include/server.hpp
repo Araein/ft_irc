@@ -57,12 +57,12 @@ class server
 	int findPlace() const;
 	bool nameUserCheck(std::string name) const;
 	bool nameExist(std::string name);
-	// bool checkChannelName(std::string name);
 	std::vector<channel>::iterator selectChannel(std::string name);
-	int findChanbyName(std::string chan);
 	std::map<std::string, std::string> splitCommandJoin(std::string buff);
 	std::vector<std::string> splitCommandNick(std::string buff);
+	std::vector<std::string> splitCommandPrivmsg(std::string buff);
 	void userUpDate(client *user);
+	std::string deleteCRLF(std::string str);
 
 public:
 	server(int, std::string);

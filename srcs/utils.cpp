@@ -80,26 +80,20 @@ bool server::nameExist(std::string name)
 	return true;
 }
 
-// bool server::checkChannelName(std::string name)
-// {
-// 	if (name[0] != '#')
-// 		return false;
-// 	if (name.size() == 1 || name.size() > 128)
-// 		return false;
-// 	return true;
-// }
-
 std::vector<channel>::iterator server::selectChannel(std::string name)
 {
+	std::vector<channel>::iterator it;
 	if (name.size() == 0)
 		return channelList.end();
-	std::vector<channel>::iterator it;
 	for (it = channelList.begin(); it != channelList.end();  it++)
 	{
-		if (it->getChannelName().compare(name) == 0)
+		if (it->getChannelName() == name)
+		{
+std::cout << "NAME:" << it->getChannelName() << ":" << name <<std::endl; 
 			return it;
+		}
 	}
-	return it;
+	return channelList.end();
 }
 
 std::map<std::string, std::string> server::splitCommandJoin(std::string buff)
@@ -167,6 +161,35 @@ std::vector<std::string> server::splitCommandNick(std::string buff)
 	return vec;
 }
 
+std::vector<std::string> server::splitCommandPrivmsg(std::string buff)
+{
+	std::istringstream iss(buff);
+	std::string str;
+	std::string tp = "";
+	std::vector<std::string> vec;
+	int indice = 0;
+	while (std::getline(iss, str, ' '))
+	{
+		indice++;
+		if (str[str.size() - 1] == '\n' && str[str.size() - 2] == '\r')
+			str = str.substr(0, str.size() - 2);
+		else if (str[str.size() - 1] == '\n' || str[str.size() - 1] == '\r')
+			str = str.substr(0, str.size() - 1);
+		if (indice < 3)
+			vec.push_back(str);
+		else
+			tp += str;
+	}
+	if (tp.size() > 0)
+	{
+		if (tp[0] == ':')
+			vec.push_back(&tp[1]);
+		else
+			vec.push_back(tp);
+	}
+	return vec;
+}
+
 void server::userUpDate(client *user)
 {
 	for (std::vector<channel>::iterator it = user->getConnectBegin(); it != user->getConnectEnd(); it++)
@@ -181,4 +204,18 @@ void server::userUpDate(client *user)
 		}
 	}
 }
+
+std::string server::deleteCRLF(std::string str)
+{
+	size_t pos = str.find('\r');
+	if (pos != std::string::npos)
+		str.erase(pos);
+	pos = str.find('\n');
+	if (pos != std::string::npos)
+		str.erase(pos);
+std::cout << "STR:" << str << std::endl;
+	return str;
+}
+
+
 

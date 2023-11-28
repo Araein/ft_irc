@@ -50,12 +50,12 @@ void server::parseCommand(std::string buff, int fd)
 	}
 	else if (command == "quit" || command == "QUIT")
 	{
-		std::cout << GREEN << "[42_IRC:  USER LOGGED OUT] " << mapUser.find(fd)->second.getNickname() << NONE << std::endl;
+		std::cout << GREEN << "[42_IRC:  USER DISCONNECTED] " << mapUser.find(fd)->second.getNickname() << NONE << std::endl;
 		closeOne(fd);
 	}
 	else
 	{
-		std::cout << "[42_IRC:  COMMAND NOT SUPPORTED] " << command << std::endl;
+		std::cout << BLUE << "[42_IRC:  COMMAND NOT SUPPORTED] " << command << NONE << std::endl;
 	}
 }
 
@@ -196,31 +196,39 @@ void server::cmdNick(int fd, std::string buff)
 void server::cmdPrivmsg(int fd, std::string buff)
 {
 	std::vector<channel>::iterator it;
-	std::istringstream iss(buff);
-	std::string command;
-	iss >> command;
-	std::string commandParam = buff.substr(command.size(), buff.size());
-	iss.clear();
-	iss.str(commandParam);
-	std::string name;
-	iss >> name;
-	std::string commandText = commandParam.substr(name.size() + 1, commandParam.size());
-	if ((it = selectChannel(name)) != channelList.end())
+	std::vector<std::string> vec = splitCommandPrivmsg(buff);
+	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
+	if (vec.size() == 1)//si pas parametre
 	{
-		if (it->userCanWrite(&mapUser.find(fd)->second) == true)
+		std::string msg = CLIENT + "403 " + " :" + vec[1] + " does not exist\r\n";
+		send(fd, msg.c_str(), msg.size(), 0);
+	std::cout << "YO" << std::endl;
+		return;
+	}
+std::cout << "channel:" << vec[1] << std::endl;
+	if ((it = selectChannel(vec[1])) != channelList.end())//channel existe
+	{
+		if (it->userCanWrite(&mapUser.find(fd)->second, vec[1]) == true)
 		{
-			it->sendToChannel(mapUser.find(fd)->second, commandText);
-			std::cout << YELLOW << name << " <" << mapUser.find(fd)->second.getNickname() << "> "<< commandText  << NONE;
-		}
-		else
-		{
-			std::string msg = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost PRIVMSG " + name + " :You are not allowed to write in this channel \r\n";
-			send(fd, msg.c_str(), msg.size(), 0);
+			if (vec.size() > 2)//il y a un message
+			{
+				std::cout << YELLOW << vec[1] << ": <" << mapUser.find(fd)->second.getNickname() << "> "<< vec[2]  << NONE << std::endl;
+				if (vec[2][0] == ':')
+					it->sendToChannel(mapUser.find(fd)->second, &vec[2][1]);
+				else
+					it->sendToChannel(mapUser.find(fd)->second, vec[2]);
+			}
+			else//il n y a pas de message
+			{
+				std::string msg = CLIENT + "412 " + " :" + vec[1] + " no message to send\r\n";
+				send(fd, msg.c_str(), msg.size(), 0);
+			}
 		}
 	}
-	else
+	else//channel existe pas
 	{
-		std::string msg = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 403 " + " :" + name + " does not exist\r\n";
+	std::cout << "GA" << std::endl;
+		std::string msg = CLIENT + "403 " + " :" + vec[1] + " does not exist\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 	}	
 }
@@ -231,15 +239,17 @@ void server::cmdJoin(std::string buff, int fd)
 	std::map<std::string, std::string>::iterator it_chanPass = chanPass.begin();
 	std::vector<channel>::iterator it_channelList;
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
-	int nbChan = 0;
+	int nbChan = mapUser.find(fd)->second.getHowManyChannel();
 
 	while (it_chanPass != chanPass.end())
 	{
+	std::cout << "TEST" << std::endl;
 		nbChan++;
-		if (nbChan > 20)
+		if (nbChan > 4)
 		{
 			std::string msg = CLIENT + "405 " + mapUser.find(fd)->second.getUsername() + " " + it_chanPass->first +  ":\r\n";
 			send(fd, msg.c_str(), msg.size(), 0);
+			return;
 		}
 		if ((it_channelList = selectChannel(it_chanPass->first)) != channelList.end())
 		{
@@ -249,7 +259,7 @@ void server::cmdJoin(std::string buff, int fd)
 		else
 		{
 			std::string channelName; 
-			if (it_chanPass->first.size() == 1)
+			if (it_chanPass->first[0] != '#' || it_chanPass->first.size() == 1)
 			{
 				std::string msg = CLIENT + "479 " + mapUser.find(fd)->second.getUsername() + " " + it_chanPass->first +  " :Invalid name\r\n";
 				send(fd, msg.c_str(), msg.size(), 0);
@@ -409,6 +419,7 @@ void server::cmdPart(int fd, std::string buff)
 	std::map<int, client>::iterator it = mapUser.find(fd);
 	if (it != mapUser.end())
 	{
+	std::cout << "PART:" << buff << std::endl;
 		client &parter = it->second;
 		std::string message, partCommand, mychannel, reason;
 		std::vector<channel>::iterator channelIt;

@@ -175,7 +175,7 @@ void channel::setUserConnect(client *user)
 		return;
 	chan.connected.push_back(*user);
 	chan.nbConnectedUser++;
-	if (chan.chanOp.size() == 0)
+	if (chan.connected.size() == 1)
 		chan.chanOp.push_back(*user);
 	user->addChannel(this);
 	welcomeMessage(*user);
@@ -189,6 +189,17 @@ void channel::setUserDisconnect(client *user)
 		if (it->getID() == user->getID())
 		{
 			user->deleteChannel(*this);
+			if (getIsChanOp(user->getID()) == true)
+			{
+				for (std::vector<client>::iterator it1 = chan.chanOp.begin(); it1 != chan.chanOp.end(); it1++)
+				{
+					if (it1->getID() == user->getID())
+					{
+						chan.chanOp.erase(it1);
+						break;
+					}
+				}
+			}
 			chan.connected.erase(it);
 			chan.nbConnectedUser--;
 			sendToChannel(*user, "has left");
@@ -248,12 +259,15 @@ void channel::sendToChannel(client const &user, std::string message)
 	}
 }
 
-bool channel::userCanWrite(client *user)
+bool channel::userCanWrite(client *user, std::string channelName)
 {
 	if (getIsConnected(user->getID()) == false)
+	{
+		std::string CLIENT = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost ";
+		std::string msg = CLIENT + "404 " + user->getUsername() + " :" + channelName + " You must be connected to send message\r\n";
+		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
-	if (chan.i_Mode == true && getIsInvited(user->getID()) == false)
-		return false;
+	}
 	return true;
 }
 
