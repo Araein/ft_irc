@@ -1,6 +1,6 @@
 #include "irc.hpp"
 
-void server::sendWelcomMsgs(int fd) const//********** MESSAGE ENVOYE AU CLIENT A LA CONNEXION
+void server::sendWelcomMsgs(int fd) const
 {
 	std::string msg;
 	std::string start = startServer();
@@ -13,7 +13,7 @@ void server::sendWelcomMsgs(int fd) const//********** MESSAGE ENVOYE AU CLIENT A
 }
 
 
-void server::printServerHeader(void) const//********** MESSAGE ENTETE AU LANCEMENT DU SERVER
+void server::printServerHeader(void) const
 {
 	std::cout << BLUE << BOLD << "________________________________________________________________" << NONE << std::endl;
 	std::cout << RED << "                                                                " << NONE << std::endl;
@@ -40,7 +40,7 @@ void server::printServerHeader(void) const//********** MESSAGE ENTETE AU LANCEME
 	std::cout << BLUE << "                                                      'tlebouvi'" << NONE << std::endl;
 }
 
-void server::printHome(int fd)//********** MESSAGE ENTETE CLIENT SI PASSWORD OK
+void server::printHome(int fd)
 {
 	std::string msg = "001 " + mapUser.find(fd)->second.getNickname() + " :";
 	msg += "  \n";

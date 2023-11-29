@@ -9,7 +9,7 @@ client::client(int id, int fd): _fd(fd), _id(id), _log(0), _netcat(0)
 	_username = "user" + oss.str();
 	if (_id == 0)
 	{
-		_nickname = "chanOp_42stud";//********** ADMIN DES CHANNEL DE DEMARRAGE
+		_nickname = "chanOp_42stud";
 		_netcat = -1;
 	}
 }

@@ -13,6 +13,7 @@ class server
 	channel *chan;
 	pollfd _fds[maxFD + 1];
 	std::string _password;
+	std::string _partCommand;
 	std::map<int, client> mapUser;
 	std::vector<channel> channelList;
 
@@ -61,7 +62,7 @@ class server
 	std::map<std::string, std::string> splitCommandJoin(std::string buff);
 	std::vector<std::string> splitCommandNick(std::string buff);
 	std::vector<std::string> splitCommandPrivmsg(std::string buff);
-	void userUpDate(client *user);
+	void userUpDate(client *user, std::string oldNick);
 	std::string deleteCRLF(std::string str);
 
 public:

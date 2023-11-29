@@ -94,7 +94,7 @@ void server::acceptNewUser(void)
 	tmp.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
 	if (tmp.fd == -1)
 		return;
-	std::cout << "[42_IRC:  NEW CONNECTION]" << std::endl;
+	std::cout << "[42_IRC:  NEW CONNECTION REQUEST]" << std::endl;
 	_curPlace = findPlace();
 	_fds[_curPlace].fd = tmp.fd;
 	_fds[_curPlace].events = tmp.events;

@@ -179,7 +179,7 @@ void channel::setUserConnect(client *user)
 		chan.chanOp.push_back(*user);
 	user->addChannel(this);
 	welcomeMessage(*user);
-	sendToChannel(*user, "has logged in");
+	sendInfoToChannel(*user, " has logged in");
 }
 
 void channel::setUserDisconnect(client *user)
@@ -259,12 +259,27 @@ void channel::sendToChannel(client const &user, std::string message)
 	}
 }
 
+void channel::sendInfoToChannel(client const &user, std::string message)
+{
+	std::string msg;
+	std::string CLIENT;
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
+	{
+		if (it->getFD() > 0 &&  it->getID() != user.getID())
+		{
+			CLIENT = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 100 ";
+			msg = CLIENT + chan.name + " :" + message + "\n";
+			send(it->getFD(), msg.c_str(), msg.size(), 0);
+		}
+	}
+}
+
 bool channel::userCanWrite(client *user, std::string channelName)
 {
 	if (getIsConnected(user->getID()) == false)
 	{
 		std::string CLIENT = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost ";
-		std::string msg = CLIENT + "404 " + user->getUsername() + " :" + channelName + " You must be connected to send message\r\n";
+		std::string msg = CLIENT + "404 " + user->getNickname() + channelName + + " :"" you have not joined the channel\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
@@ -276,25 +291,19 @@ bool channel::userCanJoin(client *user, std::string password)
 	std::string CLIENT = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost ";
 	if (chan.i_Mode == true && getIsInvited(user->getID()) == false)
 	{
-		std::string msg = CLIENT + "473 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
+		std::string msg = CLIENT + "473 " + user->getNickname() + chan.name +  " :" + chan.name + "\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
 	if (chan.needPass == true && chan.password != password)
 	{
-		std::string msg = CLIENT + "475 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
+		std::string msg = CLIENT + "475 " + user->getNickname() + chan.name +  " :" + chan.name + "\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
 	if (chan.nbConnectedUser == chan.maxConnectedUser)
 	{
-		std::string msg = CLIENT + "471 " + user->getUsername() + chan.name +  " :" + chan.name + "\r\n";
-		send(user->getFD(), msg.c_str(), msg.size(), 0);
-		return false;
-	}
-	if (user->getHowManyChannel() == 10)//SANS EFFET
-	{
-		std::string msg = CLIENT + "405 " + user->getUsername() + chan.name +  " :Too many channels joined\r\n";
+		std::string msg = CLIENT + "471 " + user->getNickname() + chan.name +  " :" + chan.name + "\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
