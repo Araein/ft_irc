@@ -82,16 +82,8 @@ std::string server::printChannel(void)
 		i++;
 		if (i == 5)
 		{
-<<<<<<< HEAD
-			msg += "      ";
-			msg += it->getChannelName();
-			msg += ":  ";
-			msg += it->getTopic();
-			msg += "\n";
-=======
 			msg += " \n";
 			i = 0;
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 		}
 		if (it->getMode('i') == false && it->getNeedPass() == false)
 			msg += "  " + it->getChannelName();
@@ -100,19 +92,8 @@ std::string server::printChannel(void)
 	msg += "Access with password and/or invitation\n";
 	for (std::vector<channel>::iterator it = channelList.begin(); it != channelList.end(); it++)
 	{
-<<<<<<< HEAD
-		if (it->getMode('i') == true)
-		{
-			msg += "      ";
-			msg += it->getChannelName();
-			msg += ":  ";
-			msg += it->getTopic();
-			msg += "\n";
-		}
-=======
 		if (it->getMode('i') == true || it->getNeedPass() == true)
 			msg += "  " + it->getChannelName();
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 	}
 	msg += " \n";
 	return msg;

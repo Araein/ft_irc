@@ -72,18 +72,6 @@ int server::findChanbyName(std::string chan) const{
 	return -1;
 }
 
-void server::createChannel(void)
-{
-	channel chan0("#Minishell");
-	channelList.push_back(chan0);
-	channel chan1("#SoLong");
-	channelList.push_back(chan1);
-	channel chan2("#PushSwap");
-	channelList.push_back(chan2);
-	channel chan3("#Inception");
-	channelList.push_back(chan3);
-}
-
 void server::mainLoop(void)
 {
 	int ret;
@@ -121,8 +109,6 @@ void server::acceptNewUser(void)
 	_fds[_curPlace].events = tmp.events;
 	_fds[_curPlace].revents = tmp.revents;
 	if (_curPlace == maxFD)
-		printFullUser(_fds[_curPlace].fd);
-	else
 	{
 		std::string msg = "ircserv:";
 		msg += RED;

@@ -36,20 +36,10 @@ int channel::getNbConnectedUser(void) const { return chan.nbConnectedUser; }
 int channel::getNeedPass(void) const { return chan.needPass; }
 int channel::getMaxConnectedUser(void) const { return chan.maxConnectedUser; }
 std::string channel::getChannelName() const { return chan.name; }
-<<<<<<< HEAD
-std::string channel::getPassword() const { return chan.password; }
-
-std::string channel::getTopic(void)const { return chan.topicMessage; }
-
-bool channel::isTopicRestricted(void) const { return chan.t_Mode; }
-
-bool channel::getIsChanOp(int id)
-=======
 std::string channel::getTopic() const { return chan.topicMessage; }
 std::string channel::getPassword() const { return chan.password; }
 
 bool channel::getIsChanOp(int id) const
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 {
 	for (std::vector<client>::const_iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
 	{
@@ -130,7 +120,7 @@ bool channel::getMode(char c) const
 	return false;
 }
 
-std::string channel::getAllMode(void) const
+std::string channel::getAllMode(void) const // removed the o mode return as it never appears when listing modes even after setting a new op
 {
 	std::string txt= "";
 	if (chan.i_Mode == true)
@@ -139,8 +129,6 @@ std::string channel::getAllMode(void) const
 		txt += 't';
 	if (chan.k_Mode == true)
 		txt += 'k';
-	if (chan.o_Mode == true)
-		txt += 'o';
 	if (chan.l_Mode == true)
 		txt += 'l';
 	return txt;
@@ -173,8 +161,6 @@ client* channel::getClient(const std::string& user)
 void channel::setNeedPass(bool value) { chan.needPass = value; }
 void channel::setMaxConnectedUser(int value) { chan.maxConnectedUser = value; }
 void channel::setPassword(std::string password) { chan.password = password; }
-<<<<<<< HEAD
-=======
 void channel::setTopic(std::string message) { chan.topicMessage = message; }
 void channel::setMode(char c, bool value)
 {
@@ -189,7 +175,6 @@ void channel::setMode(char c, bool value)
 	if (c == 'l')
 		chan.l_Mode = value;
 }
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 
 void channel::setUserConnect(client *user)
 {
@@ -225,15 +210,20 @@ void channel::setUserInvited(client *user)//********** INSCRIT UN CLIENT COMME I
 		chan.invited.push_back(*user);
 }
 
-<<<<<<< HEAD
-void channel::setTopic(std::string topic){ chan.topicMessage = topic; }
-=======
 void channel::setUserChanOp(client *user)//********** INSCRIT UN CLIENT COMME CHANNEL OPERATOR(CHANOP)
 {
 	if (getIsChanOp(user->getID()) == false)
 		chan.chanOp.push_back(*user);
 }
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
+
+void channel::undoUserChanOp(client *user){
+	if (getIsChanOp(user->getID()) == true){
+		for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++){
+			if (it->getID() == user->getID())
+				chan.chanOp.erase(it);
+		}
+	}
+}
 
 void channel::setUserExcluded(client *user, bool value)//********** INSCRIT/DESINSCRIT UN CLIENT COMME EXCLU(BANNI)
 {
@@ -331,17 +321,7 @@ bool channel::userCanJoin(client *user, std::string password)//********** EMPECH
 	return true;
 }
 
-<<<<<<< HEAD
-void channel::setUserChanOp(client const &user)//********** INSCRIT UN CLIENT COMME CHANNEL OPERATOR(CHANOP)
-{
-	if (getIsChanOp(user.getID()) == false)
-		chan.chanOp.push_back(user);
-}
-
-bool channel::userCanWrite(client const &user)//********** INDIQUE SI LE CLIENT A LE DROIT D'ECRIRE
-=======
 std::string channel::userList(void) const
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 {
 	std::string txt = "";
 	for (std::vector<client>::const_iterator it = chan.connected.begin(); it != chan.connected.end(); it++)

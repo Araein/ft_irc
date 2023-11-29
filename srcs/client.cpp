@@ -14,13 +14,6 @@ client::client(int id, int fd): _fd(fd), _id(id), _log(0), _netcat(0)
 	}
 }
 
-void client::fillProfil(std::string message)
-{
-	_password = extract(message, "PASS ", "\n");
-	_nickname = extract(message, "NICK ", "\n");
-	_username = extract(message, "USER ", " ");
-}
-
 int client::getID(void) const { return _id; }
 int client::getFD(void) const { return _fd; }
 int client::getLog(void) const { return _log; }

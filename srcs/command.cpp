@@ -34,7 +34,7 @@ void server::parseCommand(std::string buff, int fd)
 	}
 	else if (command == "mode" || command == "MODE")
 	{
-		// cmdMode();
+		cmdMode(fd, buff);
 	}
 	else if (command == "part" || command == "PART")
 	{
@@ -196,102 +196,6 @@ std::cout << "BUFF:" << std::endl;
 	send(fd, msg.c_str(), msg.size(), 0);
 }
 
-void server::cmdKick(int fd, std::string buff)
-{
-	std::istringstream iss1(buff);
-	std::string buff2;
-	std::map<int, client>::iterator it = mapUser.find(fd);
-	unsigned int countchannel = 0;
-	if (it != mapUser.end())
-	{
-		client &kicker = it->second;
-		while (std::getline(iss1, buff2))
-		{
-			buff2 = buff2 + "\n";
-			std::istringstream iss(buff2);
-			std::string message, kickCommand, mychannel, nicks, reason;
-			std::vector<channel>::iterator channelIt;
-			iss >> kickCommand;
-			iss >> mychannel;
-			std::vector<std::string> channels;
-			std::istringstream iss3(mychannel);
-			std::string channel;
-			while (std::getline(iss3, channel, ','))
-				channels.push_back(channel);
-			iss >> nicks;
-			std::getline(iss, reason);
-			if (reason == " :\r")
-				reason = " :" + kicker.getNickname() + "\r";
-			std::vector<std::string>::iterator actualChannel;
-			for (actualChannel = channels.begin(); actualChannel != channels.end(); ++actualChannel)
-			{
-				bool notadmin = false;
-				bool nochannel = false;
-				bool notmember = false;	
-				mychannel = *actualChannel;
-
-				for (channelIt = channelList.begin(); channelIt != channelList.end(); ++channelIt)
-				{
-					if (channelIt->getChannelName() == mychannel)
-					{
-						nochannel = true;
-						if (channelIt->getConnected(kicker))
-						{
-							notmember = true;
-							if (channelIt->getAdmin(kicker))
-								notadmin = true;
-						}
-						break;
-					}
-				}
-				if (!nochannel) // si channel n'existe pas
-				{
-					if  (countchannel < channels.size())
-					{
-						message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 403 " + kicker.getUsername() + " " + mychannel + " :No such channel\r\n";
-						send(kicker.getFD(), message.c_str(), message.size(), 0);
-					}
-					countchannel++;
-					continue ;
-				}
-				else if (!notmember) //si kicker pas membre
-				{
-					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 442 " + kicker.getUsername() + " " + mychannel + " :You're not on that channel\r\n";
-					send(kicker.getFD(), message.c_str(), message.size(), 0);
-					countchannel++;
-					continue ;
-				}
-				else if (!notadmin) //si kicker pas admin
-				{
-					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 482 " + kicker.getUsername() + " " + mychannel + " :You're not channel operator\r\n";
-					send(kicker.getFD(), message.c_str(), message.size(), 0);
-					countchannel++;
-					continue ;
-				}
-				if (channelIt->getConnectedFromString(nicks))
-				{
-					client *targetClient = channelIt->getClient(nicks);
-					if (!targetClient)
-					{
-						countchannel++;
-						continue;
-					}
-					channelIt->setDisconnect(*targetClient);
-					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
-					send(targetClient->getFD(), message.c_str(), message.size(), 0);
-					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
-					channelIt->sendToChannel(*targetClient, message);
-				}
-				else //si le membre n'est pas sur le channel
-				{
-					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 401 " + kicker.getUsername() + " " + nicks + " :No such nick/channel\r\n";
-					send(kicker.getFD(), message.c_str(), message.size(), 0);
-				}
-				countchannel++;
-			}
-		}
-	}
-}
 
 // void server::cmdJoin(std::string buff, int fd)
 // {
@@ -372,8 +276,12 @@ void server::cmdJoin(std::string buff, int fd)
 	{
 		if ((it_channelList = selectChannel(it_chanPass->first)) != channelList.end())//channel existant
 		{
-			if (it_channelList->userCanJoin(&mapUser.find(fd)->second, it_chanPass->second) == true)
+			if (it_channelList->userCanJoin(&mapUser.find(fd)->second, it_chanPass->second) == true){
 				it_channelList->setUserConnect(&mapUser.find(fd)->second);
+				if (it_channelList->getTopic().empty() == false){
+					send(fd, std::string("332 " + it_channelList->getChannelName() + " " + mapUser.find(fd)->second.getNickname() + "\r\n").c_str(), std::string("332 " + it_channelList->getChannelName() + " " + mapUser.find(fd)->second.getNickname() + "\r\n").length(), 0);
+				}
+			}
 		}
 		else
 		{
@@ -476,46 +384,8 @@ void server::cmdInvite(int fd, std::string buff)
 void server::cmdTopic(int fd, std::string buff)
 {
 	std::string tmp;
-<<<<<<< HEAD
-	std::string channel;
-	std::istringstream iss(buff);
-	int index;
-
-	iss >> tmp;
-	iss >> channel;
-	if (findChanbyName(channel) == -1){
-		send(fd, std::string("403" + channel + ":no such channel\r\n").c_str(), std::string("403 " + channel + ":no such channel\r\n").length(), 0);
-		return ;
-	}
-	index = findChanbyName(channel);
-	tmp = iss.str().substr(6 + channel.length() + 1, buff.length() - (6 + channel.length() + 1));
-	if (channelList[index].getIsConnected(mapUser.find(fd)->second.getID()) == true){
-		if (tmp.empty() == true && channelList[index].getTopic().empty() == true){
-			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 331 " + mapUser.find(fd)->second.getNickname() + " " + channel + " :No topic is set\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 331 " + mapUser.find(fd)->second.getNickname() + " " + channel + " :No topic is set\r\n").length(), 0);
-			return ;
-		}
-		else if (tmp.empty() == true && channelList[index].getTopic().empty() == false){
-			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 332 " + mapUser.find(fd)->second.getNickname() + " " + channel + " :" + channelList[index].getTopic() + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 332 " + mapUser.find(fd)->second.getNickname() + " " + channel + " :" + channelList[index].getTopic() + "\r\n").length(), 0);
-			return ;
-		}
-		else if (tmp.empty() == false && channelList[index].isTopicRestricted() == true && channelList[index].getIsChanOp(mapUser.find(fd)->second.getID()) == false){
-			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 482 " + mapUser.find(fd)->second.getNickname() + " " + channel + ":You do not have permission to change the topic\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 482 " + mapUser.find(fd)->second.getNickname() + " " + channel + ":You do not have permission to change the topic\r\n").length(), 0);
-			return ;
-		}
-		else if (tmp.empty() == false && channelList[index].isTopicRestricted() == true && channelList[index].getIsChanOp(mapUser.find(fd)->second.getID()) == true){
-			channelList[index].setTopic(tmp);
-			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").length(), 0);
-			channelList[index].sendToChannel(mapUser.find(fd)->second, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").c_str());
-			return ;
-		}
-		else if (tmp.empty() == false && channelList[index].isTopicRestricted() == false){
-			channelList[index].setTopic(tmp);
-			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").length(), 0);
-			channelList[index].sendToChannel(mapUser.find(fd)->second, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channel + " " + tmp + "\r\n").c_str());
-=======
 	std::string channelName;
 	std::istringstream iss(buff);
-	// int index;
 
 	iss >> tmp;
 	iss >> channelName;
@@ -524,8 +394,7 @@ void server::cmdTopic(int fd, std::string buff)
 		send(fd, std::string("403" + channelName + ":no such channel\r\n").c_str(), std::string("403 " + channelName + ":no such channel\r\n").length(), 0);
 		return ;
 	}
-	// index = findChanbyName(channel);
-	tmp = iss.str().substr(6 + channelName.length() + 1, buff.length() - (6 + channelName.length() + 1));
+	tmp = iss.str().substr(7 + channelName.length() + 1, buff.length() - (7 + channelName.length() + 1));
 	if (it_channelList->getIsConnected(mapUser.find(fd)->second.getID()) == true){
 		if (tmp.empty() == true && it_channelList->getTopic().empty() == true){
 			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 331 " + mapUser.find(fd)->second.getNickname() + " " + channelName + " :No topic is set\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 331 " + mapUser.find(fd)->second.getNickname() + " " + channelName + " :No topic is set\r\n").length(), 0);
@@ -549,24 +418,181 @@ void server::cmdTopic(int fd, std::string buff)
 			it_channelList->setTopic(tmp);
 			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").length(), 0);
 			it_channelList->sendToChannel(mapUser.find(fd)->second, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").c_str());
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 			return ;
 		}
 	}
 	else{
-<<<<<<< HEAD
-		send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 442 " + channel + ":You are not part of this channel\n").c_str(), std::string("442 " + channel + ":You are not part of this channel\n").length(), 0);
-=======
 		send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 442 " + channelName + ":You are not part of this channel\n").c_str(), std::string("442 " + channelName + ":You are not part of this channel\n").length(), 0);
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 		return ;
 	}
 }
 
-// void server::cmdMode(int fd, std::string buff)
-// {
-// 	std::istringstream iss(buff);
-// }
+void server::cmdMode(int fd, std::string buff)
+{
+	std::istringstream iss(buff);
+	int mode = -1;
+	std::string str(iss.str());
+	std::string cmd;
+	std::string chan;
+	std::string arg;
+	std::string msg;
+	std::string tmp;
+	std::map<std::string, std::string> keys;
+	client user = mapUser.find(fd)->second;
+	std::vector<channel>::iterator itchan = channelList.begin();
+
+	iss >> cmd;
+	iss >> chan;
+	iss >> arg;
+	std::cout << "channel = " << chan << " arg = " << arg << std::endl;
+	if (chan[0] != '#') // mode is sent for user mode, ignoring (CLIENT SENDS MODE +i AT BEGINNING, MAKING A CRASH LATER IN THIS FUNCTION IF THIS LINE IS REMOVED AS THE CHANNELS ARE NOT SET YET)
+		return;
+	while (itchan->getChannelName() != chan && itchan != channelList.end()){ //find channel | IT CHAAAAN UwU
+		itchan++;
+	}
+	if (itchan == channelList.end()){ // channel not found, does not output anything on client side, this is expected behavior
+		msg = ":localhost 403 " + user.getNickname() + " " + chan + " :No such channel\r\n";
+		send(fd, msg.c_str(), msg.length(), 0);
+		return ;
+	}
+	if (arg.empty()){ // list modes for channel even if no modes
+		msg = ":localhost 324 " + user.getNickname() + " " + chan + " +" + itchan->getAllMode() + "\r\n";
+		send(fd, msg.c_str(), msg.length(), 0);
+		return;
+	}
+	std::string argmsg = "";
+	if (arg[0] == '+' || arg[0] == '-'){
+		msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost MODE " + chan + " ";
+		for (std::string::iterator it = str.begin() + (cmd.length() + chan.length() + 2); it != str.end(); it++){
+			std::cout << "DEBUG = " << *it << std::endl;
+		}
+		for (std::string::iterator it = str.begin() + (cmd.length() + chan.length() + 2); it != str.end(); it++){
+			if (*it == '+' || mode == 1){
+				if (mode == 0 || mode == -1){
+					mode = 1;
+					argmsg += "+";
+				}
+				if (*it == 'i' && argmsg.find('i') == std::string::npos && arg.find('i') != std::string::npos){ // found i mode, setting up invite mode. Checks if there is already a i mode in the command wether it's suppresing or adding doesn't matter) if there is ignoring the i mode
+					itchan->setMode('i', true);
+					argmsg += "i";
+				}
+				if (*it == 't' && argmsg.find('t') == std::string::npos && arg.find('t') != std::string::npos){ // found t mode, setting up restricted topic mode> Checks if there is already a t mode in the command wether it's suppresing or adding doesn't matter) if there is ignoring the t mode
+					itchan->setMode('t', true);
+					argmsg += "t";
+				}
+				if (*it == 'k' && argmsg.find('k') == std::string::npos && arg.find('k') != std::string::npos){ // found k mode, setting up password
+					iss >> tmp;
+					if (tmp.empty() == false){ // if password is not empty we set it up, else we ignore it. Checks if there is already a k mode in teh command (wether it's suppresing or adding doesn't matter) if there is ignoring the k mode
+						itchan->setPassword(tmp);
+						itchan->setMode('k', true);
+						argmsg += "k";
+						keys.insert(std::pair<std::string, std::string>("password", tmp));
+					}
+				}
+				if (*it == 'o' && arg.find('o') != std::string::npos){
+					iss >> tmp;
+					if (tmp.empty() == true && argmsg.find('o') != std::string::npos)
+						continue ;
+					else if (tmp.empty() == false){ // checking is arg is empty, if it is, we ignore o mode
+						if (itchan->getClient(tmp)){ // checking if user provided exists, if it does setting it up as ops
+							itchan->setUserChanOp(itchan->getClient(tmp));
+							itchan->setMode('o', true);
+							argmsg += "o";
+							keys.insert(std::pair<std::string, std::string>("chanops", tmp));
+						}
+						else{ // else return error and ignore o mode
+							std::string error = ":localhost 401 " + user.getNickname() + " " + tmp + " :no such nick\r\n";
+							send(fd, error.c_str(), error.length(), 0);
+							error = ":localhost 441 " + user.getNickname() + " " + tmp + " " + itchan->getChannelName() + " :user not on channel\r\n";
+							send(fd, error.c_str(), error.length(), 0);
+						}
+					}
+				}
+				if (*it == 'l' && arg.find('l') != std::string::npos){
+					iss >> tmp;
+					if (tmp.empty() == false && std::atoi(tmp.c_str()) > 0){ // checking if arg is empty, if it is, we ignore l mode and send error but if it isn't empty but invalid parameter (string or == 0) we ignore
+						itchan->setMaxConnectedUser(std::atoi(tmp.c_str()));
+						itchan->setMode('l',true);
+						argmsg += "l";
+						keys.insert(std::pair<std::string, std::string>("limit", tmp));
+					}
+					else if (tmp.empty()){
+						std::string error = ":localhost 461 " + user.getNickname() + " MODE +l :Not enough parameters\r\n";
+						send(fd, error.c_str(), error.length(), 0);
+					}
+				}
+				if (*it == '-'){
+					mode = 0;
+					argmsg += "-";
+				}
+				if (std::string("+-ilokt\r\n ").find(*it) == std::string::npos){
+					std::string error = ":localhost 472 " + user.getNickname() + *it + " :is unknown mode char to me\r\n";
+					send(fd, error.c_str(), error.length(), 0);
+				}
+			}
+			if (*it == '-' || mode == 0){
+				if (mode == 1 || mode == -1){
+					mode = 0;
+					argmsg += "-";
+				}
+				if (*it == 'i' && argmsg.find('i') == std::string::npos && arg.find('i') != std::string::npos){ // removing invite mode, if there is already a i in the command ignoring this one
+					itchan->setMode('i', false);
+					argmsg += "i";
+				}
+				if (*it == 't'  && argmsg.find('t') == std::string::npos && arg.find('t') != std::string::npos){ // removing restrictions on topic, if there is already a i in the command ignoring this one
+					itchan->setMode('t', false);
+					argmsg += "t";
+				}
+				if (*it == 'k' && arg.find('k') != std::string::npos){ // remove password if a password is set, if not ignoring
+					if (argmsg.find('k') != std::string::npos && keys.find("password") != keys.end()) // if there is a k before BUT the argument is not valid we ignore all the k's altogether
+					{
+						if (itchan->getMode('k') == true){
+							itchan->setMode('k', false);
+							itchan->setPassword("");
+							argmsg += "k";
+						}
+					}
+				}
+				if (*it == 'o' && arg.find('o') != std::string::npos){
+					iss >> tmp;
+					if (tmp.empty() == true && argmsg.find('o') != std::string::npos)
+						continue ;
+					if (tmp.empty() == false ){
+						if (itchan->getClient(tmp)){ // checking if user exists if it does remove it from admins
+							itchan->undoUserChanOp(itchan->getClient(tmp));
+							argmsg += 'o';
+							keys.insert(std::pair<std::string, std::string>("chanopsremove", tmp));
+						}
+						else{ // else return error and ignore o mode
+							std::string error = ":localhost 401 " + user.getNickname() + " " + tmp + " :no such nick\r\n";
+							send(fd, error.c_str(), error.length(), 0);
+							error = ":localhost 441 " + user.getNickname() + " " + tmp + " " + itchan->getChannelName() + " :user not on channel\r\n";
+							send(fd, error.c_str(), error.length(), 0);
+						}
+					}
+				}
+				if (*it == 'l' && arg.find('l') != std::string::npos){
+					itchan->setMode('l', false);
+					itchan->setMaxConnectedUser(1000);
+					argmsg += "l";
+				}
+				if (std::string("+-ilokt\r\n ").find(*it) == std::string::npos){
+					std::string error = ":localhost 472 " + user.getNickname() + *it + " :is unknown mode char to me\r\n";
+					send(fd, error.c_str(), error.length(), 0);
+				}
+			}
+			if (*it == ' '){
+				it += jumpToNextMode(it);
+			}
+		}
+	}
+	std::string finalmsg(msg + argmsg);
+	for (std::map<std::string, std::string>::iterator it = keys.begin(); it != keys.end(); it++){
+		finalmsg.append(" " + it->second);
+	}
+	finalmsg += "\r\n";
+	send(fd, finalmsg.c_str(), finalmsg.length(), 0);
+}
 
 void server::cmdPing(std::string buff, int fd)
 {
@@ -599,31 +625,19 @@ void server::cmdPart(int fd, std::string buff)
 			channels.push_back(channel);
 		std::getline(iss, reason);
 		if (reason == " :\r")
-<<<<<<< HEAD
-			reason = " :" + parter.getNickname() + "\r"; //voir ce qu'il y a dans ce cas
-=======
 			reason = " :" + parter.getNickname() + "\r";
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 		std::vector<std::string>::iterator actualChannel;
 		for (actualChannel = channels.begin(); actualChannel != channels.end(); ++actualChannel)
 		{
 			bool nochannel = false;
 			bool notmember = false;	
 			mychannel = *actualChannel;
-<<<<<<< HEAD
-
-=======
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 			for (channelIt = channelList.begin(); channelIt != channelList.end(); ++channelIt)
 			{
 				if (channelIt->getChannelName() == mychannel)
 				{
 					nochannel = true;
-<<<<<<< HEAD
-					if (channelIt->getConnected(parter))
-=======
 					if (channelIt->getIsConnected(parter.getID()))
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 						notmember = true;
 					break;
 				}
@@ -640,20 +654,14 @@ void server::cmdPart(int fd, std::string buff)
 				send(parter.getFD(), message.c_str(), message.size(), 0);
 				continue ;
 			}
-<<<<<<< HEAD
-			channelIt->setDisconnect(parter);
-=======
 			channelIt->setUserDisconnect(&parter);
 			// enlever le user des invités du channel
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22
 			message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost PART " + mychannel + reason + "\n";
 			channelIt->sendToChannel(parter, message);
 			send(fd, message.c_str(), message.size(), 0);
 		}
 	}
 }
-<<<<<<< HEAD
-=======
 
 void server::cmdPass(std::string password, int fd)
 {
@@ -681,4 +689,3 @@ void server::cmdPass(std::string password, int fd)
 
 
 
->>>>>>> 3e7d6980c69169e8d0fc35d40044e4ed50616e22

@@ -59,6 +59,7 @@ class channel
 	void setUserInvited(client *user);
 	void setUserExcluded(client *user, bool value);
 	void setUserChanOp(client *user);
+	void undoUserChanOp(client *user);
 	void setMode(char c, bool value);
 	void setChannelName(std::string name);
 

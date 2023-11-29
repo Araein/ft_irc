@@ -17,13 +17,11 @@ class server
 	std::vector<channel> channelList;
 
 
-	void acceptNewUser();
 	void userMessage(int fd);
 	void errMessage(int fd);
 	void sendWelcomeMsgs(int fd);
 	int findChanbyName(std::string channel) const;
 	void printNewUser(int fd);
-	void closeOne(int fd);
 	void parseMessage(std::string buff, int fd);
 //*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
 //**********************************//THEME//**********************************//
@@ -40,7 +38,7 @@ class server
 	void cmdJoin(std::string buff, int fd);
 	void cmdInvite(int fd, std::string buff);
 	void cmdTopic(int fd, std::string buff);
-	void cmdMode();
+	void cmdMode(int fd, std::string buff);
 	void cmdPass(std::string password, int fd);
 	void cmdPart(int fd, std::string buff);
 	void cmdPing(std::string buff, int fd);
@@ -53,7 +51,6 @@ class server
 //**********************************/SERVER//**********************************/
 	void acceptNewUser();
 	void userNetcat();
-	void createChannel();
 
 
 //**********************************/INPUT//**********************************/

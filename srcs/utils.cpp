@@ -1,5 +1,13 @@
 #include "irc.hpp"
 
+int jumpToNextMode(std::string::iterator it){
+	int i = 0;
+	while ((*it != '+' || *it != '-') && *it != '\0'){
+		it++;
+		i++;
+	}
+	return i - 1;
+}
 
 std::string server::startServer(void) const
 {
@@ -180,17 +188,4 @@ void server::userUpDate(client *user)
 			}
 		}
 	}
-}
-
-std::string client::extract(const std::string& message, const std::string& start, const std::string& end)
-{
-	size_t startPos = message.find(start);
-	size_t endPos = message.find(end, startPos + start.length());
-
-	if (startPos != std::string::npos && endPos != std::string::npos)
-	{
-		return rtrim(ltrim(message.substr(startPos + start.length(), endPos - startPos - start.length())));
-	}
-
-	return "";
 }
