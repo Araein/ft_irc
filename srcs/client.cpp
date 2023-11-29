@@ -1,29 +1,60 @@
 #include "irc.hpp"
 
 client::~client(void) {}
-client::client(int id, int fd): _id(id), _fd(fd), _pwd(false), _ban(false) { }
-
-void client::firstMessage(std::string message)
+client::client(int id, int fd): _fd(fd), _id(id), _log(0), _netcat(0)
 {
-	Password = extract(message, "PASS ", "\n");
-	Nickname = extract(message, "NICK ", "\n");
-	Username = extract(message, "USER ", " ");
-	Identity = extract(message, ":", "\n");
+	std::ostringstream oss;
+	oss << _id;
+	_nickname = "user_" + oss.str();
+	_username = "user" + oss.str();
+	if (_id == 0)
+	{
+		_nickname = "chanOp_42stud";
+		_netcat = -1;
+	}
 }
 
-bool client::getPWD(void) const { return _pwd; }
+//**********************************//GETTER//**********************************//
 
 int client::getID(void) const { return _id; }
 int client::getFD(void) const { return _fd; }
-std::string client::getPassword(void) const { return Password;}
-std::string client::getIdentity(void) const { return Identity;}
-std::string client::getNickname(void) const { return Nickname;}
-std::string client::getUsername(void) const { return Username;}
+int client::getLog(void) const { return _log; }
+int client::getNetcat(void) const { return _netcat; }
+size_t client::getHowManyChannel(void) const { return channelConnected.size(); }
+std::string client::getPassword(void) const { return _password;}
+std::string client::getNickname(void) const { return _nickname;}
+std::string client::getUsername(void) const { return _username;}
+std::vector<channel>::iterator client::getConnectBegin() { return channelConnected.begin(); }
+std::vector<channel>::iterator client::getConnectEnd() { return channelConnected.end(); }
 
-void client::setPWD(void) { _pwd = true; }
+//**********************************//SETTER//**********************************//
 
-void client::setBAN(void) { _ban = true; }
-void client::setNickname(std::string nick) { Nickname = nick; }
+void client::setPassword(std::string pass) { _password = pass; }
+void client::setUsername(std::string username) { _username = username; }
+void client::setLog(void) { _log++; }
+void client::setNetcat(int value) { _netcat = value; }
+void client::setNickname(std::string nickname) { _nickname = nickname; }
+void client::setNetcat(void)
+{
+	if (_netcat > -1)
+		_netcat++;
+}
+
+//**********************************//FONCTIONS//**********************************//
+
+void client::addChannel(channel *chan) { channelConnected.push_back(*chan); }
+
+void client::deleteChannel(channel const &chan)
+{
+	for (std::vector<channel>::iterator it = channelConnected.begin(); it != channelConnected.end(); it++)
+	{
+		if (it->getChannelName() == chan.getChannelName())
+		{
+			channelConnected.erase(it);
+			break;
+		}	
+	}
+}
 
 
 

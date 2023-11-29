@@ -2,7 +2,7 @@
 
 server *srv = NULL;
 
-void sig_int(int signum)
+void sig_int(int signum)//********** GESTION DES SIGNAUX
 {
 	(void)signum;
 	srv->closeAll();
@@ -10,7 +10,7 @@ void sig_int(int signum)
 	exit(0);
 }
 
-static int parsePort(std::string port)
+static int parsePort(std::string port)//********** CONTROLE DU NUMERO DE PORT
 {
 	int val = 0;
 	for (size_t i=0; i < port.size(); i++){
@@ -34,22 +34,19 @@ static int parsePort(std::string port)
 int main (int ac, char **av)
 {
 	int port;
-	int fd = 0;
 
 	if (ac != 3 || (port = parsePort(av[1])) == false){
-		std::cerr << "Error: invalid argument.\nUsage <./ircserv> <port> <password>" << std::endl;
+		std::cerr << "Error: invalid argument.\nUsage <./ircserv> <port 49152:65535> <password>" << std::endl;
 		return 1;
 	}
 	signal(SIGINT, sig_int);
 	signal(SIGQUIT, SIG_IGN);
-	srv = new server(fd, port, av[2]);
+	srv = new server(port, av[2]);
 	if (srv->initSocket() == true){
-		srv->createChannel();
 		srv->mainLoop();
 	}
 	delete srv;
 	return 0;
 }
-
 
 

@@ -48,57 +48,41 @@ std::string getTrivia()
 
 void server::mybot(int fd, const std::string& command, std::string channelstr) 
 {
-
-    std::string message;
+	std::map<int, client>::iterator it = mapUser.find(fd);
+	client &user = it->second;
     std::vector<channel>::iterator currentchannel = selectChannel(channelstr);
-
-    if (command == "!bot\r\n")
+    std::string message = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 482 " + user.getUsername() + " " + channelstr + " :MrRobot is not present in this channel, use !bot as an operator to invite him.\r\n";
+    if (command == "!bot ")
     {
-        if (!currentchannel->getIsConnected(-1))//changer l'index de base de MrRobot?
+        if (currentchannel->getIsConnected(-1))
+            currentchannel->sendToChannel(*MrRobot,"Hello I am MrRobot, your friendly IRC bot! type \"!bot help\" to discover my commands!");
+        else if (currentchannel->getIsChanOp(user.getID()))//changer l'index de base de MrRobot?
+        {
             currentchannel->setUserConnect(MrRobot);//attention au channel privé + limite d'user
-        currentchannel->sendToChannel(*MrRobot,"I am MrRobot, your friendly IRC bot! type \"!bot help\" to discover my commands!");
+            currentchannel->sendToChannel(*MrRobot,"Hello I am MrRobot, your friendly IRC bot! type \"!bot help\" to discover my commands!");
+        }
+        else
+			send(user.getFD(), message.c_str(), message.size(), 0);
     }
     else if (!currentchannel->getIsConnected(-1))
-    {
-        currentchannel->sendToChannel(*MrRobot, "MrRobot is not present in this channel, use !bot to invite him."); //envoyer le message via notice?
-        return;
+	{
+        std::string message = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 441 " + user.getUsername() + " " + channelstr + " :MrRobot is not present in this channel, use !bot as an operator to invite him.\r\n";
+        send(user.getFD(), message.c_str(), message.size(), 0);
     }
-    else if (command == "!bot help\r\n")
+    else if (command == "!bot help ")
     	currentchannel->sendToChannel(*MrRobot,"Available commands: help | time | trivia | coinflip | thanks");
-    else if (command == "!bot time\r\n")
+    else if (command == "!bot time ")
     	currentchannel->sendToChannel(*MrRobot,"Current time is " + getCurrentTime());
-    else if (command == "!bot trivia\r\n")
+    else if (command == "!bot trivia ")
     	currentchannel->sendToChannel(*MrRobot, getTrivia());
-    else if (command == "!bot coinflip\r\n")
-    	currentchannel->sendToChannel(*MrRobot, flipCoin());
-    else if (command == "!bot thanks\r\n")
-    	currentchannel->sendToChannel(*MrRobot, "Cyprien, Sandra, and Théo thank you for using their IRC server!");
+    else if (command == "!bot coinflip ")
+    	currentchannel->sendToChannel(*MrRobot, "----- " + flipCoin() + " -----");
+    else if (command == "!bot thanks ")
+    	currentchannel->sendToChannel(*MrRobot, "Cyprien, Sandra and Théo thank you for using their IRC server!");
     else
     	currentchannel->sendToChannel(*MrRobot, "Sorry i don't know this command. Type \"!bot help\" to know my commands");
 }
 
-
-/*
-pas oublier de delete et new mr robot (comme admin)
-*/
-
-// dans  server.hpp
-
-
-//**********************************/BOT//**********************************/
-
-	// void mybot(int fd, const std::string& command);
-
-
-// dans commande.cpp
-
-	// //gestion du bot
-	// if (commandText.length() > 7)
-	// {
-	// 	std::string checkbot = commandText.substr(2, 5);
-	// 	if (checkbot == "!bot " || checkbot == "!bot\r")
-	// 	{
-	// 		mybot(fd, commandText.substr(2, commandText.length() - 2), name);
-	// 	}
-	// }
-	// // fin de gestion du bot
+// gerer l'incrementation du nombre d'user dans le channel avec mr robot + channel privés
+// empecher un autre user de s'appeller MrRobot -> faire en sorte que l'username soit déjà pris
+// si MrRobot seul dans un channel -> quitte le channel tout seul -> ajouter une variable pour verifier la presence du bot?

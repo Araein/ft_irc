@@ -4,37 +4,39 @@
 
 class client
 {
-	int _id;
-	int _fd;
-	bool _pwd;
-	bool _ban;
-	std::string Identity;
-	std::string Username;
-	std::string Nickname;
-	std::string Password;
+
+	int  _fd;
+	int  _id;
+	int _log;
+	clock_t _netcat;
+	std::string _nickname;
+	std::string _username;
+	std::string _password;
+	std::vector<channel> channelConnected;
 
 	public:
 	client(int id, int fd);
 	~client();
 
-	void firstMessage(std::string message);
-
-	bool getPWD() const;
 	int getID() const;
 	int getFD() const;
-
-
+	int getLog() const;
+	int getNetcat() const;
+	size_t getHowManyChannel() const;
 	std::string getPassword() const;
-	std::string getIdentity() const;
 	std::string getUsername() const;
 	std::string getNickname() const;
+	std::vector<channel>::iterator getConnectBegin();
+	std::vector<channel>::iterator getConnectEnd();
 
-	void setPWD();
-	void setBAN(void);
-	void setNickname(std::string nick);
+	void setPassword(std::string pass);
+	void setUsername(std::string username);
+	void setNickname(std::string nickname);
+	void setLog();
+	void setNetcat(int value);
+	void setNetcat();
+	void addChannel(channel *chan);
+	void deleteChannel(channel const &chan);
+
 
 };
-	
-
-
-

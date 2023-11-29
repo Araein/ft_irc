@@ -19,7 +19,8 @@ CC = c++
 CFLAGS = -Wall -Wextra -std=c++98 -g3
 
 DIR_SRCS = ./srcs
-SRCS = main.cpp server.cpp client.cpp channel.cpp utils.cpp command.cpp
+SRCS = main.cpp server.cpp client.cpp channel.cpp theme.cpp utils.cpp\
+	extract.cpp command.cpp input.cpp bot.cpp
 SRC = $(addprefix $(DIR_SRCS)/, $(SRCS))
 OBJS = $(SRC:.cpp=.o)
 

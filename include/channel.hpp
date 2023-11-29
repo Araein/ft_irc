@@ -2,37 +2,70 @@
 
 #include "irc.hpp"
 
+typedef struct chanData{
+	bool i_Mode;
+	bool t_Mode;
+	bool k_Mode;
+	bool o_Mode;
+	bool l_Mode;
+	bool needPass;
+	int maxConnectedUser;
+	int nbConnectedUser;
+	std::string name;
+	std::string password;
+	std::string topicMessage;
+	std::vector<client> chanOp;
+	std::vector<client> invited;
+	std::vector<client> connected;
+}channelData;
+
 class channel
 {
 
-	int _nbUser;
-	std::string _name;
-	std::vector<client> connected;
-	std::vector<client> admin;
-	std::vector<client> banned;
+	channelData chan;
+
 
 	public:
+	channel();
 	channel(std::string name);
 	~channel();
 
-	void sendToChannel(client const &, std::string);
+	int index;
 
+	int getNbConnectedUser() const;
+	int getNeedPass() const;
+	int getMaxConnectedUser() const;
+	bool getIsChanOp(int id) const;
+	bool getIsConnected(int id) const;
+	bool getIsInvited(int id) const;
+	bool getMode(char c) const;
+	std::string getAllMode(void) const;
+	std::string getPassword() const;
 	std::string getChannelName() const;
-	bool getConnected(client const &) const;
-	bool getConnectedFromString(std::string const &) const;
+	std::string getTopic() const;
+	std::string getAllChanOp() const;
+	std::string getAllConnected() const;
+	std::string getAllInvited() const;
+	bool getConnectedFromString(std::string const &user) const;
+	client* getClient(const std::string& user);
 
-	bool getAdmin(client const &) const;
-	bool getIsBanned(client const &) const;
-	int getNbUser() const;
-	client *getClient(std::string const &user);
+	void setNeedPass(bool value);
+	void setMaxConnectedUser(int value);
+	void setPassword(std::string password);
+	void setTopic(std::string message);
+	void setUserConnect(client *user);
+	void setUserDisconnect(client *user);
+	void setUserInvited(client *user);
+	void setUserChanOp(client *user);
+	void setMode(char c, bool value);
+	void setChannelName(std::string name);
 
-	void setConnect(client const &);
-	void setDisconnect(client const &);
-	void setAdminTrue(client const &);
-	void setAdminFalse(client const &);
-	void setBannedTrue(client const &);
-	void setBannedFalse(client const &);
-	void setNbUserUp();
-	void setNbUserDown();
+	void sendToChannel(client const &user, std::string message);
+	void sendInfoToChannel(client const &user, std::string message);
+	void welcomeMessage(client const &user) const;
+	bool userCanWrite(client *user, std::string channelName);
+	bool userCanJoin(client *user, std::string password);
+	void switchUser(client *user);
+	std::string userList() const;
 
 };
