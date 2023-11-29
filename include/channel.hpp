@@ -46,6 +46,7 @@ class channel
 	std::string getTopic() const;
 	std::string getAllChanOp() const;
 	std::string getAllConnected() const;
+	std::vector<client> getConnectedVector() const;
 	std::string getAllInvited() const;
 	bool getConnectedFromString(std::string const &user) const;
 	client* getClient(const std::string& user);

@@ -444,6 +444,8 @@ void server::cmdMode(int fd, std::string buff)
 	iss >> cmd;
 	iss >> chan;
 	iss >> arg;
+	if (arg == "b")
+		return ;
 	std::cout << "channel = " << chan << " arg = " << arg << std::endl;
 	if (chan[0] != '#') // mode is sent for user mode, ignoring (CLIENT SENDS MODE +i AT BEGINNING, MAKING A CRASH LATER IN THIS FUNCTION IF THIS LINE IS REMOVED AS THE CHANNELS ARE NOT SET YET)
 		return;
@@ -460,12 +462,14 @@ void server::cmdMode(int fd, std::string buff)
 		send(fd, msg.c_str(), msg.length(), 0);
 		return;
 	}
+	if (itchan->getIsChanOp(user.getID()) == false){
+		std::string error = ":localhost 482 " + user.getNickname() + " " + chan + " " + ":You're not channel operator\r\n";
+		send(fd, error.c_str(), error.length(), 0);
+		return ;
+	}
 	std::string argmsg = "";
 	if (arg[0] == '+' || arg[0] == '-'){
 		msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost MODE " + chan + " ";
-		for (std::string::iterator it = str.begin() + (cmd.length() + chan.length() + 2); it != str.end(); it++){
-			std::cout << "DEBUG = " << *it << std::endl;
-		}
 		for (std::string::iterator it = str.begin() + (cmd.length() + chan.length() + 2); it != str.end(); it++){
 			if (*it == '+' || mode == 1){
 				if (mode == 0 || mode == -1){
@@ -591,7 +595,9 @@ void server::cmdMode(int fd, std::string buff)
 		finalmsg.append(" " + it->second);
 	}
 	finalmsg += "\r\n";
-	send(fd, finalmsg.c_str(), finalmsg.length(), 0);
+	for (std::vector<client>::iterator it = itchan->getConnectedVector().begin(); it != itchan->getConnectedVector().end(); it++){
+		send(it->getFD(), finalmsg.c_str(), finalmsg.length(), 0);
+	}
 }
 
 void server::cmdPing(std::string buff, int fd)

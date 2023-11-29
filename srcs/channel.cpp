@@ -38,6 +38,7 @@ int channel::getMaxConnectedUser(void) const { return chan.maxConnectedUser; }
 std::string channel::getChannelName() const { return chan.name; }
 std::string channel::getTopic() const { return chan.topicMessage; }
 std::string channel::getPassword() const { return chan.password; }
+std::vector<client> channel::getConnectedVector()const { return chan.connected; }
 
 bool channel::getIsChanOp(int id) const
 {
@@ -95,6 +96,7 @@ std::string channel::getAllConnected(void) const
 	msg += " \n";
 	return msg;
 }
+
 
 std::string channel::getAllInvited(void) const
 {
@@ -219,8 +221,10 @@ void channel::setUserChanOp(client *user)//********** INSCRIT UN CLIENT COMME CH
 void channel::undoUserChanOp(client *user){
 	if (getIsChanOp(user->getID()) == true){
 		for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++){
-			if (it->getID() == user->getID())
+			if (it->getID() == user->getID()){
 				chan.chanOp.erase(it);
+				return ;
+			}
 		}
 	}
 }
