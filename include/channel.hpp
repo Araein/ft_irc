@@ -60,6 +60,7 @@ class channel
 	void setMode(char c, bool value);
 	void setChannelName(std::string name);
 
+	void sendToChannelnoPRIVMSG(client const &user, std::string message);
 	void sendToChannel(client const &user, std::string message);
 	void sendInfoToChannel(client const &user, std::string message);
 	void welcomeMessage(client const &user) const;

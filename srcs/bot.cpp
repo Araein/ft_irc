@@ -51,7 +51,7 @@ void server::mybot(int fd, const std::string& command, std::string channelstr)
 	std::map<int, client>::iterator it = mapUser.find(fd);
 	client &user = it->second;
     std::vector<channel>::iterator currentchannel = selectChannel(channelstr);
-    std::string message = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 482 " + user.getUsername() + " " + channelstr + " :MrRobot is not present in this channel, use !bot as an operator to invite him.\r\n";
+    std::string message = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 482 " + user.getUsername() + " " + channelstr + " :: MrRobot is not present in this channel, use !bot as an operator to invite him.\r\n";
     if (command == "!bot ")
     {
         if (currentchannel->getIsConnected(-1))
@@ -63,11 +63,6 @@ void server::mybot(int fd, const std::string& command, std::string channelstr)
         }
         else
 			send(user.getFD(), message.c_str(), message.size(), 0);
-    }
-    else if (!currentchannel->getIsConnected(-1))
-	{
-        std::string message = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 441 " + user.getUsername() + " " + channelstr + " :MrRobot is not present in this channel, use !bot as an operator to invite him.\r\n";
-        send(user.getFD(), message.c_str(), message.size(), 0);
     }
     else if (command == "!bot help ")
     	currentchannel->sendToChannel(*MrRobot,"Available commands: help | time | trivia | coinflip | thanks");

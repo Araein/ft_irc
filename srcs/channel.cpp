@@ -259,6 +259,22 @@ void channel::sendToChannel(client const &user, std::string message)
 	}
 }
 
+void channel::sendToChannelnoPRIVMSG(client const &user, std::string message)
+{
+	for (int i = 0; i < chan.nbConnectedUser; i++)
+	{
+		if (chan.connected[i].getID() != user.getID())
+		{
+			if (send(chan.connected[i].getFD(), message.c_str(), message.size(), 0) == -1)
+				std::cout << "erreur send" << std::endl;
+		}
+	}
+}
+
+
+
+
+
 void channel::sendInfoToChannel(client const &user, std::string message)
 {
 	std::string msg;

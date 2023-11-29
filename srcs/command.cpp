@@ -176,8 +176,7 @@ void server::cmdKick(int fd, std::string buff)
 					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
 					send(targetClient->getFD(), message.c_str(), message.size(), 0);
 					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
-					//if (nicks != "MrRobot")
-						channelIt->sendToChannel(*targetClient, message);
+					channelIt->sendToChannelnoPRIVMSG(*targetClient, message);
 				}
 				else //si le membre n'est pas sur le channel
 				{
@@ -522,8 +521,10 @@ void server::cmdPart(int fd, std::string buff)
 			channelIt->setUserDisconnect(&parter);
 			// enlever le user des invités du channel
 			message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost PART " + mychannel + reason + "\n";
-			channelIt->sendToChannel(parter, message);
+			channelIt->sendToChannelnoPRIVMSG(parter, message);
 			send(fd, message.c_str(), message.size(), 0);
+			if (channelIt->getNbConnectedUser() == 1 && channelIt->getConnectedFromString("MrRobot"))
+				channelIt->setUserDisconnect(MrRobot);
 		}
 	}
 }
@@ -556,7 +557,3 @@ void server::cmdPass(std::string password, int fd)
 	send(fd, msg.c_str(), msg.size(), 0);
 	closeOne(fd);
 }
-
-
-
-
