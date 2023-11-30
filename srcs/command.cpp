@@ -26,7 +26,7 @@ void server::parseCommand(std::string buff, int fd)
 	}
 	else if (command == "invite" || command == "INVITE")
 	{
-		std::cout << "DEBUG commande recu a traiter: INVITE" << std::endl;//********** A SUPPRIMER
+		cmdInvite(fd, buff);
 	}
 	else if (command == "topic" || command == "TOPIC")
 	{
