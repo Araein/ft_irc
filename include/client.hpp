@@ -29,12 +29,12 @@ class client
 	int getFD() const;
 	int getLog() const;
 	int getNetcat() const;
+	size_t getHowManyChannel() const;
 	std::string getPassword() const;
 	std::string getUsername() const;
 	std::string getNickname() const;
 	std::vector<channel>::iterator getConnectBegin();
 	std::vector<channel>::iterator getConnectEnd();
-
 
 	void setPassword(std::string pass);
 	void setUsername(std::string username);

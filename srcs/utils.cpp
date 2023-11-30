@@ -97,84 +97,6 @@ bool server::checkChannelName(std::string name)
 	return true;
 }
 
-std::vector<channel>::iterator server::selectChannel(std::string name)
-{
-	if (name.size() == 0)
-		return channelList.end();
-	std::vector<channel>::iterator it;
-	for (it = channelList.begin(); it != channelList.end();  it++)
-	{
-		if (it->getChannelName().compare(name) == 0)
-			return it;
-	}
-	return it;
-}
-
-std::map<std::string, std::string> server::splitCommandJoin(std::string buff)
-{
-	std::istringstream iss(buff);
-	std::string str;
-	std::vector<std::string> vec;
-	std::vector<std::string> chan;
-	std::vector<std::string> pass;
-	std::map<std::string, std::string> chanPass;
-	std::vector<std::string>::iterator it1 = vec.begin() + 1;//sans join
-	std::vector<std::string>::iterator it2;
-
-	while (std::getline(iss, str, ' '))//JOIN CHANNELS PASS
-	{
-		if (str[str.size() - 1] == '\n' && str[str.size() - 2] == '\r')
-			str = str.substr(0, str.size() - 2);
-		else if (str[str.size() - 1] == '\n' || str[str.size() - 1] == '\r')
-			str = str.substr(0, str.size() - 1);
-		vec.push_back(str);
-	}
-	if (vec.size() == 1)
-	{
-		chanPass.insert(std::make_pair("", ""));
-		return chanPass;
-	}
-	iss.clear();
-	iss.str(vec[1]);
-	while (std::getline(iss, str, ','))//SEPARE LES CHANNELS
-		chan.push_back(str);
-	iss.clear();
-	if (vec.size() > 2)
-		iss.str(vec[2]);
-	while (std::getline(iss, str, ','))//SEPARE LES PASS
-		pass.push_back(str);
-	if (pass.size() < chan.size())
-	{
-		while (pass.size() < chan.size())
-			pass.push_back("");
-	}
-	it1 = chan.begin();
-	it2 = pass.begin();
-	while (it1 != chan.end())
-	{
-		chanPass.insert(std::make_pair(*it1, *it2));
-		it1++;
-		it2++;
-	}
-	return chanPass;
-}
-
-std::vector<std::string> server::splitCommandNick(std::string buff)
-{
-	std::istringstream iss(buff);
-	std::string str;
-	std::vector<std::string> vec;
-	while (std::getline(iss, str, ' '))
-	{
-		if (str[str.size() - 1] == '\n' && str[str.size() - 2] == '\r')
-			str = str.substr(0, str.size() - 2);
-		else if (str[str.size() - 1] == '\n' || str[str.size() - 1] == '\r')
-			str = str.substr(0, str.size() - 1);
-		vec.push_back(str);
-	}
-	return vec;
-}
-
 void server::userUpDate(client *user)
 {
 	for (std::vector<channel>::iterator it = user->getConnectBegin(); it != user->getConnectEnd(); it++)
@@ -201,3 +123,128 @@ bool findKey(std::vector<std::string> vec, std::string key){
 void printFullUser(client &user){
 	std::cout << "fd = " << user.getFD() << " id = " << user.getID() << "log = " << user.getLog() << " nickname = " << user.getNickname() << " username = " << user.getUsername() << std::endl;;
 }
+
+std::vector<channel>::iterator server::selectChannel(std::string name)
+{
+	std::vector<channel>::iterator it;
+	if (name.size() == 0)
+		return channelList.end();
+	for (it = channelList.begin(); it != channelList.end();  it++)
+	{
+		if (it->getChannelName() == name)
+			return it;
+	}
+	return channelList.end();
+}
+
+std::map<std::string, std::string> server::splitCommandJoin(std::string buff)
+{
+	std::istringstream iss(buff);
+	std::string str;
+	std::vector<std::string> vec;
+	std::vector<std::string> chan;
+	std::vector<std::string> pass;
+	std::map<std::string, std::string> chanPass;
+	std::vector<std::string>::iterator it1 = vec.begin() + 1;
+	std::vector<std::string>::iterator it2;
+
+	while (std::getline(iss, str, ' '))
+	{
+		str = deleteCRLF(str);
+		vec.push_back(str);
+	}
+	if (vec.size() == 1)
+		return chanPass;
+	iss.clear();
+	iss.str(vec[1]);
+	while (std::getline(iss, str, ','))
+		chan.push_back(str);
+	iss.clear();
+	if (vec.size() > 2)
+		iss.str(vec[2]);
+	while (std::getline(iss, str, ','))
+		pass.push_back(str);
+	if (pass.size() < chan.size())
+	{
+		while (pass.size() < chan.size())
+			pass.push_back("");
+	}
+	it1 = chan.begin();
+	it2 = pass.begin();
+	while (it1 != chan.end())
+	{
+		chanPass.insert(std::make_pair(*it1, *it2));
+		it1++;
+		it2++;
+	}
+	return chanPass;
+}
+
+std::vector<std::string> server::splitCommandNick(std::string buff)
+{
+	std::istringstream iss(buff);
+	std::string str;
+	std::vector<std::string> vec;
+	while (std::getline(iss, str, ' '))
+	{
+		str = deleteCRLF(str);
+		vec.push_back(str);
+	}
+	return vec;
+}
+
+std::vector<std::string> server::splitCommandPrivmsg(std::string buff)
+{
+	std::istringstream iss(buff);
+	std::string str;
+	std::string tp = "";
+	std::vector<std::string> vec;
+	int indice = 0;
+	while (std::getline(iss, str, ' '))
+	{
+		indice++;
+		str = deleteCRLF(str);
+		if (indice < 3)
+			vec.push_back(str);
+		else
+			tp += str + " ";
+	}
+	if (tp.size() > 0)
+	{
+		if (tp[0] == ':')
+			vec.push_back(&tp[1]);
+		else
+			vec.push_back(tp);
+	}
+	return vec;
+}
+
+void server::userUpDate(client *user, std::string newNick)
+{
+	std::string msg = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost NICK " + newNick + "\n";
+	send(user->getFD(), msg.c_str(), msg.size(), 0);
+	for (std::vector<channel>::iterator it = user->getConnectBegin(); it != user->getConnectEnd(); it++)
+	{
+		for (std::vector<channel>::iterator itchan = channelList.begin(); itchan != channelList.end(); itchan++)
+		{
+			if (itchan->getChannelName() == it->getChannelName())
+			{
+
+				itchan->switchUser(user);
+				itchan->sendInfoToChannel(*user, " is now know as " + newNick);
+				break;
+			}
+		}
+	}
+}
+
+std::string server::deleteCRLF(std::string str)
+{
+	if (str[str.size() - 1] == '\n' && str[str.size() - 2] == '\r')
+		str = str.substr(0, str.size() - 2);
+	else if (str[str.size() - 1] == '\n' || str[str.size() - 1] == '\r')
+		str = str.substr(0, str.size() - 1);
+	return str;
+}
+
+

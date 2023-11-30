@@ -1,5 +1,8 @@
 #include "irc.hpp"
 
+
+//**********************************//GESTION DES MESSAGES ENTRANTS//**********************************//
+
 void server::receivMessage(void)
 {
 	for (int i = 1; i < maxFD + 1; i++)
@@ -62,12 +65,14 @@ void server::configureNewUser(std::string const &buff, int fd)
 	std::string command;
 	std::string msg;
 	iss >> command;
-	if (command == "QUIT" || command == "quit" || command == "PING")// || command == "PASS" || command == "pass")
+	if (command == "QUIT" || command == "quit" || command == "PING")
 		parseCommand(buff, fd);
 	else
 	{
 		std::string username;
 		std::string password = extract(buff, "PASS ", "\n");
+		if (password.size() == 0)
+			password = extract(buff, "pass ", "\n");
 		std::string nickname = extract(buff, "NICK ", "\n");
 		std::string name = extract(buff, "USER ", "\n");
 		iss.clear();
@@ -80,10 +85,6 @@ void server::configureNewUser(std::string const &buff, int fd)
 			mapUser.find(fd)->second.setLog();
 			std::string str = "NICK " + nickname + " " + username;
 			cmdNick(fd, str);
-			// if (username.size() == 0 || nameUserCheck(username) == false || nameExist(username) == false)
-			// 	mapUser.find(fd)->second.setUsername(mapUser.find(fd)->second.getNickname());
-			// else 
-			// 	mapUser.find(fd)->second.setUsername(username);
 			printHome(fd);
 			std::cout << GREEN << BOLD << "[42_IRC:  USER LOGGED IN] "<< mapUser.find(fd)->second.getNickname() << NONE << std::endl;
 		}

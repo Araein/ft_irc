@@ -16,8 +16,11 @@ _id(100), _port(port), _curPlace(0), _totalPlace(0), _password(password)
 server::~server(void)
 {
 	delete admin;
+	delete MrRobot;
 	delete [] chan;
 }
+
+//**********************************//SOCKET//**********************************//
 
 bool server::initSocket(void)
 {
@@ -103,7 +106,7 @@ void server::acceptNewUser(void)
 	tmp.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
 	if (tmp.fd == -1)
 		return;
-	std::cout << "[42_IRC:  NEW CONNECTION]" << std::endl;
+	std::cout << "[42_IRC:  NEW CONNECTION REQUEST]" << std::endl;
 	_curPlace = findPlace();
 	_fds[_curPlace].fd = tmp.fd;
 	_fds[_curPlace].events = tmp.events;
@@ -139,11 +142,23 @@ void server::userNetcat(void)
 			send(it->second.getFD(), msg.c_str(), msg.size(), 0);
 		}
 	}
+	client user( ++_id, _fds[_curPlace].fd);
+	mapUser.insert(std::make_pair(_fds[_curPlace].fd, user));
+	_totalPlace++;
 }
+
+
+//**********************************//GESTION DE NETCAT//**********************************//
+
+
+//**********************************//CANAUX DE BASE//**********************************//
 
 void server::createChannel(void)
 {
 	admin = new client(0, 0);
+	MrRobot = new client(-1, -1);
+	MrRobot->setNickname("MrRobot");
+	MrRobot->setUsername("MrRobot");
 	chan = new channel[10];
 	chan[0].setChannelName("#Libft");
 	chan[0].setUserChanOp(admin);

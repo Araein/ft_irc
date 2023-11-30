@@ -17,7 +17,6 @@ typedef struct chanData{
 	std::vector<client> chanOp;
 	std::vector<client> invited;
 	std::vector<client> connected;
-	std::vector<client> excluded;
 }channelData;
 
 class channel
@@ -38,7 +37,6 @@ class channel
 	bool getIsChanOp(int id) const;
 	bool getIsConnected(int id) const;
 	bool getIsInvited(int id) const;
-	bool getIsExcluded(int id) const;
 	bool getMode(char c) const;
 	std::string getAllMode(void) const;
 	std::string getPassword() const;
@@ -48,8 +46,11 @@ class channel
 	std::string getAllConnected() const;
 	std::vector<client> getConnectedVector() const;
 	std::string getAllInvited() const;
+	void sendInfoToChannel(client const &user, std::string message);
+	bool userCanWrite(client *user, std::string channelName);
 	bool getConnectedFromString(std::string const &user) const;
 	client* getClient(const std::string& user);
+	void sendToChannelnoPRIVMSG(client const &user, std::string message);
 
 	void setNeedPass(bool value);
 	void setMaxConnectedUser(int value);
@@ -58,7 +59,6 @@ class channel
 	void setUserConnect(client *user);
 	void setUserDisconnect(client *user);
 	void setUserInvited(client *user);
-	void setUserExcluded(client *user, bool value);
 	void setUserChanOp(client *user);
 	void undoUserChanOp(client *user);
 	void setMode(char c, bool value);

@@ -10,24 +10,28 @@ class server
 	int _totalPlace;
 
 	client *admin;
+	client *MrRobot;
+
 	channel *chan;
 	pollfd _fds[maxFD + 1];
 	std::string _password;
+	std::string _partCommand;
 	std::map<int, client> mapUser;
 	std::vector<channel> channelList;
 
-
-	void userMessage(int fd);
-	void errMessage(int fd);
-	void sendWelcomeMsgs(int fd);
-	int findChanbyName(std::string channel) const;
-	void parseMessage(std::string buff, int fd);
+//*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
+//**********************************//THEME//**********************************//
 //*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
 //**********************************//THEME//**********************************//
 	void sendWelcomMsgs(int) const;
 	void printServerHeader() const;
 	std::string printChannel();
 	void printHome(int fd);
+
+	void userMessage(int fd);
+	void errMessage(int fd);
+	int findChanbyName(std::string channel) const;
+	void parseMessage(std::string buff, int fd);
 
 
 //**********************************/COMMANDE//**********************************/
@@ -50,7 +54,7 @@ class server
 //**********************************/SERVER//**********************************/
 	void acceptNewUser();
 	void userNetcat();
-
+	void createChannel(void);
 
 //**********************************/INPUT//**********************************/
 	void receivMessage();
@@ -68,9 +72,15 @@ class server
 	bool checkChannelName(std::string name);
 	std::vector<channel>::iterator selectChannel(std::string name);
 	int findChanbyName(std::string chan);
+	void userUpDate(client *user);
 	std::map<std::string, std::string> splitCommandJoin(std::string buff);
 	std::vector<std::string> splitCommandNick(std::string buff);
-	void userUpDate(client *user);
+	std::vector<std::string> splitCommandPrivmsg(std::string buff);
+	void userUpDate(client *user, std::string oldNick);
+	std::string deleteCRLF(std::string str);
+//**********************************/BOT//**********************************/
+
+	void mybot(int fd, const std::string& command, std::string channelstr);
 
 public:
 	server(int, std::string);
@@ -79,8 +89,6 @@ public:
 //**********************************/SERVER//**********************************/
 	bool initSocket();
 	void mainLoop();
-	void createChannel();
-
 
 //**********************************/UTILS//**********************************/
 	void closeAll();
