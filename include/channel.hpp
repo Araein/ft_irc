@@ -63,6 +63,8 @@ class channel
 	void undoUserChanOp(client *user);
 	void setMode(char c, bool value);
 	void setChannelName(std::string name);
+	void setAllInvited(void);
+	void unsetUserInvited(client *user);
 
 	void sendToChannel(client const &user, std::string message);
 	void welcomeMessage(client const &user) const;

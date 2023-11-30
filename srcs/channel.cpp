@@ -122,7 +122,7 @@ bool channel::getMode(char c) const
 	return false;
 }
 
-std::string channel::getAllMode(void) const // removed the o mode return as it never appears when listing modes even after setting a new op
+std::string channel::getAllMode(void) const // removed the o mode return as it never appears when listing modes even after setting a new op, adding password if k mode is set
 {
 	std::string txt= "";
 	if (chan.i_Mode == true)
@@ -133,7 +133,15 @@ std::string channel::getAllMode(void) const // removed the o mode return as it n
 		txt += 'k';
 	if (chan.l_Mode == true)
 		txt += 'l';
+	if (chan.k_Mode == true)
+		txt += getPassword();
 	return txt;
+}
+
+void channel::setAllInvited(void){ // INSCRIT TOUT LES CLIENTS DU CHANNEL COMME INVITE
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++){
+		chan.invited.push_back(*it);
+	}
 }
 
 bool channel::getConnectedFromString(std::string const &user) const
@@ -206,6 +214,13 @@ void channel::setUserDisconnect(client *user)
 	}
 }
 
+void channel::unsetUserInvited(client *user){ //********** DESINSCRIT UN CLIENT COMME INVITE
+	for (std::vector<client>::iterator it = chan.invited.begin(); it != chan.invited.end(); it++){
+		if (it->getID() == user->getID())
+			chan.invited.erase(it);
+	}
+}
+
 void channel::setUserInvited(client *user)//********** INSCRIT UN CLIENT COMME INVITE
 {
 	if (getIsInvited(user->getID()) == false)
@@ -218,7 +233,7 @@ void channel::setUserChanOp(client *user)//********** INSCRIT UN CLIENT COMME CH
 		chan.chanOp.push_back(*user);
 }
 
-void channel::undoUserChanOp(client *user){
+void channel::undoUserChanOp(client *user){ // ENLEVE UN CLIENT COMME CHANOP
 	if (getIsChanOp(user->getID()) == true){
 		for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++){
 			if (it->getID() == user->getID()){

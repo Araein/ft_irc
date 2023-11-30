@@ -58,3 +58,5 @@ std::string extract(const std::string& message, const std::string& start, const 
 std::string rtrim(const std::string& str);
 std::string ltrim(const std::string& str);
 int jumpToNextMode(std::string::iterator it);
+void printFullUser(client &user);
+bool findKey(std::vector<std::string> vec, std::string key);

@@ -21,7 +21,6 @@ class server
 	void errMessage(int fd);
 	void sendWelcomeMsgs(int fd);
 	int findChanbyName(std::string channel) const;
-	void printNewUser(int fd);
 	void parseMessage(std::string buff, int fd);
 //*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
 //**********************************//THEME//**********************************//

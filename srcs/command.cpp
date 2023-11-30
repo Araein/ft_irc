@@ -437,7 +437,8 @@ void server::cmdMode(int fd, std::string buff)
 	std::string arg;
 	std::string msg;
 	std::string tmp;
-	std::map<std::string, std::string> keys;
+	std::vector<std::string> keys;
+	std::vector<std::string> values;
 	client user = mapUser.find(fd)->second;
 	std::vector<channel>::iterator itchan = channelList.begin();
 
@@ -446,7 +447,6 @@ void server::cmdMode(int fd, std::string buff)
 	iss >> arg;
 	if (arg == "b")
 		return ;
-	std::cout << "channel = " << chan << " arg = " << arg << std::endl;
 	if (chan[0] != '#') // mode is sent for user mode, ignoring (CLIENT SENDS MODE +i AT BEGINNING, MAKING A CRASH LATER IN THIS FUNCTION IF THIS LINE IS REMOVED AS THE CHANNELS ARE NOT SET YET)
 		return;
 	while (itchan->getChannelName() != chan && itchan != channelList.end()){ //find channel | IT CHAAAAN UwU
@@ -478,6 +478,7 @@ void server::cmdMode(int fd, std::string buff)
 				}
 				if (*it == 'i' && argmsg.find('i') == std::string::npos && arg.find('i') != std::string::npos){ // found i mode, setting up invite mode. Checks if there is already a i mode in the command wether it's suppresing or adding doesn't matter) if there is ignoring the i mode
 					itchan->setMode('i', true);
+					itchan->setAllInvited();
 					argmsg += "i";
 				}
 				if (*it == 't' && argmsg.find('t') == std::string::npos && arg.find('t') != std::string::npos){ // found t mode, setting up restricted topic mode> Checks if there is already a t mode in the command wether it's suppresing or adding doesn't matter) if there is ignoring the t mode
@@ -489,8 +490,10 @@ void server::cmdMode(int fd, std::string buff)
 					if (tmp.empty() == false){ // if password is not empty we set it up, else we ignore it. Checks if there is already a k mode in teh command (wether it's suppresing or adding doesn't matter) if there is ignoring the k mode
 						itchan->setPassword(tmp);
 						itchan->setMode('k', true);
+						itchan->setNeedPass(true);
 						argmsg += "k";
-						keys.insert(std::pair<std::string, std::string>("password", tmp));
+						keys.push_back("password");
+						values.push_back(tmp);
 					}
 				}
 				if (*it == 'o' && arg.find('o') != std::string::npos){
@@ -502,7 +505,8 @@ void server::cmdMode(int fd, std::string buff)
 							itchan->setUserChanOp(itchan->getClient(tmp));
 							itchan->setMode('o', true);
 							argmsg += "o";
-							keys.insert(std::pair<std::string, std::string>("chanops", tmp));
+							keys.push_back("chanops");
+							values.push_back(tmp);
 						}
 						else{ // else return error and ignore o mode
 							std::string error = ":localhost 401 " + user.getNickname() + " " + tmp + " :no such nick\r\n";
@@ -518,7 +522,8 @@ void server::cmdMode(int fd, std::string buff)
 						itchan->setMaxConnectedUser(std::atoi(tmp.c_str()));
 						itchan->setMode('l',true);
 						argmsg += "l";
-						keys.insert(std::pair<std::string, std::string>("limit", tmp));
+						keys.push_back("limit");
+						values.push_back(tmp);
 					}
 					else if (tmp.empty()){
 						std::string error = ":localhost 461 " + user.getNickname() + " MODE +l :Not enough parameters\r\n";
@@ -548,10 +553,19 @@ void server::cmdMode(int fd, std::string buff)
 					argmsg += "t";
 				}
 				if (*it == 'k' && arg.find('k') != std::string::npos){ // remove password if a password is set, if not ignoring
-					if (argmsg.find('k') != std::string::npos && keys.find("password") != keys.end()) // if there is a k before BUT the argument is not valid we ignore all the k's altogether
+					if (argmsg.find('k') != std::string::npos && findKey(keys, "password") == true) // if there is a k before BUT the argument is not valid we ignore all the k's altogether
 					{
 						if (itchan->getMode('k') == true){
 							itchan->setMode('k', false);
+							itchan->setNeedPass(false);
+							itchan->setPassword("");
+							argmsg += "k";
+						}
+					}
+					else if (argmsg.find('k') == std::string::npos && findKey(keys, "password") == false){
+						if (itchan->getMode('k') == true){
+							itchan->setMode('k', false);
+							itchan->setNeedPass(false);
 							itchan->setPassword("");
 							argmsg += "k";
 						}
@@ -565,7 +579,8 @@ void server::cmdMode(int fd, std::string buff)
 						if (itchan->getClient(tmp)){ // checking if user exists if it does remove it from admins
 							itchan->undoUserChanOp(itchan->getClient(tmp));
 							argmsg += 'o';
-							keys.insert(std::pair<std::string, std::string>("chanopsremove", tmp));
+							keys.push_back("chanopsremove");
+							values.push_back(tmp);
 						}
 						else{ // else return error and ignore o mode
 							std::string error = ":localhost 401 " + user.getNickname() + " " + tmp + " :no such nick\r\n";
@@ -591,10 +606,11 @@ void server::cmdMode(int fd, std::string buff)
 		}
 	}
 	std::string finalmsg(msg + argmsg);
-	for (std::map<std::string, std::string>::iterator it = keys.begin(); it != keys.end(); it++){
-		finalmsg.append(" " + it->second);
+	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++){
+		finalmsg.append(" " + *it);
 	}
 	finalmsg += "\r\n";
+	send(fd, finalmsg.c_str(), finalmsg.length(), 0);
 	for (std::vector<client>::iterator it = itchan->getConnectedVector().begin(); it != itchan->getConnectedVector().end(); it++){
 		send(it->getFD(), finalmsg.c_str(), finalmsg.length(), 0);
 	}
@@ -661,7 +677,7 @@ void server::cmdPart(int fd, std::string buff)
 				continue ;
 			}
 			channelIt->setUserDisconnect(&parter);
-			// enlever le user des invités du channel
+			channelIt->unsetUserInvited(&parter);
 			message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost PART " + mychannel + reason + "\n";
 			channelIt->sendToChannel(parter, message);
 			send(fd, message.c_str(), message.size(), 0);

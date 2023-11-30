@@ -189,3 +189,15 @@ void server::userUpDate(client *user)
 		}
 	}
 }
+
+bool findKey(std::vector<std::string> vec, std::string key){
+	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++){
+		if (*it == key)
+			return true;
+	}
+	return false;
+}
+
+void printFullUser(client &user){
+	std::cout << "fd = " << user.getFD() << " id = " << user.getID() << "log = " << user.getLog() << " nickname = " << user.getNickname() << " username = " << user.getUsername() << std::endl;;
+}
