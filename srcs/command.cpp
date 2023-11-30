@@ -674,9 +674,6 @@ void server::cmdMode(int fd, std::string buff)
 	}
 	finalmsg += "\r\n";
 	send(fd, finalmsg.c_str(), finalmsg.length(), 0);
-	for (std::vector<client>::iterator it = itchan->getConnectedVector().begin(); it != itchan->getConnectedVector().end(); it++){
-		send(it->getFD(), finalmsg.c_str(), finalmsg.length(), 0);
-	}
 }
 
 void server::cmdPing(std::string buff, int fd)
