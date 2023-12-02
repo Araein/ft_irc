@@ -55,6 +55,8 @@ void server::printHome(int fd)
 	msg += "          **  *********    *********   **       **    ********* \n";
 	msg += "****************************************************************\n";
 	msg += " \n";
+	msg += printBonus();
+	msg += " \n";
 	msg += "AVAILABLE COMMANDS\n";
 	msg += "   -PASS:   <password>\n";
 	msg += "   -NICK:   <nickname> \n";
@@ -76,7 +78,7 @@ std::string server::printChannel(void)
 	std::string msg = "";
 	int i = 0;
 	msg += "AVAILABLE CHANNELS\n";
-	msg += "Free access to all\n";
+	msg += "*Free access\n";
 	for (std::vector<channel>::iterator it = channelList.begin(); it != channelList.end(); it++)
 	{
 		i++;
@@ -89,7 +91,7 @@ std::string server::printChannel(void)
 			msg += "  " + it->getChannelName();
 	}
 	msg += " \n";
-	msg += "Access with password and/or invitation\n";
+	msg += "*With password and/or invitation\n";
 	for (std::vector<channel>::iterator it = channelList.begin(); it != channelList.end(); it++)
 	{
 		if (it->getMode('i') == true || it->getNeedPass() == true)
@@ -98,3 +100,23 @@ std::string server::printChannel(void)
 	msg += " \n";
 	return msg;
 }
+
+std::string server::printBonus(void)
+{
+	std::string msg = "You can call";
+	msg += GREEN;
+	msg += BOLD;
+	msg += "  MrRobot ";
+	msg += NONE;
+	msg += "(in channel send !bot)\n";
+	msg += "\n";
+	msg += "You can ";
+	msg += GREEN;
+	msg += BOLD;
+	msg += "      Transfer File ";
+	msg += NONE;
+	msg += " (in channel send !trf help)\n";
+	return msg;
+}
+
+

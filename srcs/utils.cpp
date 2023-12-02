@@ -26,6 +26,7 @@ void server::closeOne(int fd)
 	{
 		if (it->second.getFD() == fd)
 		{
+			it->second.exitUser();
 			shutdown(it->second.getFD(), SHUT_RDWR);
 			mapUser.erase(it);
 			break;
@@ -202,5 +203,37 @@ std::string server::deleteCRLF(std::string str)
 		str = str.substr(0, str.size() - 1);
 	return str;
 }
+
+int server::jumpToNextMode(std::string::iterator it){
+	int i = 0;
+	while ((*it != '+' || *it != '-') && *it != '\0'){
+		it++;
+		i++;
+	}
+	return i - 1;
+}
+
+bool server::findKey(std::vector<std::string> vec, std::string key){
+	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++){
+		if (*it == key)
+			return true;
+	}
+	return false;
+}
+
+std::map<int, client>::iterator server::selectUser(std::string name)
+{
+	std::map<int, client>::iterator it;
+	if (name.size() == 0)
+		return mapUser.end();
+	for (it = mapUser.begin(); it != mapUser.end();  it++)
+	{
+		if (it->second.getNickname() == name)
+			return it;
+	}
+	return mapUser.end();
+}
+
+
 
 

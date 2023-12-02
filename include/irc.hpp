@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include <cstring>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -20,13 +21,17 @@
 #include <algorithm>
 #include <cctype>
 #include <ctime>
+#include <cmath>
 #include <iomanip>
-
+#include <cstdlib>
+#include <fstream>
+#include <ostream>
 
 #define bufferSize 4096
 #define minPort 49152
 #define maxPort 65535
 #define maxFD 20
+#define maxSEND 4
 
 
 

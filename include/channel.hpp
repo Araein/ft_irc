@@ -24,7 +24,6 @@ class channel
 
 	channelData chan;
 
-
 	public:
 	channel();
 	channel(std::string name);
@@ -32,6 +31,7 @@ class channel
 
 	int index;
 
+//**********************************/GETTER//**********************************/
 	int getNbConnectedUser() const;
 	int getNeedPass() const;
 	int getMaxConnectedUser() const;
@@ -42,6 +42,7 @@ class channel
 	std::string getAllMode(void) const;
 	std::string getPassword() const;
 	std::string getChannelName() const;
+	std::vector<client> getConnectedVector() const;
 	std::string getTopic() const;
 	std::string getAllChanOp() const;
 	std::string getAllConnected() const;
@@ -49,6 +50,8 @@ class channel
 	bool getConnectedFromString(std::string const &user) const;
 	client* getClient(const std::string& user);
 
+
+//**********************************/SETTER//**********************************/
 	void setNeedPass(bool value);
 	void setMaxConnectedUser(int value);
 	void setPassword(std::string password);
@@ -59,7 +62,13 @@ class channel
 	void setUserChanOp(client *user);
 	void setMode(char c, bool value);
 	void setChannelName(std::string name);
+	void setAllInvited(void);
+	void setUserShutdown(client *user);
+	void undoUserChanOp(client *user);
+	void unsetUserInvited(client *user);
 
+
+//**********************************/FUNCTION//**********************************/
 	void sendToChannel(client const &user, std::string message);
 	void sendInfoToChannel(client const &user, std::string message);
 	void welcomeMessage(client const &user) const;
@@ -67,5 +76,7 @@ class channel
 	bool userCanJoin(client *user, std::string password);
 	void switchUser(client *user);
 	std::string userList() const;
+	void sendToChannelnoPRIVMSG(client const &user, std::string message);
+	void sendToOne(client const &user, std::string message);
 
 };
