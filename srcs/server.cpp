@@ -64,6 +64,17 @@ bool server::initSocket(void)
 	return true;
 }
 
+int server::findChanbyName(std::string chan) const{
+	int i = 0;
+	for (std::vector<channel>::const_iterator it = channelList.begin(); it != channelList.end(); it++)
+	{
+		if (chan == it->getChannelName())
+			return i;
+		i++;
+	}
+	return -1;
+}
+
 void server::mainLoop(void)
 {
 	int ret;
@@ -116,9 +127,6 @@ void server::acceptNewUser(void)
 	_totalPlace++;
 }
 
-
-//**********************************//GESTION DE NETCAT//**********************************//
-
 void server::userNetcat(void)
 {
 	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
@@ -134,7 +142,13 @@ void server::userNetcat(void)
 			send(it->second.getFD(), msg.c_str(), msg.size(), 0);
 		}
 	}
+	client user( ++_id, _fds[_curPlace].fd);
+	mapUser.insert(std::make_pair(_fds[_curPlace].fd, user));
+	_totalPlace++;
 }
+
+
+//**********************************//GESTION DE NETCAT//**********************************//
 
 
 //**********************************//CANAUX DE BASE//**********************************//
@@ -142,9 +156,18 @@ void server::userNetcat(void)
 void server::createChannel(void)
 {
 	admin = new client(0, 0);
-	MrRobot = new client(-1, -1);
+
+
+	client user( -1, -1);
+	MrRobot = new client( -1, -1);
+
+	user.setNickname("MrRobot");
+	user.setUsername("MrRobot");
+	mapUser.insert(std::make_pair(-1, user));
 	MrRobot->setNickname("MrRobot");
 	MrRobot->setUsername("MrRobot");
+
+
 	chan = new channel[10];
 	chan[0].setChannelName("#Libft");
 	chan[0].setUserChanOp(admin);

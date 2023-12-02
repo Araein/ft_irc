@@ -21,10 +21,17 @@ class server
 
 //*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
 //**********************************//THEME//**********************************//
+//*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
+//**********************************//THEME//**********************************//
 	void sendWelcomMsgs(int) const;
 	void printServerHeader() const;
 	std::string printChannel();
 	void printHome(int fd);
+
+	void userMessage(int fd);
+	void errMessage(int fd);
+	int findChanbyName(std::string channel) const;
+	void parseMessage(std::string buff, int fd);
 
 
 //**********************************/COMMANDE//**********************************/
@@ -34,18 +41,20 @@ class server
 	void cmdJoin(std::string buff, int fd);
 	void cmdInvite(int fd, std::string buff);
 	void cmdTopic(int fd, std::string buff);
-	void cmdMode();
+	void cmdMode(int fd, std::string buff);
 	void cmdPass(std::string password, int fd);
 	void cmdPart(int fd, std::string buff);
 	void cmdPing(std::string buff, int fd);
 	void cmdPrivmsg(int fd, std::string buff);
 
 
+	int getFD(int i) const;
+	int getPort() const;
+	std::string getPassword() const;
 //**********************************/SERVER//**********************************/
 	void acceptNewUser();
 	void userNetcat();
-	void createChannel();
-
+	void createChannel(void);
 
 //**********************************/INPUT//**********************************/
 	void receivMessage();
@@ -60,7 +69,10 @@ class server
 	int findPlace() const;
 	bool nameUserCheck(std::string name) const;
 	bool nameExist(std::string name);
+	bool checkChannelName(std::string name);
 	std::vector<channel>::iterator selectChannel(std::string name);
+	int findChanbyName(std::string chan);
+	void userUpDate(client *user);
 	std::map<std::string, std::string> splitCommandJoin(std::string buff);
 	std::vector<std::string> splitCommandNick(std::string buff);
 	std::vector<std::string> splitCommandPrivmsg(std::string buff);

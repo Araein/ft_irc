@@ -58,7 +58,7 @@ void server::mybot(int fd, const std::string& command, std::string channelstr)
             currentchannel->sendToChannel(*MrRobot,"Hello I am MrRobot, your friendly IRC bot! type \"!bot help\" to discover my commands!");
         else if (currentchannel->getIsChanOp(user.getID()))//changer l'index de base de MrRobot?
         {
-            currentchannel->setUserConnect(MrRobot);//attention au channel privé + limite d'user
+            currentchannel->setUserConnect(MrRobot);//attention a la limite d'user
             currentchannel->sendToChannel(*MrRobot,"Hello I am MrRobot, your friendly IRC bot! type \"!bot help\" to discover my commands!");
         }
         else
@@ -74,10 +74,10 @@ void server::mybot(int fd, const std::string& command, std::string channelstr)
     	currentchannel->sendToChannel(*MrRobot, "----- " + flipCoin() + " -----");
     else if (command == "!bot thanks ")
     	currentchannel->sendToChannel(*MrRobot, "Cyprien, Sandra and Théo thank you for using their IRC server!");
+    else if (!(currentchannel->getIsConnected(-1)))
+		send(user.getFD(), message.c_str(), message.size(), 0);
     else
     	currentchannel->sendToChannel(*MrRobot, "Sorry i don't know this command. Type \"!bot help\" to know my commands");
 }
 
 // gerer l'incrementation du nombre d'user dans le channel avec mr robot + channel privés
-// empecher un autre user de s'appeller MrRobot -> faire en sorte que l'username soit déjà pris
-// si MrRobot seul dans un channel -> quitte le channel tout seul -> ajouter une variable pour verifier la presence du bot?

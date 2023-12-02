@@ -5,6 +5,8 @@
 class client
 {
 
+	std::string rtrim(const std::string& str);
+	std::string ltrim(const std::string& str);
 	int  _fd;
 	int  _id;
 	int _log;
@@ -18,6 +20,11 @@ class client
 	client(int id, int fd);
 	~client();
 
+	void firstMessage(std::string message);
+	std::string extract(const std::string& message, const std::string& start, const std::string& end);
+	void fillProfil(std::string message);
+
+	bool getPWD() const;
 	int getID() const;
 	int getFD() const;
 	int getLog() const;
@@ -37,6 +44,7 @@ class client
 	void setNetcat();
 	void addChannel(channel *chan);
 	void deleteChannel(channel const &chan);
+	void chanUpDate();
 
 
 };

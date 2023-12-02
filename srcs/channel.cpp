@@ -38,6 +38,7 @@ int channel::getMaxConnectedUser(void) const { return chan.maxConnectedUser; }
 std::string channel::getChannelName() const { return chan.name; }
 std::string channel::getTopic() const { return chan.topicMessage; }
 std::string channel::getPassword() const { return chan.password; }
+std::vector<client> channel::getConnectedVector()const { return chan.connected; }
 
 bool channel::getIsChanOp(int id) const
 {
@@ -69,15 +70,7 @@ bool channel::getIsInvited(int id) const
 	return false;
 }
 
-std::string channel::getAllChanOp(void) const
-{
-	std::string msg = "";
 
-	for (std::vector<client>::const_iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
-		msg += it->getNickname() + " ";
-	msg += " \n";
-	return msg;
-}
 
 std::string channel::getAllConnected(void) const
 {
@@ -87,6 +80,7 @@ std::string channel::getAllConnected(void) const
 	msg += " \n";
 	return msg;
 }
+
 
 std::string channel::getAllInvited(void) const
 {
@@ -112,7 +106,7 @@ bool channel::getMode(char c) const
 	return false;
 }
 
-std::string channel::getAllMode(void) const
+std::string channel::getAllMode(void) const // removed the o mode return as it never appears when listing modes even after setting a new op, adding password if k mode is set
 {
 	std::string txt= "";
 	if (chan.i_Mode == true)
@@ -121,11 +115,27 @@ std::string channel::getAllMode(void) const
 		txt += 't';
 	if (chan.k_Mode == true)
 		txt += 'k';
-	if (chan.o_Mode == true)
-		txt += 'o';
 	if (chan.l_Mode == true)
 		txt += 'l';
+	if (chan.k_Mode == true)
+		txt += getPassword();
 	return txt;
+}
+
+void channel::setAllInvited(void){ // INSCRIT TOUT LES CLIENTS DU CHANNEL COMME INVITE
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++){
+		chan.invited.push_back(*it);
+	}
+}
+
+std::string channel::getAllChanOp(void) const
+{
+	std::string msg = "";
+
+	for (std::vector<client>::const_iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
+		msg += it->getNickname() + " ";
+	msg += " \n";
+	return msg;
 }
 
 bool channel::getConnectedFromString(std::string const &user) const
@@ -155,18 +165,20 @@ void channel::setNeedPass(bool value) { chan.needPass = value; }
 void channel::setMaxConnectedUser(int value) { chan.maxConnectedUser = value; }
 void channel::setPassword(std::string password) { chan.password = password; }
 void channel::setTopic(std::string message) { chan.topicMessage = message; }
-void channel::setMode(char c, bool value)
+
+void channel::sendInfoToChannel(client const &user, std::string message)
 {
-	if (c == 'i')
-		chan.i_Mode = value;
-	if (c == 't')
-		chan.t_Mode = value;
-	if (c == 'k')
-		chan.k_Mode = value;
-	if (c == 'o')
-		chan.o_Mode = value;
-	if (c == 'l')
-		chan.l_Mode = value;
+	std::string msg;
+	std::string CLIENT;
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
+	{
+		if (it->getFD() > 0 &&  it->getID() != user.getID())
+		{
+			CLIENT = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 100 ";
+			msg = CLIENT + chan.name + " :" + message + "\n";
+			send(it->getFD(), msg.c_str(), msg.size(), 0);
+		}
+	}
 }
 
 void channel::setUserConnect(client *user)
@@ -181,6 +193,23 @@ void channel::setUserConnect(client *user)
 	welcomeMessage(*user);
 	sendInfoToChannel(*user, " has logged in");
 }
+
+//**********************************//SETTER//**********************************//
+
+void channel::setMode(char c, bool value)
+{
+	if (c == 'i')
+		chan.i_Mode = value;
+	if (c == 't')
+		chan.t_Mode = value;
+	if (c == 'k')
+		chan.k_Mode = value;
+	if (c == 'o')
+		chan.o_Mode = value;
+	if (c == 'l')
+		chan.l_Mode = value;
+}
+
 
 void channel::setUserDisconnect(client *user)
 {
@@ -208,16 +237,38 @@ void channel::setUserDisconnect(client *user)
 	}
 }
 
-void channel::setUserInvited(client *user)
+void channel::unsetUserInvited(client *user){ //********** DESINSCRIT UN CLIENT COMME INVITE
+	for (std::vector<client>::iterator it = chan.invited.begin(); it != chan.invited.end(); it++){
+		if (it->getID() == user->getID())
+		{
+			chan.invited.erase(it);
+			break;
+		}
+	}
+}
+
+
+void channel::setUserInvited(client *user)//********** INSCRIT UN CLIENT COMME INVITE
 {
 	if (getIsInvited(user->getID()) == false)
 		chan.invited.push_back(*user);
 }
 
-void channel::setUserChanOp(client *user)
+void channel::setUserChanOp(client *user)//********** INSCRIT UN CLIENT COMME CHANNEL OPERATOR(CHANOP)
 {
 	if (getIsChanOp(user->getID()) == false)
 		chan.chanOp.push_back(*user);
+}
+
+void channel::undoUserChanOp(client *user){ // ENLEVE UN CLIENT COMME CHANOP
+	if (getIsChanOp(user->getID()) == true){
+		for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++){
+			if (it->getID() == user->getID()){
+				chan.chanOp.erase(it);
+				return ;
+			}
+		}
+	}
 }
 
 void channel::setChannelName(std::string name) { chan.name = name; }
@@ -245,6 +296,8 @@ void channel::welcomeMessage(client const &user) const
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
 	msg = CLIENT + "329 " + user.getNickname() + " " + chan.name + " " + oss.str() +"\r\n";
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
+	msg = CLIENT + "324 " + user.getNickname() + " " + chan.name + " " + getAllMode() +"\r\n";
+	send(user.getFD(), msg.c_str(), msg.size(), 0);
 }
 
 void channel::sendToChannel(client const &user, std::string message)
@@ -267,25 +320,6 @@ void channel::sendToChannelnoPRIVMSG(client const &user, std::string message)
 		{
 			if (send(chan.connected[i].getFD(), message.c_str(), message.size(), 0) == -1)
 				std::cout << "erreur send" << std::endl;
-		}
-	}
-}
-
-
-
-
-
-void channel::sendInfoToChannel(client const &user, std::string message)
-{
-	std::string msg;
-	std::string CLIENT;
-	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
-	{
-		if (it->getFD() > 0 &&  it->getID() != user.getID())
-		{
-			CLIENT = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 100 ";
-			msg = CLIENT + chan.name + " :" + message + "\n";
-			send(it->getFD(), msg.c_str(), msg.size(), 0);
 		}
 	}
 }

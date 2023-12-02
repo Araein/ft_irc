@@ -1,5 +1,13 @@
 #include "irc.hpp"
 
+int jumpToNextMode(std::string::iterator it){
+	int i = 0;
+	while ((*it != '+' || *it != '-') && *it != '\0'){
+		it++;
+		i++;
+	}
+	return i - 1;
+}
 
 std::string server::startServer(void) const
 {
@@ -78,6 +86,42 @@ bool server::nameExist(std::string name)
 			return false;
 	}
 	return true;
+}
+
+bool server::checkChannelName(std::string name)
+{
+	if (name[0] != '#')
+		return false;
+	if (name.size() == 0 || name.size() > 128)
+		return false;
+	return true;
+}
+
+void server::userUpDate(client *user)
+{
+	for (std::vector<channel>::iterator it = user->getConnectBegin(); it != user->getConnectEnd(); it++)
+	{
+		for (std::vector<channel>::iterator itchan = channelList.begin(); itchan != channelList.end(); itchan++)
+		{
+			if (itchan->getChannelName() == it->getChannelName())
+			{
+				itchan->switchUser(user);
+				break;
+			}
+		}
+	}
+}
+
+bool findKey(std::vector<std::string> vec, std::string key){
+	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++){
+		if (*it == key)
+			return true;
+	}
+	return false;
+}
+
+void printFullUser(client &user){
+	std::cout << "fd = " << user.getFD() << " id = " << user.getID() << "log = " << user.getLog() << " nickname = " << user.getNickname() << " username = " << user.getUsername() << std::endl;;
 }
 
 std::vector<channel>::iterator server::selectChannel(std::string name)
