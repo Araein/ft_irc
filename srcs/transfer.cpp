@@ -124,12 +124,11 @@ void server::trfDel(int fd, std::string txt, std::string channelName)
 void server::trfHelp(int fd, std::string channelName)
 {
 	std::string msg;
-	if (selectChannel(channelName) == channelList.end())
-		msg = "You has not joined a channel";
-	else
-	{
-		msg+= "En cours";
-	}
+	msg = "<!trf send> <recipient> <path source>\n";
+	selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, msg);
+	msg = "<!trf get> <sender> <serial number> [path destination]\n";
+	selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, msg);
+	msg = "<!trf del> <serial number>\n";
 	selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, msg);
 }
 

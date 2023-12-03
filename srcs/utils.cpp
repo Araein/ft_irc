@@ -15,7 +15,8 @@ void server::closeAll(void)
 	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
 	{
 		shutdown(it->second.getFD() , SHUT_RDWR);
-		close(it->second.getFD());
+		if (it->second.getFD() > 0)
+			close(it->second.getFD());
 	}
 	std::cout << std::endl << RED << BOLD << "[42_IRC:  DISCONNECTED] " << NONE << "Hope you enjoyed it"  << std::endl;
 }
