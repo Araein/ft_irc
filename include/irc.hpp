@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include <cstring>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -19,16 +20,18 @@
 #include <errno.h>
 #include <algorithm>
 #include <cctype>
-#include <cstdlib>
 #include <ctime>
+#include <cmath>
 #include <iomanip>
-
-
+#include <cstdlib>
+#include <fstream>
+#include <ostream>
 
 #define bufferSize 4096
 #define minPort 49152
 #define maxPort 65535
 #define maxFD 20
+#define maxSEND 4
 
 
 
@@ -57,6 +60,4 @@ bool IsNotSpace(int ch);
 std::string extract(const std::string& message, const std::string& start, const std::string& end);
 std::string rtrim(const std::string& str);
 std::string ltrim(const std::string& str);
-int jumpToNextMode(std::string::iterator it);
-void printFullUser(client &user);
-bool findKey(std::vector<std::string> vec, std::string key);
+

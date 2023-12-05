@@ -1,13 +1,5 @@
 #include "irc.hpp"
 
-int jumpToNextMode(std::string::iterator it){
-	int i = 0;
-	while ((*it != '+' || *it != '-') && *it != '\0'){
-		it++;
-		i++;
-	}
-	return i - 1;
-}
 
 std::string server::startServer(void) const
 {
@@ -23,7 +15,8 @@ void server::closeAll(void)
 	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
 	{
 		shutdown(it->second.getFD() , SHUT_RDWR);
-		close(it->second.getFD());
+		if (it->second.getFD() > 0)
+			close(it->second.getFD());
 	}
 	std::cout << std::endl << RED << BOLD << "[42_IRC:  DISCONNECTED] " << NONE << "Hope you enjoyed it"  << std::endl;
 }
@@ -34,6 +27,7 @@ void server::closeOne(int fd)
 	{
 		if (it->second.getFD() == fd)
 		{
+			it->second.exitUser();
 			shutdown(it->second.getFD(), SHUT_RDWR);
 			mapUser.erase(it);
 			break;
@@ -86,42 +80,6 @@ bool server::nameExist(std::string name)
 			return false;
 	}
 	return true;
-}
-
-bool server::checkChannelName(std::string name)
-{
-	if (name[0] != '#')
-		return false;
-	if (name.size() == 0 || name.size() > 128)
-		return false;
-	return true;
-}
-
-void server::userUpDate(client *user)
-{
-	for (std::vector<channel>::iterator it = user->getConnectBegin(); it != user->getConnectEnd(); it++)
-	{
-		for (std::vector<channel>::iterator itchan = channelList.begin(); itchan != channelList.end(); itchan++)
-		{
-			if (itchan->getChannelName() == it->getChannelName())
-			{
-				itchan->switchUser(user);
-				break;
-			}
-		}
-	}
-}
-
-bool findKey(std::vector<std::string> vec, std::string key){
-	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++){
-		if (*it == key)
-			return true;
-	}
-	return false;
-}
-
-void printFullUser(client &user){
-	std::cout << "fd = " << user.getFD() << " id = " << user.getID() << "log = " << user.getLog() << " nickname = " << user.getNickname() << " username = " << user.getUsername() << std::endl;;
 }
 
 std::vector<channel>::iterator server::selectChannel(std::string name)
@@ -246,5 +204,37 @@ std::string server::deleteCRLF(std::string str)
 		str = str.substr(0, str.size() - 1);
 	return str;
 }
+
+int server::jumpToNextMode(std::string::iterator it){
+	int i = 0;
+	while ((*it != '+' || *it != '-') && *it != '\0'){
+		it++;
+		i++;
+	}
+	return i - 1;
+}
+
+bool server::findKey(std::vector<std::string> vec, std::string key){
+	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++){
+		if (*it == key)
+			return true;
+	}
+	return false;
+}
+
+std::map<int, client>::iterator server::selectUser(std::string name)
+{
+	std::map<int, client>::iterator it;
+	if (name.size() == 0)
+		return mapUser.end();
+	for (it = mapUser.begin(); it != mapUser.end();  it++)
+	{
+		if (it->second.getNickname() == name)
+			return it;
+	}
+	return mapUser.end();
+}
+
+
 
 
