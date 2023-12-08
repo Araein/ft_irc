@@ -52,8 +52,10 @@ void server::trfSend(int fd, std::string txt, std::string channelName)
 		trf.pathFile = vec[2];
 		trf.filename = extractFilename(trf.pathFile);
 		trf.id = mapUser.find(fd)->second.setFileList(trf);
-		rep = mapUser.find(fd)->second.getNickname() + " sent you a file. For download it '!trf get " + mapUser.find(fd)->second.getNickname() + " " + trf.id + "'"; 
+		rep = "Download: '!trf get " + mapUser.find(fd)->second.getNickname() + " " + trf.id + "'"; 
 		selectChannel(channelName)->sendToOne(selectUser(vec[1])->second, rep);
+		rep = "Successfull sent file " + trf.id; 
+		selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, rep);
 		std::cout << CYAN << "[42_IRC: <<<< " << mapUser.find(fd)->second.getNickname() << ":" << " Sent a file" << NONE << std::endl;
 	}
 	else
@@ -124,12 +126,13 @@ void server::trfDel(int fd, std::string txt, std::string channelName)
 void server::trfHelp(int fd, std::string channelName)
 {
 	std::string msg;
-	msg = "<!trf send> <recipient> <path source>\n";
-	selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, msg);
-	msg = "<!trf get> <sender> <serial number> [path destination]\n";
-	selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, msg);
-	msg = "<!trf del> <serial number>\n";
-	selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, msg);
+	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
+	msg = CLIENT + " 372 : <!trf send> <recipient> <path source>\n";
+	send(fd, msg.c_str(), msg.size(), 0);
+	msg = CLIENT + " 372 : <!trf get> <sender> <serial number> [path destination]\n";
+	send(fd, msg.c_str(), msg.size(), 0);
+	msg = CLIENT + " 372 : <!trf del> <serial number>\n";
+	send(fd, msg.c_str(), msg.size(), 0);
 }
 
 std::string server::extractFilename(std::string filename)

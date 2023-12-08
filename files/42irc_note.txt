@@ -1,0 +1,166 @@
+pseudo
+
+	Le pseudonyme ne peut pas contenir d'espaces.
+	Le pseudonyme ne peut pas commencer par un chiffre.
+	Le pseudonyme ne peut pas contenir certains caractères spéciaux.
+	: (deux-points)
+	, (virgule)
+	! (point d'exclamation)
+	@ (arobase)
+	# (dièse)
+
+/RAWLOG OPEN debug.log 
+
+vim ~/.irssi/config
+/window list
+
+
+
+autre cmd
+ERR_UNKNOWNCOMMAND (421) : Indique que la commande spécifiée n'est pas reconnue par le serveur.
+
+NICK
+	A FAIRE
+	431 ERR_NONICKNAMEGIVEN : Aucun pseudonyme n'a été fourni dans la commande.
+	432 ERR_ERRONEUSNICKNAME : Le pseudonyme fourni contient des caractères invalides.
+	433 ERR_NICKNAMEINUSE : Le pseudonyme demandé est déjà en cours d'utilisation sur le serveur.
+
+	A IGNORER
+	ERR_NONICKCHANGE : L'utilisateur a essayé de changer de pseudonyme sans succès.
+	436 ERR_NICKCOLLISION : Le pseudonyme demandé provoque une collision avec un autre utilisateur déjà présent sur le canal.
+	437 ERR_UNAVAILRESOURCE : Le serveur ne peut pas attribuer le pseudonyme demandé, probablement parce qu'il est réservé ou restreint.
+	439 ERR_NICKTOOFAST : Le client change de pseudonyme trop rapidement.
+	ERR_RESTRICTED : Le pseudonyme demandé est restreint.
+	ERR_CANTCHANGENICK : Impossible de changer de pseudonyme pour une raison quelconque.
+
+JOIN
+	A FAIRE
+	OK->ERR_NEEDMOREPARAMS (461) : Indique que la commande /JOIN n'a pas été correctement spécifiée, généralement parce qu'aucun nom de canal n'a été fourni.
+	OK->ERR_TOOMANYCHANNELS (405)
+	OK->ERR_BADCHANMASK (476) : Indique que le nom du canal spécifié dans la commande /JOIN est invalide.
+	OK->ERR_INVITEONLYCHAN (473) : Indique que le canal est réservé aux utilisateurs invités uniquement.
+	OK->ERR_BADCHANNELKEY (475) : Indique que le canal a une clé (mot de passe) et que l'utilisateur doit fournir la clé correcte pour rejoindre.
+	OK->ERR_CHANNELISFULL (471) : Indique que le canal est plein, c'est-à-dire qu'il a atteint le nombre maximal d'utilisateurs autorisés.
+	OK->RPL_TOPIC (332) : Indique le sujet (topic) actuel du canal. Ce message est généralement envoyé après que le client a rejoint le canal.
+	OK->RPL_NAMREPLY (353) : Donne la liste des utilisateurs présents sur le canal. Il peut y avoir plusieurs réponses successives pour les canaux avec un grand nombre d'utilisateurs.
+	OK->RPL_ENDOFNAMES (366) : Indique la fin de la liste des noms d'utilisateurs sur le canal.
+
+	A IGNORER
+	ERR_BANNEDFROMCHAN (474) : Indique que l'utilisateur est banni du canal.
+	RPL_TOPICWHOTIME (333) : Fournit des informations supplémentaires sur le sujet du canal, telles que l'auteur du sujet et le moment où il a été défini.
+
+
+PRIVMSG
+A FAIRE
+		OK->ERR_NORECIPIENT (411) : Indique qu'aucun destinataire n'a été spécifié dans la commande /PRIVMSG.
+		OK->ERR_NOTEXTTOSEND (412) : Indique qu'aucun texte n'a été fourni dans la commande /PRIVMSG.
+		OK->ERR_NOSUCHCHANNEL (403)
+		OK->ERR_CANNOTSENDTOCHAN (404) : Indique que le destinataire spécifié dans la commande /PRIVMSG est un canal auquel l'utilisateur n'est pas autorisé à envoyer des messages.
+	RPL_WHOISUSER (311) : Fournit des informations sur l'utilisateur destinataire du message privé.
+	RPL_ENDOFWHOIS (318) : Indique la fin des informations WHOIS sur l'utilisateur destinataire.
+
+PASS
+A FAIRE
+		OK->RPL_WELCOME (001) : Indique que la connexion au serveur IRC a réussi.
+		OK->ERR_ALREADYREGISTERED (462) : Indique que l'utilisateur est déjà enregistré et ne peut pas s'inscrire à nouveau.
+		OK->ERR_PASSWDMISMATCH (464)
+
+PING
+		OK->ERR_NOORIGIN (409) : Indique que la commande /PING n'a pas d'origine spécifiée. C'est une erreur qui peut se produire si la commande /PING est mal formée.
+
+
+WHO
+	RPL_WHOREPLY (352) : Cette réponse fournit des informations détaillées sur un utilisateur qui correspond aux critères spécifiés dans la commande /WHO. Les informations peuvent inclure le canal sur lequel l'utilisateur est, son pseudonyme, son identifiant d'utilisateur, son adresse IP, etc.
+	RPL_ENDOFWHO (315) : Indique la fin de la liste des utilisateurs correspondant aux critères spécifiés dans la commande /WHO.
+	ERR_NOSUCHCHANNEL (403) : Indique que le canal spécifié dans la commande /WHO n'existe pas.
+	ERR_NEEDMOREPARAMS (461) : Indique que la commande /WHO n'a pas été correctement spécifiée, généralement parce qu'elle manque de paramètres.
+		
+
+
+	352			est le code numérique indiquant que la réponse concerne la commande WHO.
+	votre_nick	est votre pseudonyme (nickname).
+	#ds			est le nom du canal pour lequel vous demandez des informations.
+	utilisateur	est le pseudonyme de l'utilisateur sur le canal.
+	hôte		est l'hôte de l'utilisateur.
+	serveur		est le serveur IRC auquel l'utilisateur est connecté.
+	userr_mode	indique les modes de l'utilisateur sur le canal.
+	real_name	est le vrai nom de l'utilisateur.
+
+    352 : Code numérique indiquant que la réponse concerne la commande WHO.
+    votre_nick : Votre pseudonyme (nickname) ou l'expéditeur de la commande WHO.
+    utilisateur : Le pseudonyme (nickname) de l'utilisateur spécifique demandé dans la commande WHO.
+    hôte : L'hôte de l'utilisateur.
+    serveur : Le serveur IRC auquel l'utilisateur est connecté.
+    utilisateur_mode : Les modes spécifiques de l'utilisateur.
+    real_name : Le vrai nom de l'utilisateur.
+:serveur.example.com 352 votre_nick John hôte serveur H :John Doe
+
+
+
+WHOIS
+	RPL_WHOISUSER (311) : Cette réponse fournit des informations sur l'utilisateur, telles que le pseudonyme, l'identifiant d'utilisateur, l'adresse IP, le nom réel, etc.
+	RPL_WHOISSERVER (312) : Fournit des informations sur le serveur IRC sur lequel l'utilisateur est connecté.
+	RPL_WHOISOPERATOR (313) : Indique si l'utilisateur est un opérateur du serveur IRC.
+	RPL_ENDOFWHOIS (318) : Indique la fin des informations WHOIS sur l'utilisateur.
+	RPL_WHOISCHANNELS (319) : Fournit une liste des canaux sur lesquels l'utilisateur est actuellement présent.
+	ERR_NOSUCHNICK (401) : Indique que le pseudonyme spécifié dans la commande /WHOIS n'est pas présent sur le serveur.
+	ERR_NONICKNAMEGIVEN (431) : Indique qu'aucun pseudonyme n'a été spécifié dans la commande /WHOIS.
+	ERR_NEEDMOREPARAMS (461) : Indique que la commande /WHOIS n'a pas été correctement spécifiée, généralement parce qu'elle manque de paramètres.
+
+
+	RPL_WHOISIDLE (317) : Donne des informations sur le temps écoulé depuis que l'utilisateur a été actif sur le serveur.
+
+WHOAS
+
+
+
+TEST
+
+*PASS:
+	(netcat)
+	-avec ou sans command PASS/pass		-->OK
+	-sans argument						-->OK
+	-mdp VIDE							-->OK
+	-mdp faux/correcte					-->OK
+
+*JOIN:
+	-join tout seul = erreur461				-->OK
+	-join  + channel sans # = erreur476		-->OK
+	-join nb max atteint = erreur405		-->OK
+	-join channel inviteOnly				-->OK
+	-
+	-
+
+
+PRIVMSG ou MSG
+	- sans argument
+	- avec 1 seul argument
+
+
+INVITE
+	-erreur recu dans server a modifier
+	
+	channel sans mode
+	-depuis un channel
+	-
+	-
+	-
+	-
+
+MODE
+	- sans argument: manque reponse server
+
+
+
+
+
+Erreurs trouvees
+
+*MODE
+- sans argument(netcat) -> pas de reponse du server
+- MODE #channel +l 3 -> un nombre supeieur de clients peut toujours se connecter
+
+*INVITE
+- a la fermeture d'un channel les invites le restent ils
+- INVITE #CHANNEL -> ne devrait pas fonctionner
+- si pas chanOp -> la reponse du server est envoyee a tous le channel

@@ -294,7 +294,7 @@ void server::cmdPrivmsg(int fd, std::string buff)
 				trfSend(fd, &vec[2][5], vec[1]);
 			else if (cmd == "get")
 				trfGet(fd, &vec[2][5], vec[1]);
-			else if (cmd == "DEL")
+			else if (cmd == "del")
 				trfDel(fd, &vec[2][5], vec[1]);
 			else
 				trfHelp(fd, vec[1]);
