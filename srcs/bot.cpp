@@ -36,8 +36,6 @@ std::string server::getTrivia()
 	triviaStatements.push_back("Honeybees can recognize human faces.");
 	triviaStatements.push_back("Penguins only have one mate their entire life.");
 	triviaStatements.push_back("A 'butt' was a medieval unit of measure for wine.");
-	triviaStatements.push_back("The shortest war in history was between Britain and Zanzibar on August 27, 1896. Zanzibar surrendered after 38 minutes.");
-
 	std::srand(std::time(0));
 	int randomIndex = std::rand() % triviaStatements.size();
 	return triviaStatements[randomIndex];
@@ -53,14 +51,16 @@ void server::mybot(int fd, const std::string& command, std::string channelstr)
 	{
 		if (currentchannel->getIsConnected(-1))
 			currentchannel->sendToChannel(*MrRobot,"Hello I am MrRobot, your friendly IRC bot! type \"!bot help\" to discover my commands!");
-		else if (currentchannel->getIsChanOp(user.getID()))//changer l'index de base de MrRobot?
+		else if (currentchannel->getIsChanOp(user.getID()))
 		{
-			currentchannel->setUserConnect(MrRobot);//attention a la limite d'user
+			currentchannel->setUserConnect(MrRobot);
 			currentchannel->sendToChannel(*MrRobot,"Hello I am MrRobot, your friendly IRC bot! type \"!bot help\" to discover my commands!");
 		}
 		else
 			send(user.getFD(), message.c_str(), message.size(), 0);
 	}
+    else if (!(currentchannel->getIsConnected(-1)))
+        send(user.getFD(), message.c_str(), message.size(), 0);
 	else if (command == "!bot help ")
 		currentchannel->sendToChannel(*MrRobot,"Available commands: help | time | trivia | coinflip | thanks");
 	else if (command == "!bot time ")
@@ -76,5 +76,3 @@ void server::mybot(int fd, const std::string& command, std::string channelstr)
 	else
 		currentchannel->sendToChannel(*MrRobot, "Sorry i don't know this command. Type \"!bot help\" to know my commands");
 }
-
-// gerer l'incrementation du nombre d'user dans le channel avec mr robot + channel privés

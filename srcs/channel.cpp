@@ -175,7 +175,8 @@ void channel::setUserConnect(client *user)
 	if (getIsConnected(user->getID()) == true)
 		return;
 	chan.connected.push_back(*user);
-	chan.nbConnectedUser++;
+	if (user->getNickname() != "MrRobot")
+		chan.nbConnectedUser++;
 	if (chan.connected.size() == 1)
 		chan.chanOp.push_back(*user);
 	user->addChannel(this);
@@ -202,7 +203,8 @@ void channel::setUserDisconnect(client *user)
 				}
 			}
 			chan.connected.erase(it);
-			chan.nbConnectedUser--;
+			if (user->getNickname() != "MrRobot")
+				chan.nbConnectedUser--;
 			sendToChannel(*user, "has left");
 			break;
 		}

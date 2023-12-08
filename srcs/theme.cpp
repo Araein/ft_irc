@@ -124,7 +124,7 @@ std::string server::printBonus(void)
 	msg += BOLD;
 	msg += "      Transfer File ";
 	msg += NONE;
-	msg += " (in channel send !trf help)\n";
+	msg += " (in channel send !trf)\n";
 	return msg;
 }
 
