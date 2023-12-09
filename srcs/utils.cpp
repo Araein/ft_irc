@@ -82,6 +82,20 @@ bool server::nameExist(std::string name)
 	return true;
 }
 
+std::vector<privChannel>::iterator server::selectPrivChan(std::string name1, std::string name2)
+{
+	std::vector<privChannel>::iterator it;
+	if (name1.size() == 0 || name2.size() == 0)
+		return privateList.end();
+	for (it = privateList.begin(); it != privateList.end();  it++)
+	{
+		if ((it->name1 == name1 && it->name2 == name2) || (it->name1 == name2 && it->name2 == name1))
+			return it;
+	}
+	return privateList.end();
+}
+
+
 std::vector<channel>::iterator server::selectChannel(std::string name)
 {
 	std::vector<channel>::iterator it;

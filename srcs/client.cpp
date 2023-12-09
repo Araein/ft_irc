@@ -126,5 +126,3 @@ void client::delFileList(std::string id)
 	}
 }
 
-
-

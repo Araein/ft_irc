@@ -57,7 +57,6 @@ class server
 	void cmdPrivmsg(int fd, std::string buff);
 	void cmdPrivateMsg(int fd, std::vector<std::string> vec);
 
-
 //**********************************/SERVER//**********************************/
 	void acceptNewUser();
 	void userNetcat();
@@ -86,6 +85,7 @@ class server
 	std::string deleteCRLF(std::string str);
 	int jumpToNextMode(std::string::iterator it);
 	bool findKey(std::vector<std::string> vec, std::string key);
+
 
 //**********************************/BOT//**********************************/
 	void mybot(int fd, const std::string& command, std::string channelstr);
