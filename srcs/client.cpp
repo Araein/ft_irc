@@ -1,7 +1,7 @@
 #include "client.hpp"
 
 client::~client(void) {}
-client::client(int id, int fd): _fd(fd), _id(id), _log(0), _netcat(0)
+client::client(int id, int fd): _fd(fd), _id(id), _log(0), fileId(100), _netcat(0)
 {
 	std::ostringstream oss;
 	oss << _id;
@@ -10,7 +10,9 @@ client::client(int id, int fd): _fd(fd), _id(id), _log(0), _netcat(0)
 	if (_id == 0)
 	{
 		_nickname = "chanOp_42stud";
-		_netcat = -1;
+		_username = "chanOp_42stud";
+		_netcat = -2;
+		_log = 2;
 	}
 }
 
@@ -26,6 +28,47 @@ std::string client::getNickname(void) const { return _nickname;}
 std::string client::getUsername(void) const { return _username;}
 std::vector<channel>::iterator client::getConnectBegin() { return channelConnected.begin(); }
 std::vector<channel>::iterator client::getConnectEnd() { return channelConnected.end(); }
+int client::getHowManyFile() const { return fileList.size(); }
+
+int client::getFileDest(std::string id) const
+{
+	for (std::vector<transferFile>::const_iterator it = fileList.begin(); it != fileList.end(); it++)
+	{
+		if (it->id == id)
+			return it->fdDest;
+	}
+	return -1;
+}
+
+bool client::getIsChanOp(void)
+{
+	for (std::vector<channel>::iterator it = channelConnected.begin(); it != channelConnected.end(); it++)
+	{
+		if (it->getIsChanOp(_id) == true)
+			return true;
+	}
+	return false;
+}
+
+bool client::getNumFileExist(std::string id) const
+{
+	for (std::vector<transferFile>::const_iterator it = fileList.begin(); it != fileList.end(); it++)
+	{
+		if (it->id == id)
+			return true;
+	}
+	return false;
+}
+
+std::vector<transferFile>::iterator client::getTrf(std::string id)
+{
+	for (std::vector<transferFile>::iterator it = fileList.begin(); it != fileList.end(); it++)
+	{
+		if (it->id == id)
+			return it;
+	}
+	return fileList.end();
+}
 
 //**********************************//SETTER//**********************************//
 
@@ -56,6 +99,30 @@ void client::deleteChannel(channel const &chan)
 	}
 }
 
+void client::exitUser(void)
+{
+	for (std::vector<channel>::iterator it = channelConnected.begin(); it != channelConnected.end(); it++)
+		it->setUserShutdown(this);
+}
 
+std::string client::setFileList(transferFile &trf)
+{
+	std::ostringstream oss;
+	oss << ++fileId;
+	trf.id = oss.str();
+	fileList.push_back(trf);
+	return trf.id;
+}
 
+void client::delFileList(std::string id)
+{
+	for (std::vector<transferFile>::iterator it = fileList.begin(); it != fileList.end(); it++)
+	{
+		if (it->id == id)
+		{
+			fileList.erase(it);
+			return;
+		}
+	}
+}
 

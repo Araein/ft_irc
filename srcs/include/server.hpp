@@ -36,18 +36,11 @@ class server
 
 //*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
 //**********************************//THEME//**********************************//
-//*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
-//**********************************//THEME//**********************************//
 	void sendWelcomMsgs(int) const;
 	void printServerHeader() const;
 	std::string printChannel();
 	void printHome(int fd);
 	std::string printBonus(void);
-
-	void userMessage(int fd);
-	void errMessage(int fd);
-	int findChanbyName(std::string channel) const;
-	void parseMessage(std::string buff, int fd);
 
 
 //**********************************/COMMANDE//**********************************/
@@ -64,14 +57,11 @@ class server
 	void cmdPrivmsg(int fd, std::string buff);
 	void cmdPrivateMsg(int fd, std::vector<std::string> vec);
 
-
-	int getFD(int i) const;
-	int getPort() const;
-	std::string getPassword() const;
 //**********************************/SERVER//**********************************/
 	void acceptNewUser();
 	void userNetcat();
-	void createChannel(void);
+	void createChannel();
+
 
 //**********************************/INPUT//**********************************/
 	void receivMessage();
@@ -95,6 +85,7 @@ class server
 	std::string deleteCRLF(std::string str);
 	int jumpToNextMode(std::string::iterator it);
 	bool findKey(std::vector<std::string> vec, std::string key);
+
 
 //**********************************/BOT//**********************************/
 	void mybot(int fd, const std::string& command, std::string channelstr);

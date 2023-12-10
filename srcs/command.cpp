@@ -5,9 +5,11 @@ void server::parseCommand(std::string buff, int fd)
 	std::istringstream iss(buff);
 	std::string command;
 	std::string param;
+	std::string txt;
 	std::string msg;
-	iss >> command >> param;
+	iss >> command >> param >> txt;
 	std::cout << CYAN << "[42_IRC: <<<< " << mapUser.find(fd)->second.getNickname() << ":" << command << NONE << std::endl;
+	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
 	if (command == "kick" || command == "KICK")
 	{
 		cmdKick(fd, buff);
@@ -16,7 +18,7 @@ void server::parseCommand(std::string buff, int fd)
 	{
 		cmdNick(fd, buff);
 	}
-	else if (command == "privmsg" || command == "PRIVMSG")
+	else if (command == "privmsg" || command == "PRIVMSG" || command == "msg" || command == "MSG")
 	{
 		cmdPrivmsg(fd, buff);
 	}
@@ -34,11 +36,17 @@ void server::parseCommand(std::string buff, int fd)
 	}
 	else if (command == "mode" || command == "MODE")
 	{
-		cmdMode(fd, buff);
-		
-		std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
-		msg = CLIENT + "324 " + mapUser.find(fd)->second.getNickname() + " :" + param + " +i\r\n";
-		send(fd, msg.c_str(), msg.size(), 0);
+		if (selectUser(param) != mapUser.end())
+		{
+			std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
+			if (txt == "+i")
+				msg = CLIENT + "324 " + mapUser.find(fd)->second.getNickname() + " :" + param + " +i\r\n";
+			else
+				msg = CLIENT + "472 " + mapUser.find(fd)->second.getNickname() + " :" + param + " is not supported to 42IRC\r\n";
+			send(fd, msg.c_str(), msg.size(), 0);
+		}
+		else
+			cmdMode(fd, buff);
 	}
 	else if (command == "part" || command == "PART")
 	{
@@ -54,17 +62,23 @@ void server::parseCommand(std::string buff, int fd)
 	}
 	else if (command == "who" || command == "WHO")
 	{
-		std::cout << "DEBUG WHO:" << buff << std::endl;
-		// cmdWho(param, fd);
+		msg = CLIENT + "315 " + mapUser.find(fd)->second.getNickname() + " :" + command + " unknown to 42_IRC\r\n";
+		send(fd, msg.c_str(), msg.size(), 0);
+		return;
 	}
 	else if (command == "whois" || command == "WHOIS")
 	{
-		std::cout << "DEBUG WHOIS:" << buff << std::endl;
-		// cmdWhois(param, fd);
+		msg = CLIENT + "318 " + mapUser.find(fd)->second.getNickname() + " :" + command + " unknown to 42_IRC\r\n";
+		send(fd, msg.c_str(), msg.size(), 0);
+		return;
 	}
 	else if (command == "quit" || command == "QUIT")
 	{
-		std::cout << GREEN << "[42_IRC:  USER DISCONNECTED] " << mapUser.find(fd)->second.getNickname() << NONE << std::endl;
+		std::istringstream iss2(buff);
+		std::string cmd;
+		std::string mess;
+		iss2 >> cmd >> mess ;
+		std::cout << GREEN << "[42_IRC:  USER DISCONNECTED] " << mapUser.find(fd)->second.getNickname() << " " << mess << NONE << std::endl;
 		closeOne(fd);
 	}
 	else
@@ -141,7 +155,7 @@ void server::cmdKick(int fd, std::string buff)
 						break;
 					}
 				}
-				if (!nochannel) // si channel n'existe pas
+				if (!nochannel)
 				{
 					if  (countchannel < channels.size())
 					{
@@ -151,14 +165,14 @@ void server::cmdKick(int fd, std::string buff)
 					countchannel++;
 					continue ;
 				}
-				else if (!notmember) //si kicker pas membre
+				else if (!notmember)
 				{
 					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 442 " + kicker.getUsername() + " " + mychannel + " :You're not on that channel\r\n";
 					send(kicker.getFD(), message.c_str(), message.size(), 0);
 					countchannel++;
 					continue ;
 				}
-				else if (!notadmin) //si kicker pas admin
+				else if (!notadmin)
 				{
 					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 482 " + kicker.getUsername() + " " + mychannel + " :You're not channel operator\r\n";
 					send(kicker.getFD(), message.c_str(), message.size(), 0);
@@ -173,13 +187,14 @@ void server::cmdKick(int fd, std::string buff)
 						countchannel++;
 						continue;
 					}
+					channelIt->unsetUserInvited(targetClient);
 					channelIt->setUserDisconnect(targetClient);
 					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
 					send(targetClient->getFD(), message.c_str(), message.size(), 0);
 					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
 					channelIt->sendToChannelnoPRIVMSG(*targetClient, message);
 				}
-				else //si le membre n'est pas sur le channel
+				else
 				{
 					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost 401 " + kicker.getUsername() + " " + nicks + " :No such nick/channel\r\n";
 					send(kicker.getFD(), message.c_str(), message.size(), 0);
@@ -293,25 +308,37 @@ void server::cmdPrivmsg(int fd, std::string buff)
 	}
 	if ((it = selectChannel(vec[1])) == channelList.end())
 	{
-		msg = CLIENT + "403 " + mapUser.find(fd)->second.getNickname() + " :'" + vec[1] + "'\r\n";
-		send(fd, msg.c_str(), msg.size(), 0);
+		if (selectUser(vec[1]) == mapUser.end())
+		{
+			msg = CLIENT + "401 " + mapUser.find(fd)->second.getNickname() + vec[1] + " :\r\n";
+			send(fd, msg.c_str(), msg.size(), 0);
+			return;
+		}
+		cmdPrivateMsg(fd, vec);
 		return;
 	}
 	if (it->userCanWrite(&mapUser.find(fd)->second, vec[1]) == true) 
 	{
-		std::string txt;
-		if (vec[2][0] == ':')
-			txt = vec[2].substr(1, vec[2].size());
-		else
-			txt = vec[2];
-		std::cout << YELLOW << vec[1] << ": <" << mapUser.find(fd)->second.getNickname() << "> " << txt << NONE << std::endl;
-		it->sendToChannel(mapUser.find(fd)->second, txt);
- 		if (txt.length() >= 5)
+		std::string str = vec[2].substr(0, 5);
+		if (str == "!bot ")
+			mybot(fd, vec[2], vec[1]);
+		else if (str == "!trf ")
 		{
-			std::string checkbot = txt.substr(0, 5);
-			if (checkbot == "!bot ")
-				mybot(fd, txt, vec[1]);
-		}		
+			std::istringstream iss2(&vec[2][5]);
+			std::string cmd;
+			iss2 >> cmd;
+			if (cmd == "send")
+				trfSend(fd, &vec[2][5], vec[1]);
+			else if (cmd == "get")
+				trfGet(fd, &vec[2][5], vec[1]);
+			else if (cmd == "del")
+				trfDel(fd, &vec[2][5], vec[1]);
+			else
+				trfHelp(fd, vec[1]);
+		}
+		else
+			it->sendToChannel(mapUser.find(fd)->second, vec[2]);
+		std::cout << YELLOW << vec[1] << ": <" << mapUser.find(fd)->second.getNickname() << "> " << vec[2] << NONE << std::endl;
 	}
 }
 
@@ -333,7 +360,7 @@ void server::cmdJoin(std::string buff, int fd)
 	while (it_chanPass != chanPass.end())
 	{
 		nbChan++;
-		if (nbChan > 4)//mettre a 20
+		if (nbChan > maxChannelConnect)
 		{
 			msg = CLIENT + "405 " + mapUser.find(fd)->second.getNickname() + " " + it_chanPass->first +  ":\r\n";
 			send(fd, msg.c_str(), msg.size(), 0);
@@ -342,7 +369,9 @@ void server::cmdJoin(std::string buff, int fd)
 		if ((it_channelList = selectChannel(it_chanPass->first)) != channelList.end())
 		{
 			if (it_channelList->userCanJoin(&mapUser.find(fd)->second, it_chanPass->second) == true)
+			{
 				it_channelList->setUserConnect(&mapUser.find(fd)->second);
+			}
 		}
 		else
 		{
@@ -390,7 +419,7 @@ void server::cmdInvite(int fd, std::string buff)
 		}
 		if (it2 == mapUser.end())
 		{
-			message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 401 " + inviter.getUsername() + " " + user + " :No such nick/channel\r\n";
+			message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 401 " + inviter.getNickname() + " " + user + " :No such nick/channel\r\n";
 			send(inviter.getFD(), message.c_str(), message.size(), 0);
 			return ;
 		}
@@ -408,36 +437,34 @@ void server::cmdInvite(int fd, std::string buff)
 		}
 		if (!nochannel)
 		{
-			message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 403 " + inviter.getUsername() + " " + mychannel + " :No such channel\r\n";
+			message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 403 " + inviter.getNickname() + " " + mychannel + " :No such channel\r\n";
 			send(inviter.getFD(), message.c_str(), message.size(), 0);
 			return ;
 		}
 		else if (!notmember)
 		{
-			message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 442 " + inviter.getUsername() + " " + mychannel + " :You're not on that channel\r\n";
+			message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 442 " + inviter.getNickname() + " " + mychannel + " :You're not on that channel\r\n";
 			send(inviter.getFD(), message.c_str(), message.size(), 0);
 			return ;
 		}
 		else if (alreadymember)
 		{
-			message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 443 " + inviter.getUsername() + " " + user + " " + mychannel + " :is already on channel\r\n";
+			message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 443 " + inviter.getNickname() + " " + user + " " + mychannel + " :is already on channel\r\n";
 			send(inviter.getFD(), message.c_str(), message.size(), 0);
 			return ;	
 		}
-		// if (channelIt->private() && !(channelIt->getAdmin(inviter))) //-> si channel privé et user pas operator de ce channel
-		// {
-		// 	message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 482 " + inviter.getUsername() + " " + mychannel + " :You're not channel operator\r\n";
-		// 	channelIt->sendToChannel(inviter, message);
-		// 	return ;
-		// }
-
-		// ajouter le user a la liste des invités/admis du channel ici
-		message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 341 " + inviter.getUsername() + " " + user + " " + mychannel + "\r\n";
+		if (channelIt->getMode('i') && !(channelIt->getIsChanOp(inviter.getID())))
+		{
+			message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 482 " + inviter.getNickname() + " " + mychannel + " :You're not channel operator\r\n";
+			send(inviter.getFD(), message.c_str(), message.size(), 0);
+			return ;
+		}
+		channelIt->setUserInvited(&it2->second);
+		message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 341 " + inviter.getNickname() + " " + user + " " + mychannel + "\r\n";
 		send(inviter.getFD(), message.c_str(), message.size(), 0);
-		std::cout << message << std::endl;
-		message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost NOTICE @" + mychannel + " :" + inviter.getUsername() + " invited " + user + " into channel  " + mychannel + "\r\n";
+		message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost NOTICE @" + mychannel + " :" + inviter.getNickname() + " invited " + user + " into channel  " + mychannel + "\r\n";
 		send(inviter.getFD(), message.c_str(), message.size(), 0);
-		message = ":" + it2->second.getNickname() + "!" + it2->second.getUsername() + "@localhost NOTICE @" + mychannel + " :" + inviter.getUsername() + " invited " + user + " into channel  " + mychannel + "\r\n";
+		message = ":" + it2->second.getNickname() + "!" + it2->second.getUsername() + "@localhost NOTICE @" + mychannel + " :" + inviter.getNickname() + " invited " + user + " into channel  " + mychannel + "\r\n";
 		send(it2->second.getFD() , message.c_str(), message.size(), 0);
 	}
 }
@@ -453,7 +480,7 @@ void server::cmdTopic(int fd, std::string buff)
 	iss >> channelName;
 	std::vector<channel>::iterator it_channelList = selectChannel(channelName);
 	if (it_channelList == channelList.end()){
-		send(fd, std::string("403" + channelName + ":no such channel\r\n").c_str(), std::string("403 " + channelName + ":no such channel\r\n").length(), 0);
+		send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 403" + channelName + ":no such channel\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 403 " + channelName + ":no such channel\r\n").length(), 0);
 		return ;
 	}
 	// index = findChanbyName(channel);
@@ -468,24 +495,24 @@ void server::cmdTopic(int fd, std::string buff)
 			return ;
 		}
 		else if (tmp.empty() == false && it_channelList->getMode('t') == true && it_channelList->getIsChanOp(mapUser.find(fd)->second.getID()) == false){
-			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 482 " + mapUser.find(fd)->second.getNickname() + " " + channelName + ":You do not have permission to change the topic\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 482 " + mapUser.find(fd)->second.getNickname() + " " + channelName + ":You do not have permission to change the topic\r\n").length(), 0);
+			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 482 " + mapUser.find(fd)->second.getNickname() + " " + channelName + " :You do not have permission to change the topic\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 482 " + mapUser.find(fd)->second.getNickname() + " " + channelName + " :You do not have permission to change the topic\r\n").length(), 0);
 			return ;
 		}
 		else if (tmp.empty() == false && it_channelList->getMode('t') == true && it_channelList->getIsChanOp(mapUser.find(fd)->second.getID()) == true){
 			it_channelList->setTopic(tmp);
 			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").length(), 0);
-			it_channelList->sendToChannel(mapUser.find(fd)->second, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").c_str());
+			it_channelList->sendToChannelnoPRIVMSG(mapUser.find(fd)->second, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").c_str());
 			return ;
 		}
 		else if (tmp.empty() == false && it_channelList->getMode('t') == false){
 			it_channelList->setTopic(tmp);
 			send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").length(), 0);
-			it_channelList->sendToChannel(mapUser.find(fd)->second, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").c_str());
+			it_channelList->sendToChannelnoPRIVMSG(mapUser.find(fd)->second, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost TOPIC " + channelName + " " + tmp + "\r\n").c_str());
 			return ;
 		}
 	}
 	else{
-		send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 442 " + channelName + ":You are not part of this channel\n").c_str(), std::string("442 " + channelName + ":You are not part of this channel\n").length(), 0);
+		send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 442 " + channelName + " :You are not part of this channel\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 442 " + channelName + " :You are not part of this channel\n").length(), 0);
 		return ;
 	}
 }
@@ -512,7 +539,7 @@ void server::cmdMode(int fd, std::string buff)
 		return ;
 	if (chan[0] != '#') // mode is sent for user mode, ignoring (CLIENT SENDS MODE +i AT BEGINNING, MAKING A CRASH LATER IN THIS FUNCTION IF THIS LINE IS REMOVED AS THE CHANNELS ARE NOT SET YET)
 		return;
-	while (itchan->getChannelName() != chan && itchan != channelList.end()){ //find channel | IT CHAAAAN UwU
+	while (itchan != channelList.end() && itchan->getChannelName() != chan){ //find channel | IT CHAAAAN UwU
 		itchan++;
 	}
 	if (itchan == channelList.end()){ // channel not found, does not output anything on client side, this is expected behavior
@@ -729,25 +756,31 @@ void server::cmdPart(int fd, std::string buff)
 					break;
 				}
 			}
-			if (!nochannel) // si channel n'existe pas
+			if (!nochannel)
 			{
 				message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost 403 " + parter.getUsername() + " " + mychannel + " :No such channel\r\n";
 				send(parter.getFD(), message.c_str(), message.size(), 0);
 				continue ;
 			}
-			else if (!notmember) //si  pas membre
+			else if (!notmember)
 			{
 				message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost 442 " + parter.getUsername() + " " + mychannel + " :You're not on that channel\r\n";
 				send(parter.getFD(), message.c_str(), message.size(), 0);
 				continue ;
 			}
-			channelIt->setUserDisconnect(&parter);
+		
 			channelIt->unsetUserInvited(&parter);
+			channelIt->setUserDisconnect(&parter);
 			message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost PART " + mychannel + reason + "\n";
 			channelIt->sendToChannelnoPRIVMSG(parter, message);
 			send(fd, message.c_str(), message.size(), 0);
-			if (channelIt->getNbConnectedUser() == 1 && channelIt->getConnectedFromString("MrRobot"))
-				channelIt->setUserDisconnect(MrRobot);
+			
+			if (channelIt->getNbConnectedUser() == 0)
+			{
+				if (channelIt->getConnectedFromString("MrRobot"))
+					channelIt->setUserDisconnect(MrRobot);
+				channelList.erase(channelIt);
+			} 
 		}
 	}
 }
@@ -778,5 +811,35 @@ void server::cmdPass(std::string password, int fd)
 	}
 	msg = CLIENT + "464 "+ mapUser.find(fd)->second.getNickname() + " :" + RED + BOLD + "Invalid password, you will be disconnected" + NONE + "\r\n";
 	send(fd, msg.c_str(), msg.size(), 0);
+	std::cout << RED << BOLD << "[42_IRC:  USER FAILED TO LOG IN] "<< mapUser.find(fd)->second.getNickname() << NONE << std::endl;
 	closeOne(fd);
 }
+
+void server::cmdPrivateMsg(int fd, std::vector<std::string> vec)
+{
+	std::map<int, client>::iterator it_recip = selectUser(vec[1]);
+	std::map<int, client>::iterator it_sender = selectUser(mapUser.find(fd)->second.getNickname());
+	std::vector<privChannel>::iterator it_privlist = selectPrivChan(it_sender->second.getNickname(), it_recip->second.getNickname());
+	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
+	if (it_privlist == privateList.end())
+	{
+		privChannel pc;
+		pc.name1 = it_sender->second.getNickname();
+		pc.name2 = it_recip->second.getNickname();
+	}
+	std::string str = vec[2].substr(0, 5);
+	if (str == "!bot " || str == "!trf ")
+	{
+		std::string msg = "001 : To use !bot or !trf join a channel(not private channel)\r\n";
+		send(fd, msg.c_str(), msg.size(), 0);
+	}
+	
+	std::cout << "sentence = ." << vec[2] << "." << std::endl;
+	//std::string msg = CLIENT + "PRIVMSG " + it_recip->second.getNickname() + " " + vec[1] + " :" + vec[2] + "\r\n";
+	std::string msg = CLIENT + "PRIVMSG " + vec[1] + " :" + vec[2] + "\r\n";
+		std::cout << "msg = ." << msg << "." << std::endl;
+
+	send(it_recip->first, msg.c_str(), msg.size(), 0);
+	std::cout << YELLOW << vec[1] << ": <" << mapUser.find(fd)->second.getNickname() << "> " << vec[2] << NONE << std::endl;
+}
+

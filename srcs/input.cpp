@@ -11,17 +11,9 @@ void server::receivMessage(void)
 		{
 			if (_fds[i].revents & POLLIN)
 				inputMessage(_fds[i].fd);
-			else if (_fds[i].revents & POLLERR)
-				inputError(_fds[i].fd);
 			_fds[i].revents = 0;
 		}
 	}
-}
-
-void server::inputError(int fd)
-{
-	(void)fd;
-	std::cout << "DEBUG errMessage en cours" << std::endl;
 }
 
 void server::inputMessage(int fd)
@@ -29,14 +21,15 @@ void server::inputMessage(int fd)
 	std::string msg;
 	int size;
 	char buff[bufferSize];
-	mapUser.find(fd)->second.setNetcat(-1);
+	mapUser.find(fd)->second.setNetcat(-2);
 	memset(&buff, 0, bufferSize);
 	size = recv(fd, buff, bufferSize - 1, MSG_DONTWAIT);
 	if (size < 0)//********** MESSAGE VIDE OU MAL RECEPTIONNE
 	{
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
 		{
-			msg = ":400 " + mapUser.find(fd)->second.getNickname() + ":Your message could not be sent./nPlease try again\r\n";
+			std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
+			msg = CLIENT + "400 " + mapUser.find(fd)->second.getNickname() + " :Your message could not be sent./nPlease try again\r\n";
 			send(fd, msg.c_str(), msg.size(), 0);
 		}
 	}
@@ -63,12 +56,13 @@ void server::configureNewUser(std::string const &buff, int fd)
 {
 	std::istringstream iss(buff);
 	std::string command;
-	std::string msg;
 	iss >> command;
-	if (command == "QUIT" || command == "quit" || command == "PING")
+	if (mapUser.find(fd)->second.getLog() >= 2 || command == "QUIT" || command == "quit")
 		parseCommand(buff, fd);
 	else
 	{
+		size_t i = buff.find("PASS");
+		size_t j = buff.find("pass");
 		std::string username;
 		std::string password = extract(buff, "PASS ", "\n");
 		if (password.size() == 0)
@@ -79,7 +73,12 @@ void server::configureNewUser(std::string const &buff, int fd)
 		iss.str(name);
 		iss >> username;
 		if (mapUser.find(fd)->second.getLog() == 0)
-			cmdPass(password, fd);
+		{
+			if (mapUser.find(fd)->second.getNetcat() == -2 && i == std::string::npos && j == std::string::npos)
+				cmdPass(command, fd);
+			else
+				cmdPass(password, fd);
+		}
 		if (mapUser.find(fd)->second.getLog() == 1)
 		{
 			mapUser.find(fd)->second.setLog();

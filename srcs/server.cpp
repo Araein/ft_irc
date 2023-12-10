@@ -136,9 +136,9 @@ void server::userNetcat(void)
 			it->second.setNetcat();
 		if (it->second.getNetcat() == 2 && it->second.getLog() == 0)
 		{
-			it->second.setNetcat(-1);
+			it->second.setNetcat(-2);
 			msg = "Please enter your password to connect to 42IRC\n";
-			msg += "Use the command : PASS (or QUIT to quit the server)\n";
+			msg += "Use QUIT to quit the server\n";
 			send(it->second.getFD(), msg.c_str(), msg.size(), 0);
 		}
 	}
@@ -156,9 +156,16 @@ void server::userNetcat(void)
 void server::createChannel(void)
 {
 	admin = new client(0, 0);
-	MrRobot = new client(-1, -1);
+
+	client user( -1, -1);
+	MrRobot = new client( -1, -1);
+
+	user.setNickname("MrRobot");
+	user.setUsername("MrRobot");
 	MrRobot->setNickname("MrRobot");
 	MrRobot->setUsername("MrRobot");
+	mapUser.insert(std::make_pair(-1, user));
+
 	chan = new channel[10];
 	chan[0].setChannelName("#Libft");
 	chan[0].setUserChanOp(admin);
@@ -212,4 +219,7 @@ void server::createChannel(void)
 	channelList.push_back(chan[8]);
 	channelList.push_back(chan[9]);
 }
+
+
+
 

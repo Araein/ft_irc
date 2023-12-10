@@ -47,11 +47,8 @@ class channel
 	std::string getAllChanOp() const;
 	std::string getAllConnected() const;
 	std::string getAllInvited() const;
-	void sendInfoToChannel(client const &user, std::string message);
-	bool userCanWrite(client *user, std::string channelName);
 	bool getConnectedFromString(std::string const &user) const;
 	client* getClient(const std::string& user);
-	void sendToChannelnoPRIVMSG(client const &user, std::string message);
 
 
 //**********************************/SETTER//**********************************/
@@ -63,21 +60,23 @@ class channel
 	void setUserDisconnect(client *user);
 	void setUserInvited(client *user);
 	void setUserChanOp(client *user);
-	void undoUserChanOp(client *user);
 	void setMode(char c, bool value);
 	void setChannelName(std::string name);
 	void setAllInvited(void);
 	void setUserShutdown(client *user);
+	void undoUserChanOp(client *user);
 	void unsetUserInvited(client *user);
 
 
 //**********************************/FUNCTION//**********************************/
 	void sendToChannel(client const &user, std::string message);
+	void sendInfoToChannel(client const &user, std::string message);
 	void welcomeMessage(client const &user) const;
-	bool userCanWrite(client *user);
+	bool userCanWrite(client *user, std::string channelName);
 	bool userCanJoin(client *user, std::string password);
 	void switchUser(client *user);
 	std::string userList() const;
+	void sendToChannelnoPRIVMSG(client const &user, std::string message);
 	void sendToOne(client const &user, std::string message);
 
 };

@@ -5,8 +5,6 @@
 class client
 {
 
-	std::string rtrim(const std::string& str);
-	std::string ltrim(const std::string& str);
 	int  _fd;
 	int  _id;
 	int _log;
