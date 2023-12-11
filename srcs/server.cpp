@@ -56,7 +56,7 @@ bool server::initSocket(void)
 		close(_fds[0].fd);
 		return false;
 	}
-	client us(_id, _fds[0].fd);
+	client us(++_id, _fds[0].fd);
 	us.setNetcat(-1);
 	mapUser.insert(std::make_pair(_fds[0].fd, us));
 	_totalPlace++;
@@ -140,11 +140,13 @@ void server::userNetcat(void)
 
 void server::createChannel(void)
 {
-	admin = new client(0, 0);
+	admin = new client(_id, 0);
+	mapUser.insert(std::make_pair(-1, *admin));
+	admin->setNickname("chanOp42");
+	admin->setUsername("chanOp42");
 
 	client user( -1, -1);
-	MrRobot = new client( -1, -1);
-
+	MrRobot = new client( ++_id, -1);
 	user.setNickname("MrRobot");
 	user.setUsername("MrRobot");
 	MrRobot->setNickname("MrRobot");

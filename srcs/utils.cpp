@@ -12,11 +12,13 @@ std::string server::startServer(void) const
 
 void server::closeAll(void)
 {
-	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
+	for (int i = 0; i < maxFD + 1; i++)
 	{
-		shutdown(it->second.getFD() , SHUT_RDWR);
-		if (it->second.getFD() > 0)
-			close(it->second.getFD());
+		if (_fds[i].fd > 0)
+		{
+			shutdown(_fds[i].fd , SHUT_RDWR);
+			close(_fds[i].fd);
+		}
 	}
 	std::cout << std::endl << RED << BOLD << "[42_IRC:  DISCONNECTED] " << NONE << "Hope you enjoyed it"  << std::endl;
 }

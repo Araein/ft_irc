@@ -7,10 +7,8 @@ client::client(int id, int fd): _fd(fd), _id(id), _log(0), fileId(100), _netcat(
 	oss << _id;
 	_nickname = "user_" + oss.str();
 	_username = "user" + oss.str();
-	if (_id == 0)
+	if (_id <= 102)
 	{
-		_nickname = "chanOp_42stud";
-		_username = "chanOp_42stud";
 		_netcat = -2;
 		_log = 2;
 	}

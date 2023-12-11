@@ -280,7 +280,7 @@ void server::cmdPrivmsg(int fd, std::string buff)
 		cmdPrivateMsg(fd, vec);
 		return;
 	}
-	if (it->userCanWrite(&mapUser.find(fd)->second, vec[1]) == true) 
+	if (it->userCanWrite(&mapUser.find(fd)->second) == true) 
 	{
 		std::string str = vec[2].substr(0, 5);
 		if (str == "!bot ")

@@ -310,7 +310,7 @@ void channel::sendInfoToChannel(client const &user, std::string message)
 	}
 }
 
-bool channel::userCanWrite(client *user, std::string channelName)
+bool channel::userCanWrite(client *user)
 {
 	if (getIsConnected(user->getID()) == false)
 	{

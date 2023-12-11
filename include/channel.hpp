@@ -72,7 +72,7 @@ class channel
 	void sendToChannel(client const &user, std::string message);
 	void sendInfoToChannel(client const &user, std::string message);
 	void welcomeMessage(client const &user) const;
-	bool userCanWrite(client *user, std::string channelName);
+	bool userCanWrite(client *user);
 	bool userCanJoin(client *user, std::string password);
 	void switchUser(client *user);
 	std::string userList() const;
