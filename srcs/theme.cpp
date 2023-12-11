@@ -42,7 +42,7 @@ void server::printServerHeader(void) const
 
 void server::printHome(int fd)
 {
-	std::string msg = "001 " + mapUser.find(fd)->second.getNickname() + " :";
+	std::string msg = "372 " + mapUser.find(fd)->second.getNickname() + " :";
 	msg += "  \n";
 	msg += " \n";
 	msg += "****************************************************************\n";

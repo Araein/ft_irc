@@ -95,7 +95,6 @@ std::vector<privChannel>::iterator server::selectPrivChan(std::string name1, std
 	return privateList.end();
 }
 
-
 std::vector<channel>::iterator server::selectChannel(std::string name)
 {
 	std::vector<channel>::iterator it;
@@ -152,7 +151,7 @@ std::map<std::string, std::string> server::splitCommandJoin(std::string buff)
 	return chanPass;
 }
 
-std::vector<std::string> server::splitCommandNick(std::string buff)
+std::vector<std::string> server::splitCommand(std::string buff)
 {
 	std::istringstream iss(buff);
 	std::string str;

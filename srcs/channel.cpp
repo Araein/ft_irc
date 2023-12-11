@@ -225,7 +225,7 @@ void channel::setUserChanOp(client *user)
 
 void channel::setChannelName(std::string name) { chan.name = name; }
 
-void channel::setAllInvited(void){ // INSCRIT TOUT LES CLIENTS DU CHANNEL COMME INVITE
+void channel::setAllInvited(void){
 	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++){
 		chan.invited.push_back(*it);
 	}
@@ -268,11 +268,11 @@ void channel::welcomeMessage(client const &user) const
 	oss << currentTime;
 	std::string msg;
 	std::string CLIENT = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost ";
-	msg = CLIENT + "JOIN " + chan.name + "\n";
+	msg = CLIENT + "JOIN " + chan.name + "\r\n";
 	send(user.getFD(), msg.c_str(), msg.size(), 0);
 	if (chan.topicMessage.size() > 0)
 	{
-		msg = CLIENT + "332 " + user.getNickname()+ " " + chan.name + " :" + chan.topicMessage + "\r\n";
+		msg = CLIENT + "332 " + user.getNickname() + " " + chan.name + " :" + chan.topicMessage + "\r\n";
 		send(user.getFD(), msg.c_str(), msg.size(), 0);
 	}
 	msg = CLIENT + "353 " + user.getNickname() + " = " + chan.name + " :" + userList() + "\r\n";
@@ -289,7 +289,7 @@ void channel::sendToChannel(client const &user, std::string message)
 	{
 		if (it->getFD() > 0 &&  it->getID() != user.getID())
 		{
-			std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + message + " \r\n";
+			std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + message + "\r\n";
 			send(it->getFD(), msg.c_str(), msg.size(), 0);
 		}
 	}
@@ -303,7 +303,7 @@ void channel::sendInfoToChannel(client const &user, std::string message)
 	{
 		if (it->getFD() > 0 &&  it->getID() != user.getID())
 		{
-			CLIENT = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 100 ";
+			CLIENT = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 372 ";
 			msg = CLIENT + chan.name + " :" + message + "\n";
 			send(it->getFD(), msg.c_str(), msg.size(), 0);
 		}
@@ -314,8 +314,9 @@ bool channel::userCanWrite(client *user, std::string channelName)
 {
 	if (getIsConnected(user->getID()) == false)
 	{
+
 		std::string CLIENT = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost ";
-		std::string msg = CLIENT + "404 " + user->getNickname() + channelName + + " :"" you have not joined the channel\r\n";
+		std::string msg = CLIENT + "404 " + user->getNickname() + " " + chan.name +  ":You have not joined the channel\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
@@ -327,19 +328,19 @@ bool channel::userCanJoin(client *user, std::string password)
 	std::string CLIENT = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost ";
 	if (chan.i_Mode == true && getIsInvited(user->getID()) == false)
 	{
-		std::string msg = CLIENT + "473 " + user->getNickname() + chan.name +  " :" + chan.name + "\r\n";
+		std::string msg = CLIENT + "473 " + user->getNickname() + " " + chan.name +  " :" + chan.name + "\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
 	if (chan.needPass == true && chan.password != password)
 	{
-		std::string msg = CLIENT + "475 " + user->getNickname() + chan.name +  " :" + chan.name + "\r\n";
+		std::string msg = CLIENT + "475 " + user->getNickname() + " " + chan.name +  " :" + chan.name + "\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
 	if (chan.nbConnectedUser == chan.maxConnectedUser)
 	{
-		std::string msg = CLIENT + "471 " + user->getNickname() + chan.name +  " :" + chan.name + "\r\n";
+		std::string msg = CLIENT + "471 " + user->getNickname() + " " + chan.name +  " :" + chan.name + "\r\n";
 		send(user->getFD(), msg.c_str(), msg.size(), 0);
 		return false;
 	}
@@ -405,7 +406,7 @@ void channel::sendToOne(client const &user, std::string message)
 	{
 		if (it->getFD() > 0 &&  it->getID() == user.getID())
 		{
-			std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + message + " \r\n";
+			std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + message + "\r\n";
 			send(it->getFD(), msg.c_str(), msg.size(), 0);
 			break;
 		}

@@ -79,7 +79,7 @@ class server
 	std::vector<channel>::iterator selectChannel(std::string name);
 	std::map<int, client>::iterator selectUser(std::string name);
 	std::map<std::string, std::string> splitCommandJoin(std::string buff);
-	std::vector<std::string> splitCommandNick(std::string buff);
+	std::vector<std::string> splitCommand(std::string buff);
 	std::vector<std::string> splitCommandPrivmsg(std::string buff);
 	void userUpDate(client *user, std::string oldNick);
 	std::string deleteCRLF(std::string str);

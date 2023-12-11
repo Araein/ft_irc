@@ -102,9 +102,8 @@ void server::acceptNewUser(void)
 	_fds[_curPlace].revents = tmp.revents;
 	if (_curPlace == maxFD)
 	{
-		std::string msg = "ircserv:";
-		msg += RED;
-		msg += " Too many connections in progress. Please try again later";
+		std::string msg = RED;
+		msg += "Too many connections in progress. Please try again later";
 		msg += NONE;
 		msg += "\r\n";
 		send(tmp.fd, msg.c_str(), msg.size(), 0);

@@ -7,10 +7,9 @@ void server::receivMessage(void)
 {
 	for (int i = 1; i < maxFD + 1; i++)
 	{
-		if (_fds[i].revents & (POLLIN | POLLERR))
+		if (_fds[i].revents & (POLLIN))
 		{
-			if (_fds[i].revents & POLLIN)
-				inputMessage(_fds[i].fd);
+			inputMessage(_fds[i].fd);
 			_fds[i].revents = 0;
 		}
 	}
@@ -24,7 +23,7 @@ void server::inputMessage(int fd)
 	mapUser.find(fd)->second.setNetcat(-2);
 	memset(&buff, 0, bufferSize);
 	size = recv(fd, buff, bufferSize - 1, MSG_DONTWAIT);
-	if (size < 0)//********** MESSAGE VIDE OU MAL RECEPTIONNE
+	if (size < 0)
 	{
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
 		{
@@ -33,7 +32,7 @@ void server::inputMessage(int fd)
 			send(fd, msg.c_str(), msg.size(), 0);
 		}
 	}
-	else if (size == 0)//********** MESSAGE INDIQUANT LA DECONNEXION D'UN CLIENT
+	else if (size == 0)
 	{
 		std::cout << GREEN << "[42_IRC:  USER DISCONNECTED] " << mapUser.find(fd)->second.getNickname() << NONE << std::endl;
 		closeOne(fd);

@@ -207,7 +207,7 @@ void server::cmdKick(int fd, std::string buff)
 
 void server::cmdNick(int fd, std::string buff)
 {
-	std::vector<std::string> vec = splitCommandNick(buff);
+	std::vector<std::string> vec = splitCommand(buff);
 	std::string msg;
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
 	if (vec.size() == 1 || vec[1].size() == 0)
@@ -273,7 +273,7 @@ void server::cmdPrivmsg(int fd, std::string buff)
 	{
 		if (selectUser(vec[1]) == mapUser.end())
 		{
-			msg = CLIENT + "401 " + mapUser.find(fd)->second.getNickname() + vec[1] + " :\r\n";
+			msg = CLIENT + "401 " + mapUser.find(fd)->second.getNickname() + " " + vec[1] + " :\r\n";
 			send(fd, msg.c_str(), msg.size(), 0);
 			return;
 		}
@@ -588,7 +588,7 @@ void server::cmdMode(int fd, std::string buff)
 					argmsg += "-";
 				}
 				if (std::string("+-ilokt\r\n ").find(*it) == std::string::npos){
-					std::string error = ":localhost 472 " + user.getNickname() + *it + " :is unknown mode char to me\r\n";
+					std::string error = ":localhost 472 " + user.getNickname() + " " + *it + " :is unknown mode char to me\r\n";
 					send(fd, error.c_str(), error.length(), 0);
 				}
 			}
@@ -649,7 +649,7 @@ void server::cmdMode(int fd, std::string buff)
 					argmsg += "l";
 				}
 				if (std::string("+-ilokt\r\n ").find(*it) == std::string::npos){
-					std::string error = ":localhost 472 " + user.getNickname() + *it + " :is unknown mode char to me\r\n";
+					std::string error = ":localhost 472 " + user.getNickname() + " " + *it + " :is unknown mode char to me\r\n";
 					send(fd, error.c_str(), error.length(), 0);
 				}
 			}
@@ -765,7 +765,7 @@ void server::cmdPass(std::string password, int fd)
 	if (_password.compare(password) == 0)
 	{
 		mapUser.find(fd)->second.setLog();
-		msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + " :" + GREEN + BOLD + "You have successfully logged in" + NONE + "\r\n";
+		msg = CLIENT + "372 " + mapUser.find(fd)->second.getNickname() + " :" + GREEN + BOLD + "You have successfully logged in" + NONE + "\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		sendWelcomMsgs(fd);
 		return;
@@ -791,7 +791,7 @@ void server::cmdPrivateMsg(int fd, std::vector<std::string> vec)
 	std::string str = vec[2].substr(0, 5);
 	if (str == "!bot " || str == "!trf ")
 	{
-		std::string msg = "001 : To use !bot or !trf join a channel(not private channel)\r\n";
+		std::string msg = CLIENT + "372 " + mapUser.find(fd)->second.getNickname() + " :To use !bot or !trf join a channel(not private channel)\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 	}
 	std::string msg = CLIENT + "PRIVMSG " + it_recip->second.getNickname() + " " + vec[1] + " :" + vec[2] + "\r\n";
