@@ -38,9 +38,9 @@ int client::getFileDest(std::string id) const
 	return -1;
 }
 
-bool client::getIsChanOp(void)
+bool client::getIsChanOp(void) const
 {
-	for (std::vector<channel>::iterator it = channelConnected.begin(); it != channelConnected.end(); it++)
+	for (std::vector<channel>::const_iterator it = channelConnected.begin(); it != channelConnected.end(); it++)
 	{
 		if (it->getIsChanOp(_id) == true)
 			return true;
@@ -58,9 +58,9 @@ bool client::getNumFileExist(std::string id) const
 	return false;
 }
 
-std::vector<transferFile>::iterator client::getTrf(std::string id)
+std::vector<transferFile>::const_iterator client::getTrf(std::string const &id) const
 {
-	for (std::vector<transferFile>::iterator it = fileList.begin(); it != fileList.end(); it++)
+	for (std::vector<transferFile>::const_iterator it = fileList.begin(); it != fileList.end(); it++)
 	{
 		if (it->id == id)
 			return it;
@@ -70,20 +70,20 @@ std::vector<transferFile>::iterator client::getTrf(std::string id)
 
 //**********************************//SETTER//**********************************//
 
-void client::setPassword(std::string pass) { _password = pass; }
-void client::setUsername(std::string username) { _username = username; }
+void client::setPassword(std::string const &pass) { _password = pass; }
+void client::setUsername(std::string const &username) { _username = username; }
 void client::setLog(void) { _log++; }
 void client::setNetcat(int value) { _netcat = value; }
-void client::setNickname(std::string nickname) { _nickname = nickname; }
+void client::setNickname(std::string const &nickname) { _nickname = nickname; }
 void client::setNetcat(void)
 {
 	if (_netcat > -1)
 		_netcat++;
 }
 
-//**********************************//FONCTIONS//**********************************//
+//**********************************//FUNCTION//**********************************//
 
-void client::addChannel(channel *chan) { channelConnected.push_back(*chan); }
+void client::addChannel(channel const &chan) { channelConnected.push_back(chan); }
 
 void client::deleteChannel(channel const &chan)
 {
@@ -100,7 +100,7 @@ void client::deleteChannel(channel const &chan)
 void client::exitUser(void)
 {
 	for (std::vector<channel>::iterator it = channelConnected.begin(); it != channelConnected.end(); it++)
-		it->setUserShutdown(this);
+		it->setUserShutdown(*this);
 }
 
 std::string client::setFileList(transferFile &trf)
@@ -112,7 +112,7 @@ std::string client::setFileList(transferFile &trf)
 	return trf.id;
 }
 
-void client::delFileList(std::string id)
+void client::delFileList(std::string const &id)
 {
 	for (std::vector<transferFile>::iterator it = fileList.begin(); it != fileList.end(); it++)
 	{

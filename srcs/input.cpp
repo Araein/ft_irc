@@ -1,13 +1,12 @@
 #include "irc.hpp"
 
-
-//**********************************//GESTION DES MESSAGES ENTRANTS//**********************************//
+//**********************************//INCOMING MESSAGE//**********************************//
 
 void server::receivMessage(void)
 {
 	for (int i = 1; i < maxFD + 1; i++)
 	{
-		if (_fds[i].revents & (POLLIN))
+		if (_fds[i].revents & POLLIN)
 		{
 			inputMessage(_fds[i].fd);
 			_fds[i].revents = 0;
@@ -56,21 +55,18 @@ void server::configureNewUser(std::string const &buff, int fd)
 	std::istringstream iss(buff);
 	std::string command;
 	iss >> command;
-	if (mapUser.find(fd)->second.getLog() >= 2 || command == "QUIT" || command == "quit")
+	if (command == "QUIT" || command == "quit")
 		parseCommand(buff, fd);
+	else if (command == "/QUIT" || command == "/quit")
+		parseCommand(&buff[1], fd);
 	else
 	{
 		size_t i = buff.find("PASS");
 		size_t j = buff.find("pass");
-		std::string username;
 		std::string password = extract(buff, "PASS ", "\n");
 		if (password.size() == 0)
 			password = extract(buff, "pass ", "\n");
 		std::string nickname = extract(buff, "NICK ", "\n");
-		std::string name = extract(buff, "USER ", "\n");
-		iss.clear();
-		iss.str(name);
-		iss >> username;
 		if (mapUser.find(fd)->second.getLog() == 0)
 		{
 			if (mapUser.find(fd)->second.getNetcat() == -2 && i == std::string::npos && j == std::string::npos)
@@ -81,18 +77,10 @@ void server::configureNewUser(std::string const &buff, int fd)
 		if (mapUser.find(fd)->second.getLog() == 1)
 		{
 			mapUser.find(fd)->second.setLog();
-			std::string str = "NICK " + nickname + " " + username;
+			std::string str = "NICK " + nickname;
 			cmdNick(fd, str);
 			printHome(fd);
 			std::cout << GREEN << BOLD << "[42_IRC:  USER LOGGED IN] "<< mapUser.find(fd)->second.getNickname() << NONE << std::endl;
 		}
 	}
 }
-
-
-
-
-
-
-
-

@@ -12,7 +12,6 @@ void server::sendWelcomMsgs(int fd) const
 	send(fd, msg.c_str(), msg.length(), 0);
 }
 
-
 void server::printServerHeader(void) const
 {
 	std::cout << BLUE << BOLD << "________________________________________________________________" << NONE << std::endl;
@@ -40,7 +39,7 @@ void server::printServerHeader(void) const
 	std::cout << BLUE << "                                                      'tlebouvi'" << NONE << std::endl;
 }
 
-void server::printHome(int fd)
+void server::printHome(int fd) const
 {
 	std::string msg = "372 " + mapUser.find(fd)->second.getNickname() + " :";
 	msg += "  \n";
@@ -82,13 +81,12 @@ void server::printHome(int fd)
 	send(fd, msg.c_str(), msg.size(), 0);
 }
 
-std::string server::printChannel(void)
+std::string server::printChannel(void) const
 {
-	std::string msg = "";
 	int i = 0;
-	msg += "AVAILABLE CHANNELS\n";
+	std::string msg = "AVAILABLE CHANNELS\n";
 	msg += "*Free access\n";
-	for (std::vector<channel>::iterator it = channelList.begin(); it != channelList.end(); it++)
+	for (std::vector<channel>::const_iterator it = channelList.begin(); it != channelList.end(); it++)
 	{
 		i++;
 		if (i == 5)
@@ -101,7 +99,7 @@ std::string server::printChannel(void)
 	}
 	msg += " \n";
 	msg += "*With password and/or invitation\n";
-	for (std::vector<channel>::iterator it = channelList.begin(); it != channelList.end(); it++)
+	for (std::vector<channel>::const_iterator it = channelList.begin(); it != channelList.end(); it++)
 	{
 		if (it->getMode('i') == true || it->getNeedPass() == true)
 			msg += "  " + it->getChannelName();
@@ -110,7 +108,7 @@ std::string server::printChannel(void)
 	return msg;
 }
 
-std::string server::printBonus(void)
+std::string server::printBonus(void) const
 {
 	std::string msg = "You can call";
 	msg += GREEN;
@@ -127,5 +125,3 @@ std::string server::printBonus(void)
 	msg += " (in channel send !trf)\n";
 	return msg;
 }
-
-

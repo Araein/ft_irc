@@ -1,6 +1,6 @@
 #include "irc.hpp"
 
-server::server(int port, std::string password):
+server::server(int port, std::string const &password):
 _id(100), _port(port), _curPlace(0), _totalPlace(0), _password(password)
 {
 	printServerHeader();
@@ -8,11 +8,12 @@ _id(100), _port(port), _curPlace(0), _totalPlace(0), _password(password)
 	for (int i = 0; i < maxFD + 1; i++)
 	{
 		_fds[i].fd = -1;
-		_fds[i].events = POLLIN | POLLERR;
+		_fds[i].events = POLLIN;
 		_fds[i].revents = 0;
 	}
 	_fds[maxFD].fd = -2;
 }
+
 server::~server(void)
 {
 	delete admin;
@@ -34,30 +35,31 @@ bool server::initSocket(void)
 	_fds[0].fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
 	if (_fds[0].fd < 0)
 	{
-		std::cerr << "Failed to open socket" << std::endl;
+		std::cerr << RED << "[42_IRC:  ERROR] Failed to open socket" << NONE << std::endl;
 		return false;
 	}
 	if (setsockopt(_fds[0].fd, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt))){
-		std::cerr << "Failed to config socket" << std::endl;
+		std::cerr << RED << "[42_IRC:  ERROR] Failed to config socket" << NONE << std::endl;
 		close(_fds[0].fd);
 		return false;
 	}
 	std::cout << "[42_IRC:  CONNECTED]" << std::endl;
 	if (bind(_fds[0].fd, (sockaddr *)&sock, sizeof(sock)) < 0)
 	{
-		std::cerr << "Failed to bind to socket" << std::endl;
+		std::cerr << RED << "[42_IRC:  ERROR] Failed to bind socket" << NONE << std::endl;
 		close(_fds[0].fd);
 		return false;
 	}
-	std::cout << "[42_IRC:  BINDING]" << std::endl;
+	std::cout << "[42_IRC:  BOUND]" << std::endl;
 	if (listen(_fds[0].fd, SOMAXCONN) < 0)
 	{
-		std::cerr << "Failed to listen to socket" << std::endl;
+		std::cerr << RED << "[42_IRC:  ERROR] Failed to listen to socket" << NONE << std::endl;
 		close(_fds[0].fd);
 		return false;
 	}
 	client us(++_id, _fds[0].fd);
 	us.setNetcat(-1);
+	us.setNickname("server");
 	mapUser.insert(std::make_pair(_fds[0].fd, us));
 	_totalPlace++;
 	std::cout << "[42_IRC:  LISTENING ON PORT " << _port << "]" << std::endl;
@@ -72,7 +74,7 @@ void server::mainLoop(void)
 		ret = poll(_fds, maxFD + 1, 1000);
 		if (ret < 0)
 		{
-			std::cerr << "[42_IRC:  FAILED POLL() CALL]" << std::endl;
+			std::cerr << RED << "[42_IRC:  ERROR] Failed to call poll()" << NONE << std::endl;
 			closeAll();
 			return;
 		}
@@ -91,7 +93,7 @@ void server::acceptNewUser(void)
 	memset(&sock, 0, sizeSock);
 	pollfd tmp;
 	tmp.revents = 0;
-	tmp.events = POLLIN | POLLERR;
+	tmp.events = POLLIN;
 	tmp.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
 	if (tmp.fd == -1)
 		return;
@@ -103,7 +105,7 @@ void server::acceptNewUser(void)
 	if (_curPlace == maxFD)
 	{
 		std::string msg = RED;
-		msg += "Too many connections in progress. Please try again later";
+		msg += "Maximum number of connections reached";
 		msg += NONE;
 		msg += "\r\n";
 		send(tmp.fd, msg.c_str(), msg.size(), 0);
@@ -116,7 +118,7 @@ void server::acceptNewUser(void)
 }
 
 
-//**********************************//GESTION DE NETCAT//**********************************//
+//**********************************//NETCAT//**********************************//
 
 void server::userNetcat(void)
 {
@@ -136,65 +138,62 @@ void server::userNetcat(void)
 }
 
 
-//**********************************//CANAUX DE BASE//**********************************//
+//**********************************//DATA//**********************************//
 
 void server::createChannel(void)
 {
-	admin = new client(_id, 0);
-	mapUser.insert(std::make_pair(-1, *admin));
+	admin = new client(_id, -3);
 	admin->setNickname("chanOp42");
 	admin->setUsername("chanOp42");
+	mapUser.insert(std::make_pair(-3, *admin));
 
-	client user( -1, -1);
-	MrRobot = new client( ++_id, -1);
-	user.setNickname("MrRobot");
-	user.setUsername("MrRobot");
+	MrRobot = new client( ++_id, -4);
 	MrRobot->setNickname("MrRobot");
 	MrRobot->setUsername("MrRobot");
-	mapUser.insert(std::make_pair(-1, user));
+	mapUser.insert(std::make_pair(-4, *MrRobot));
 
 	chan = new channel[10];
 	chan[0].setChannelName("#Libft");
-	chan[0].setUserChanOp(admin);
+	chan[0].setUserChanOp(*admin);
 	chan[0].setTopic("Discuss around the Libft and how to create your first library");
 	chan[1].setChannelName("#get_next_line");
-	chan[1].setUserChanOp(admin);
+	chan[1].setUserChanOp(*admin);
 	chan[1].setTopic("Discute around get_next_line and how to read a file");
 	chan[2].setChannelName("#BornToBeRoot");
-	chan[2].setUserChanOp(admin);
+	chan[2].setUserChanOp(*admin);
 	chan[2].setTopic("Discuss around the virtual Machine and Linux");
 	chan[3].setChannelName("#soLong");
-	chan[3].setUserChanOp(admin);
+	chan[3].setUserChanOp(*admin);
 	chan[3].setTopic("Discuss around the minilibx");
 	chan[4].setChannelName("#minishell");
-	chan[4].setUserChanOp(admin);
+	chan[4].setUserChanOp(*admin);
 	chan[4].setTopic("Discuss around the Shell");
 	chan[5].setChannelName("#philosopher");
-	chan[5].setUserChanOp(admin);
+	chan[5].setUserChanOp(*admin);
 	chan[5].setTopic("Discuss around the threads");
 	chan[6].setChannelName("#Evaluation");
-	chan[6].setUserChanOp(admin);
+	chan[6].setUserChanOp(*admin);
 	chan[6].setMaxConnectedUser(2);
 	chan[6].setTopic("Evaluate or get evaluated");
 	chan[6].setPassword("stud42");
 	chan[7].setChannelName("#Promo");
-	chan[7].setUserChanOp(admin);
+	chan[7].setUserChanOp(*admin);
 	chan[7].setNeedPass(true);
 	chan[7].setTopic("Discuss with students from your promo");
 	chan[7].setPassword("stud42");
 	chan[8].setChannelName("#Staff");
-	chan[8].setUserChanOp(admin);
+	chan[8].setUserChanOp(*admin);
 	chan[8].setMaxConnectedUser(5);
 	chan[8].setTopic("Participate in the development of future student projects. On invitation by a staff member\n");
 	chan[8].setMode('i', true);
-	chan[8].setUserInvited(admin);
+	chan[8].setUserInvited(*admin);
 	chan[8].setPassword("stud42");
 	chan[9].setChannelName("#API");
-	chan[9].setUserChanOp(admin);
+	chan[9].setUserChanOp(*admin);
 	chan[9].setTopic("Welcome to the discussion forum reserved for tutors. On invitation by a tutor or staff\n");
 	chan[9].setPassword("stud42");
 	chan[9].setMode('i', true);
-	chan[9].setUserInvited(admin);
+	chan[9].setUserInvited(*admin);
 	channelList.push_back(chan[0]);
 	channelList.push_back(chan[1]);
 	channelList.push_back(chan[2]);
