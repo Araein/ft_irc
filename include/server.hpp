@@ -29,7 +29,7 @@ class server
 
 	pollfd _fds[maxFD + 1];
 	std::string _password;
-	std::string _partCommand;
+	std::map<int, std::string> truncCmd;
 	std::map<int, client> mapUser;
 	std::vector<channel> channelList;
 	std::vector<privChannel> privateList;
@@ -85,6 +85,7 @@ class server
 	std::string deleteCRLF(std::string str);
 	int jumpToNextMode(std::string::iterator it);
 	bool findKey(std::vector<std::string> vec, std::string key);
+	std::map<int, std::string>::iterator selectTrunc(int fd);
 
 
 //**********************************/BOT//**********************************/

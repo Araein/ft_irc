@@ -249,6 +249,14 @@ std::map<int, client>::iterator server::selectUser(std::string const &name)
 	return mapUser.end();
 }
 
-
+std::map<int, std::string>::iterator server::selectTrunc(int fd)
+{
+	for (std::map<int, std::string>::iterator it = truncCmd.begin(); it != truncCmd.end(); it++)
+	{
+		if (it->first == fd)
+			return it;
+	}
+	return truncCmd.end();
+}
 
 

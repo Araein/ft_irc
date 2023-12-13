@@ -90,25 +90,35 @@ void server::parseCommand(std::string buff, int fd)
 	else
 	{
 		std::string temp;
-		if (buff[buff.size() - 1] == '\n' && _partCommand.size() == 0)
+		if (buff[buff.size() - 1] == '\n' && selectTrunc(fd) == truncCmd.end())
 		{
 			msg = CLIENT + "421 " + mapUser.find(fd)->second.getNickname() + " :" + command + " not found in 42_IRC\r\n";
 			send(fd, msg.c_str(), msg.size(), 0);
 			std::cout << BLUE << "[42_IRC:  COMMAND NOT FOUND] " << command << NONE << std::endl;
 			return;	
 		}
-		if (buff[buff.size() - 1] == '\n' && _partCommand.size() > 0)
+		if (buff[buff.size() - 1] == '\n' && selectTrunc(fd) != truncCmd.end())
 		{
-			_partCommand += buff;
-			temp = _partCommand;
-			_partCommand = "";
+			selectTrunc(fd)->second += buff;
+			temp = selectTrunc(fd)->second;
+			truncCmd.erase(selectTrunc(fd));
 			parseCommand(temp, fd);
 			return;
 		}
-		if (buff[buff.size() - 1] == '\r')
-			_partCommand += buff.substr(0, buff.size() - 1);
+		if (selectTrunc(fd) != truncCmd.end())
+		{
+			if (buff[buff.size() - 1] == '\r')
+				selectTrunc(fd)->second += buff.substr(0, buff.size() - 1);
+			else
+				selectTrunc(fd)->second += buff;
+		}
 		else
-			_partCommand += buff;
+		{
+			if (buff[buff.size() - 1] == '\r')
+				truncCmd.insert(std::make_pair(fd, buff.substr(0, buff.size() - 1)));
+			else
+				truncCmd.insert(std::make_pair(fd, buff));
+		}
 	}
 }
 
