@@ -34,19 +34,18 @@ class server
 	std::vector<channel> channelList;
 	std::vector<privChannel> privateList;
 
-//*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
 //**********************************//THEME//**********************************//
 	void sendWelcomMsgs(int) const;
 	void printServerHeader() const;
-	std::string printChannel();
-	void printHome(int fd);
-	std::string printBonus(void);
+	std::string printChannel() const;
+	void printHome(int fd) const;
+	std::string printBonus(void) const;
 
 
-//**********************************/COMMANDE//**********************************/
+//**********************************/COMMAND//**********************************/
 	void parseCommand(std::string buff, int fd);
 	void cmdKick(int fd, std::string buff);
-	void cmdNick(int fd, std::string nickname);
+	void cmdNick(int fd, std::string buff);
 	void cmdJoin(std::string buff, int fd);
 	void cmdInvite(int fd, std::string buff);
 	void cmdTopic(int fd, std::string buff);
@@ -56,6 +55,7 @@ class server
 	void cmdPing(std::string buff, int fd);
 	void cmdPrivmsg(int fd, std::string buff);
 	void cmdPrivateMsg(int fd, std::vector<std::string> vec);
+	void cmdPartPrivmsg(int fd, std::string const &name1, std::string const &name2);
 
 //**********************************/SERVER//**********************************/
 	void acceptNewUser();
@@ -73,15 +73,15 @@ class server
 	std::string startServer() const;
 	void closeOne(int);
 	int findPlace() const;
-	bool nameUserCheck(std::string name) const;
-	bool nameExist(std::string name);
-	std::vector<privChannel>::iterator selectPrivChan(std::string name1, std::string name2);
-	std::vector<channel>::iterator selectChannel(std::string name);
-	std::map<int, client>::iterator selectUser(std::string name);
-	std::map<std::string, std::string> splitCommandJoin(std::string buff);
-	std::vector<std::string> splitCommandNick(std::string buff);
-	std::vector<std::string> splitCommandPrivmsg(std::string buff);
-	void userUpDate(client *user, std::string oldNick);
+	bool nameUserCheck(std::string const &name) const;
+	bool nameExist(std::string const &name) const;
+	std::vector<privChannel>::const_iterator selectPrivChan(std::string const &name1, std::string const &name2) const;
+	std::vector<channel>::iterator selectChannel(std::string const &name);
+	std::map<int, client>::iterator selectUser(std::string const &name);
+	std::map<std::string, std::string> splitCommandJoin(std::string const &buff);
+	std::vector<std::string> splitCommand(std::string const &buff);
+	std::vector<std::string> splitCommandPrivmsg(std::string const &buff);
+	void userUpDate(client &user, std::string const &oldNick);
 	std::string deleteCRLF(std::string str);
 	int jumpToNextMode(std::string::iterator it);
 	bool findKey(std::vector<std::string> vec, std::string key);
@@ -95,14 +95,14 @@ class server
 
 
 //**********************************/TRANSFER//**********************************/
-	void trfSend(int fd, std::string txt, std::string channelName);
-	void trfGet(int fd, std::string txt, std::string channelName);
-	void trfDel(int fd, std::string txt, std::string channelName);
-	void trfHelp(int fd, std::string channelName);
-	std::string extractFilename(std::string filename);
+	void trfSend(int fd, std::string const &txt, std::string const &channelName);
+	void trfGet(int fd, std::string const &txt, std::string const &channelName);
+	void trfDel(int fd, std::string const &txt, std::string const &channelName);
+	void trfHelp(int fd) const;
+	std::string extractFilename(std::string const &filename);
 
 public:
-	server(int, std::string);
+	server(int, std::string const &password);
 	~server();
 
 //**********************************/SERVER//**********************************/

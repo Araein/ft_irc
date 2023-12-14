@@ -54,29 +54,29 @@ class channel
 //**********************************/SETTER//**********************************/
 	void setNeedPass(bool value);
 	void setMaxConnectedUser(int value);
-	void setPassword(std::string password);
-	void setTopic(std::string message);
-	void setUserConnect(client *user);
-	void setUserDisconnect(client *user);
-	void setUserInvited(client *user);
-	void setUserChanOp(client *user);
+	void setPassword(std::string const &password);
+	void setTopic(std::string const &message);
+	void setUserConnect(client &user);
+	void setUserDisconnect(client &user);
+	void setUserInvited(client const &user);
+	void setUserChanOp(client const &user);
 	void setMode(char c, bool value);
-	void setChannelName(std::string name);
+	void setChannelName(std::string const &name);
 	void setAllInvited(void);
-	void setUserShutdown(client *user);
-	void undoUserChanOp(client *user);
-	void unsetUserInvited(client *user);
+	void setUserShutdown(client const &user);
+	void undoUserChanOp(client const &user);
+	void unsetUserInvited(client const &user);
 
 
 //**********************************/FUNCTION//**********************************/
-	void sendToChannel(client const &user, std::string message);
-	void sendInfoToChannel(client const &user, std::string message);
+	void sendToChannel(client const &user, std::string const &message);
+	void sendInfoToChannel(client const &user, std::string const &message);
 	void welcomeMessage(client const &user) const;
-	bool userCanWrite(client *user, std::string channelName);
-	bool userCanJoin(client *user, std::string password);
-	void switchUser(client *user);
+	bool userCanWrite(client const &user);
+	bool userCanJoin(client const &user, std::string const &password) const;
+	void switchUser(client const &user);
 	std::string userList() const;
-	void sendToChannelnoPRIVMSG(client const &user, std::string message);
-	void sendToOne(client const &user, std::string message);
+	void sendToChannelnoPRIVMSG(client const &user, std::string const &message);
+	void sendToOne(client const &user, std::string const &message) const;
 
 };

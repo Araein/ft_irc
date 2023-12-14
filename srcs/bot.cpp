@@ -1,4 +1,3 @@
-
 #include "irc.hpp"
 
 std::string server::getCurrentTime() 
@@ -49,17 +48,17 @@ void server::mybot(int fd, const std::string& command, std::string channelstr)
 	std::string message = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost 482 " + user.getUsername() + " " + channelstr + " :: MrRobot is not present in this channel, use !bot as an operator to invite him.\r\n";
 	if (command == "!bot ")
 	{
-		if (currentchannel->getIsConnected(-1))
+		if (currentchannel->getIsConnected(101))
 			currentchannel->sendToChannel(*MrRobot,"Hello I am MrRobot, your friendly IRC bot! type \"!bot help\" to discover my commands!");
 		else if (currentchannel->getIsChanOp(user.getID()))
 		{
-			currentchannel->setUserConnect(MrRobot);
+			currentchannel->setUserConnect(*MrRobot);
 			currentchannel->sendToChannel(*MrRobot,"Hello I am MrRobot, your friendly IRC bot! type \"!bot help\" to discover my commands!");
 		}
 		else
 			send(user.getFD(), message.c_str(), message.size(), 0);
 	}
-    else if (!(currentchannel->getIsConnected(-1)))
+    else if (!(currentchannel->getIsConnected(101)))
         send(user.getFD(), message.c_str(), message.size(), 0);
 	else if (command == "!bot help ")
 		currentchannel->sendToChannel(*MrRobot,"Available commands: help | time | trivia | coinflip | thanks");
@@ -71,7 +70,7 @@ void server::mybot(int fd, const std::string& command, std::string channelstr)
 		currentchannel->sendToChannel(*MrRobot, "----- " + flipCoin() + " -----");
 	else if (command == "!bot thanks ")
 		currentchannel->sendToChannel(*MrRobot, "Cyprien, Sandra and Théo thank you for using their IRC server!");
-	else if (!(currentchannel->getIsConnected(-1)))
+	else if (!(currentchannel->getIsConnected(101)))
 		send(user.getFD(), message.c_str(), message.size(), 0);
 	else
 		currentchannel->sendToChannel(*MrRobot, "Sorry i don't know this command. Type \"!bot help\" to know my commands");

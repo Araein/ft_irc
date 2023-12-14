@@ -25,6 +25,7 @@ SRC = $(addprefix $(DIR_SRCS)/, $(SRCS))
 OBJS = $(SRC:.cpp=.o)
 
 all: $(NAME)
+	@mkdir -p files
 
 $(NAME): $(OBJS) $(HEARDER)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)

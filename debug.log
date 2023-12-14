@@ -1,0 +1,367 @@
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< JOIN #bleble
+>> :user42!user103@localhost JOIN #bleble
+>> :user42!user103@localhost 353 user42 = #bleble :@user42 
+>> :user42!user103@localhost 366 user42 #bleble :End of NAMES list
+<< MODE #bleble
+>> :user42!user103@localhost 329 user42 #bleble 1702401881
+>> :localhost 324 user42 #bleble +
+--> chanquery mode
+<< WHO #bleble
+>> :user42!user103@localhost 421 user42 :WHO not found in 42_IRC
+<< TOPIC #test :coucou
+>> :user42!user103@localhost TOPIC #test :coucou
+>> 
+<< TOPIC #bleble :test coucou
+>> :user42!user103@localhost TOPIC #bleble :test coucou
+>> 
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> FAILED who: chanquery abort
+<< MODE #bleble b
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< MODE #bleble +i
+>> :user42!user103@localhost MODE #bleble +i
+<< PING user42
+>> PONG user42
+--> FAILED mode b: chanquery abort
+--> lag pong
+<< INVITE bob #bleble
+>> :user42!user103@localhost 341 user42 bob #bleble
+>> :user42!user103@localhost NOTICE @#bleble :user42 invited bob into channel  #bleble
+>> :bob!user104@localhost 372 #bleble : has logged in
+>> :bob!user104@localhost PRIVMSG #bleble :coucou 
+<< MODE #bleble +o bob
+>> :user42!user103@localhost MODE #bleble +o bob
+>> :bob!user104@localhost PRIVMSG #bleble :has left
+>> :bob!user104@localhost PART #bleble
+>> :bob!user104@localhost PRIVMSG #test :has left
+>> :bob!user104@localhost PART #test
+<< MODE #bleble +o bob
+>> :localhost 401 user42 bob :no such nick
+>> :localhost 441 user42 bob #bleble :user not on channel
+>> :user42!user103@localhost MODE #bleble +
+<< PING user42
+>> PONG user42
+--> lag pong
+<< INVITE bob #bleble
+>> :user42!user103@localhost 341 user42 bob #bleble
+>> :user42!user103@localhost NOTICE @#bleble :user42 invited bob into channel  #bleble
+>> :bob!user104@localhost 372 #bleble : has logged in
+<< PING user42
+>> PONG user42
+--> lag pong
+>> :bob!user104@localhost PRIVMSG #bleble :has left
+>> :bob!user104@localhost PART #bleble
+<< MODE #bleble +o bob
+>> :localhost 401 user42 bob :no such nick
+>> :localhost 441 user42 bob #bleble :user not on channel
+>> :user42!user103@localhost MODE #bleble +
+<< PING user42
+>> PONG user42
+--> lag pong
+<< MODE #bleble +o bob
+>> :localhost 401 user42 bob :no such nick
+>> :localhost 441 user42 bob #bleble :user not on channel
+>> :user42!user103@localhost MODE #bleble +
+<< MODE #bleble +o bobby
+>> :localhost 401 user42 bobby :no such nick
+>> :localhost 441 user42 bobby #bleble :user not on channel
+>> :user42!user103@localhost MODE #bleble +
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< MODE #bleble +ik
+>> :user42!user103@localhost MODE #bleble +i
+<< MODE #bleble +ik test
+>> :user42!user103@localhost MODE #bleble +ik test
+<< INVITE bob #bleble
+>> :user42!user103@localhost 341 user42 bob #bleble
+>> :user42!user103@localhost NOTICE @#bleble :user42 invited bob into channel  #bleble
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< MODE #bleble +ifr
+>> :localhost 472 user42f :is unknown mode char to me
+>> :localhost 472 user42r :is unknown mode char to me
+>> :user42!user103@localhost MODE #bleble +i
+<< MODE #bleble +fri
+>> :localhost 472 user42f :is unknown mode char to me
+>> :localhost 472 user42r :is unknown mode char to me
+>> :user42!user103@localhost MODE #bleble +i
+<< PING user42
+>> PONG user42
+--> lag pong
+<< MODE #bleble +ik
+>> :user42!user103@localhost MODE #bleble +i
+<< PING user42
+>> PONG user42
+--> lag pong
+<< MODE #bleble +ik tre
+>> :user42!user103@localhost MODE #bleble +ik tre
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PRIVMSG #bleble :!bot
+>> :MrRobot!MrRobot@localhost 372 #bleble : has logged in
+>> :MrRobot!MrRobot@localhost PRIVMSG #bleble :Hello I am MrRobot, your friendly IRC bot! type "!bot help" to discover my commands!
+<< PRIVMSG #bleble :!bot coinflip
+>> :MrRobot!MrRobot@localhost PRIVMSG #bleble :----- Tails -----
+<< KICK #bleble MrRobot :
+>> :MrRobot!MrRobot@localhost PRIVMSG #bleble :has left
+>> :user42!user103@localhost KICK #bleble MrRobot :user42
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong
+<< PING user42
+>> PONG user42
+--> lag pong

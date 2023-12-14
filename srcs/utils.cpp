@@ -1,6 +1,5 @@
 #include "irc.hpp"
 
-
 std::string server::startServer(void) const
 {
 	std::time_t tt = std::time(0);
@@ -12,11 +11,13 @@ std::string server::startServer(void) const
 
 void server::closeAll(void)
 {
-	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
+	for (int i = 0; i < maxFD + 1; i++)
 	{
-		shutdown(it->second.getFD() , SHUT_RDWR);
-		if (it->second.getFD() > 0)
-			close(it->second.getFD());
+		if (_fds[i].fd > 0)
+		{
+			shutdown(_fds[i].fd , SHUT_RDWR);
+			close(_fds[i].fd);
+		}
 	}
 	std::cout << std::endl << RED << BOLD << "[42_IRC:  DISCONNECTED] " << NONE << "Hope you enjoyed it"  << std::endl;
 }
@@ -58,7 +59,7 @@ int server::findPlace(void) const
 	return maxFD;
 }
 
-bool server::nameUserCheck(std::string name) const
+bool server::nameUserCheck(std::string const &name) const
 {
 	if (isalpha(name[0]) == 0)
 		return false;
@@ -72,9 +73,9 @@ bool server::nameUserCheck(std::string name) const
 	return true;
 }
 
-bool server::nameExist(std::string name)
+bool server::nameExist(std::string const &name) const
 {
-	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
+	for (std::map<int, client>::const_iterator it = mapUser.begin(); it != mapUser.end(); it++)
 	{
 		if (it->second.getNickname().compare(name) == 0)
 			return false;
@@ -82,9 +83,9 @@ bool server::nameExist(std::string name)
 	return true;
 }
 
-std::vector<privChannel>::iterator server::selectPrivChan(std::string name1, std::string name2)
+std::vector<privChannel>::const_iterator server::selectPrivChan(std::string const &name1, std::string const &name2) const
 {
-	std::vector<privChannel>::iterator it;
+	std::vector<privChannel>::const_iterator it;
 	if (name1.size() == 0 || name2.size() == 0)
 		return privateList.end();
 	for (it = privateList.begin(); it != privateList.end();  it++)
@@ -95,8 +96,7 @@ std::vector<privChannel>::iterator server::selectPrivChan(std::string name1, std
 	return privateList.end();
 }
 
-
-std::vector<channel>::iterator server::selectChannel(std::string name)
+std::vector<channel>::iterator server::selectChannel(std::string const &name)
 {
 	std::vector<channel>::iterator it;
 	if (name.size() == 0)
@@ -109,7 +109,7 @@ std::vector<channel>::iterator server::selectChannel(std::string name)
 	return channelList.end();
 }
 
-std::map<std::string, std::string> server::splitCommandJoin(std::string buff)
+std::map<std::string, std::string> server::splitCommandJoin(std::string const &buff)
 {
 	std::istringstream iss(buff);
 	std::string str;
@@ -152,7 +152,7 @@ std::map<std::string, std::string> server::splitCommandJoin(std::string buff)
 	return chanPass;
 }
 
-std::vector<std::string> server::splitCommandNick(std::string buff)
+std::vector<std::string> server::splitCommand(std::string const &buff)
 {
 	std::istringstream iss(buff);
 	std::string str;
@@ -165,7 +165,7 @@ std::vector<std::string> server::splitCommandNick(std::string buff)
 	return vec;
 }
 
-std::vector<std::string> server::splitCommandPrivmsg(std::string buff)
+std::vector<std::string> server::splitCommandPrivmsg(std::string const &buff)
 {
 	std::istringstream iss(buff);
 	std::string str;
@@ -191,11 +191,11 @@ std::vector<std::string> server::splitCommandPrivmsg(std::string buff)
 	return vec;
 }
 
-void server::userUpDate(client *user, std::string newNick)
+void server::userUpDate(client &user, std::string const &newNick)
 {
-	std::string msg = ":" + user->getNickname() + "!" + user->getUsername() + "@localhost NICK " + newNick + "\n";
-	send(user->getFD(), msg.c_str(), msg.size(), 0);
-	for (std::vector<channel>::iterator it = user->getConnectBegin(); it != user->getConnectEnd(); it++)
+	std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost NICK " + newNick + "\n";
+	send(user.getFD(), msg.c_str(), msg.size(), 0);
+	for (std::vector<channel>::iterator it = user.getConnectBegin(); it != user.getConnectEnd(); it++)
 	{
 		for (std::vector<channel>::iterator itchan = channelList.begin(); itchan != channelList.end(); itchan++)
 		{
@@ -203,7 +203,7 @@ void server::userUpDate(client *user, std::string newNick)
 			{
 
 				itchan->switchUser(user);
-				itchan->sendInfoToChannel(*user, " is now know as " + newNick);
+				itchan->sendInfoToChannel(user, " is now known as " + newNick);
 				break;
 			}
 		}
@@ -236,7 +236,7 @@ bool server::findKey(std::vector<std::string> vec, std::string key){
 	return false;
 }
 
-std::map<int, client>::iterator server::selectUser(std::string name)
+std::map<int, client>::iterator server::selectUser(std::string const &name)
 {
 	std::map<int, client>::iterator it;
 	if (name.size() == 0)
