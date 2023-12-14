@@ -19,14 +19,9 @@ void server::inputMessage(int fd)
 	std::string msg;
 	int size;
 	char buff[bufferSize];
-	char left[bufferSize];
 	mapUser.find(fd)->second.setNetcat(-2);
 	memset(&buff, 0, bufferSize);
-	memset(&left, 0, bufferSize);
 	size = recv(fd, buff, bufferSize - 1, MSG_DONTWAIT);
-	if ((std::string(buff).find("USER") == std::string::npos || std::string(buff).find("NICK") == std::string::npos) && mapUser.find(fd)->second.getLog() < 2){
-		size += recv(fd, left, bufferSize - 1, MSG_DONTWAIT);
-	}
 	if (size < 0)
 	{
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
@@ -44,7 +39,7 @@ void server::inputMessage(int fd)
 	else 
 	{
 		if (mapUser.find(fd)->second.getLog() < 2)
-			configureNewUser(std::string(buff).append(left), fd);
+			configureNewUser(buff, fd);
 		else
 		{
 			if (buff[0] == '/')
@@ -75,19 +70,27 @@ void server::configureNewUser(std::string const &buff, int fd)
 		std::string nickname = extract(buff, "NICK ", "\n");
 		if (mapUser.find(fd)->second.getLog() == 0)
 		{
-			std::string username = extract(buff, "USER ", " ");
-			mapUser.find(fd)->second.setUsername(username);
-			std::string str = "NICK " + nickname;
-			cmdNick(fd, str);
-			mapUser.find(fd)->second.setLog();
-			std::cout << GREEN << BOLD << "[42_IRC:  USER LOGGED IN] "<< mapUser.find(fd)->second.getNickname() << NONE << std::endl;
-		}
-		if (mapUser.find(fd)->second.getLog() == 1)
-		{
 			if (mapUser.find(fd)->second.getNetcat() == -2 && i == std::string::npos && j == std::string::npos)
 				cmdPass(command, fd);
 			else
 				cmdPass(password, fd);
+		}
+		if (mapUser.find(fd)->second.getLog() == 1)
+		{
+			std::string username = extract(buff, "USER ", " ");
+			if (username.empty() == true)
+				return ;
+			mapUser.find(fd)->second.setUsername(username);
+			std::string str = "NICK " + nickname;
+			cmdNick(fd, str);
+			mapUser.find(fd)->second.setLog();
+			std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
+			std::string msg = CLIENT + "372 " + mapUser.find(fd)->second.getNickname() + " :" + GREEN + BOLD + "You have successfully logged in" + NONE + "\r\n";
+			send(fd, msg.c_str(), msg.size(), 0);
+			sendWelcomMsgs(fd);
+			printHome(fd);
+			std::cout << GREEN << BOLD << "[42_IRC:  USER LOGGED IN] "<< mapUser.find(fd)->second.getNickname() << NONE << std::endl;
+
 		}
 	}
 }

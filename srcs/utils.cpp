@@ -81,6 +81,25 @@ bool server::nameUserCheck(std::string const &name) const
 	return true;
 }
 
+void server::userUpDate(client &user, std::string const &newNick)
+{
+	std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost NICK " + newNick + "\n";
+	send(user.getFD(), msg.c_str(), msg.size(), 0);
+	for (std::vector<channel>::iterator it = user.getConnectBegin(); it != user.getConnectEnd(); it++)
+	{
+		for (std::vector<channel>::iterator itchan = channelList.begin(); itchan != channelList.end(); itchan++)
+		{
+			if (itchan->getChannelName() == it->getChannelName())
+			{
+
+				itchan->switchUser(user);
+				itchan->sendInfoToChannel(user, " is now known as " + newNick);
+				break;
+			}
+		}
+	}
+}
+
 bool server::nameExist(std::string const &name) const
 {
 	for (std::map<int, client>::const_iterator it = mapUser.begin(); it != mapUser.end(); it++)
@@ -197,25 +216,6 @@ std::vector<std::string> server::splitCommandPrivmsg(std::string const &buff)
 			vec.push_back(tp);
 	}
 	return vec;
-}
-
-void server::userUpDate(client &user, std::string const &newNick)
-{
-	std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost NICK " + newNick + "\n";
-	send(user.getFD(), msg.c_str(), msg.size(), 0);
-	for (std::vector<channel>::iterator it = user.getConnectBegin(); it != user.getConnectEnd(); it++)
-	{
-		for (std::vector<channel>::iterator itchan = channelList.begin(); itchan != channelList.end(); itchan++)
-		{
-			if (itchan->getChannelName() == it->getChannelName())
-			{
-
-				itchan->switchUser(user);
-				itchan->sendInfoToChannel(user, " is now known as " + newNick);
-				break;
-			}
-		}
-	}
 }
 
 std::string server::deleteCRLF(std::string str)

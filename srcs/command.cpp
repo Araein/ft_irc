@@ -259,7 +259,7 @@ void server::cmdNick(int fd, std::string buff)
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
-	else if (mapUser.find(fd)->second.getLog() == 0 && nameExist(vec[1]) == false){
+	else if (mapUser.find(fd)->second.getLog() == 1 && nameExist(vec[1]) == false){
 		std::string nick;
 		if (vec[1].size() > 20){
 			vec[1].replace(19, 1, "_");
@@ -278,6 +278,7 @@ void server::cmdNick(int fd, std::string buff)
 			}
 		}
 		nick = vec[1];
+		userUpDate(mapUser.find(fd)->second, nick);
 		mapUser.find(fd)->second.setNickname(nick);
 		CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
 		msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + "\r\n";
@@ -289,6 +290,7 @@ void server::cmdNick(int fd, std::string buff)
 		newNick = vec[1].substr(0, 19);
 	else
 		newNick = vec[1];
+	userUpDate(mapUser.find(fd)->second, newNick);
 	mapUser.find(fd)->second.setNickname(newNick);
 	CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
 	msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + "\r\n";
@@ -840,7 +842,7 @@ void server::cmdPass(std::string password, int fd)
 {
 	std::string msg;
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
-	if (mapUser.find(fd)->second.getLog() > 1)
+	if (mapUser.find(fd)->second.getLog() > 0)
 	{
 		msg = CLIENT + "462 " + mapUser.find(fd)->second.getNickname() + " :You have already logged in\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
@@ -855,11 +857,7 @@ void server::cmdPass(std::string password, int fd)
 	if (_password.compare(password) == 0)
 	{
 		mapUser.find(fd)->second.setLog();
-		msg = CLIENT + "372 " + mapUser.find(fd)->second.getNickname() + " :" + GREEN + BOLD + "You have successfully logged in" + NONE + "\r\n";
-		send(fd, msg.c_str(), msg.size(), 0);
-		sendWelcomMsgs(fd);
-		printHome(fd);
-		return;
+		return ;
 	}
 	msg = CLIENT + "464 "+ mapUser.find(fd)->second.getNickname() + " :" + RED + BOLD + "Invalid password, you will be disconnected" + NONE + "\r\n";
 	send(fd, msg.c_str(), msg.size(), 0);
