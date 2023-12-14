@@ -66,6 +66,17 @@ bool server::initSocket(void)
 	return true;
 }
 
+int server::findChanbyName(std::string chan) const{
+	int i = 0;
+	for (std::vector<channel>::const_iterator it = channelList.begin(); it != channelList.end(); it++)
+	{
+		if (chan == it->getChannelName())
+			return i;
+		i++;
+	}
+	return -1;
+}
+
 void server::mainLoop(void)
 {
 	int ret;
@@ -135,6 +146,9 @@ void server::userNetcat(void)
 			send(it->second.getFD(), msg.c_str(), msg.size(), 0);
 		}
 	}
+	client user( ++_id, _fds[_curPlace].fd);
+	mapUser.insert(std::make_pair(_fds[_curPlace].fd, user));
+	_totalPlace++;
 }
 
 

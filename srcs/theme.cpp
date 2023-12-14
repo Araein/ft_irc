@@ -4,10 +4,9 @@ void server::sendWelcomMsgs(int fd) const
 {
 	std::string msg;
 	std::string start = startServer();
-	msg = "001 " + mapUser.find(fd)->second.getNickname() + " :Welcome to 42 IRC!\n";
-	msg += "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
-	msg += "003 RPL_CREATED :The server was created " + start + "\n";
-	msg += "004 RPL_MYINFO :ircserv 0.1 level0 +itkol\n";
+	msg += "002 " + mapUser.find(fd)->second.getNickname() + " :Your host is ircserv running version 0.1\n";
+	msg += "003 " + mapUser.find(fd)->second.getNickname() + " :The server was created " + start + "\n";
+	msg += "004 " + mapUser.find(fd)->second.getNickname() + " :ircserv 0.1 level0 +itkol\n";
 	msg += ":ircserv CAP * LS : \r\n";
 	send(fd, msg.c_str(), msg.length(), 0);
 }

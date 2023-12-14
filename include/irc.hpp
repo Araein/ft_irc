@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <ctime>
 #include <cmath>
 #include <iomanip>
@@ -61,4 +62,7 @@ bool IsNotSpace(int ch);
 std::string extract(const std::string& message, const std::string& start, const std::string& end);
 std::string rtrim(const std::string& str);
 std::string ltrim(const std::string& str);
-
+int jumpToNextMode(std::string::iterator it);
+void printFullUser(client &user);
+bool findKey(std::vector<std::string> vec, std::string key);
+std::string to_string(int i);

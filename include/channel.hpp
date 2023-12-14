@@ -47,8 +47,10 @@ class channel
 	std::string getAllChanOp() const;
 	std::string getAllConnected() const;
 	std::string getAllInvited() const;
+	bool userCanWrite(client *user, std::string channelName);
 	bool getConnectedFromString(std::string const &user) const;
 	client* getClient(const std::string& user);
+
 
 
 //**********************************/SETTER//**********************************/
@@ -70,6 +72,7 @@ class channel
 
 //**********************************/FUNCTION//**********************************/
 	void sendToChannel(client const &user, std::string const &message);
+	void sendToChannelNotice(client const &user, std::string const &message);
 	void sendInfoToChannel(client const &user, std::string const &message);
 	void welcomeMessage(client const &user) const;
 	bool userCanWrite(client const &user);

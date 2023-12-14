@@ -29,11 +29,13 @@ class server
 
 	pollfd _fds[maxFD + 1];
 	std::string _password;
-	std::string _partCommand;
+	std::map<int, std::string> truncCmd;
 	std::map<int, client> mapUser;
 	std::vector<channel> channelList;
 	std::vector<privChannel> privateList;
 
+//**********************************//THEME//**********************************//
+//*************FICHIERS DANS LESQUELS SONT IMPLEMENTER LES FONCTIONS*************//
 //**********************************//THEME//**********************************//
 	void sendWelcomMsgs(int) const;
 	void printServerHeader() const;
@@ -55,13 +57,16 @@ class server
 	void cmdPing(std::string buff, int fd);
 	void cmdPrivmsg(int fd, std::string buff);
 	void cmdPrivateMsg(int fd, std::vector<std::string> vec);
-	void cmdPartPrivmsg(int fd, std::string const &name1, std::string const &name2);
+	void cmdNotice(int fd, std::string buff);
 
+
+	int getFD(int i) const;
+	int getPort() const;
+	std::string getPassword() const;
 //**********************************/SERVER//**********************************/
 	void acceptNewUser();
 	void userNetcat();
-	void createChannel();
-
+	void createChannel(void);
 
 //**********************************/INPUT//**********************************/
 	void receivMessage();
@@ -73,6 +78,7 @@ class server
 	std::string startServer() const;
 	void closeOne(int);
 	int findPlace() const;
+	int findChanbyName(std::string chan) const;
 	bool nameUserCheck(std::string const &name) const;
 	bool nameExist(std::string const &name) const;
 	std::vector<privChannel>::const_iterator selectPrivChan(std::string const &name1, std::string const &name2) const;
@@ -85,6 +91,7 @@ class server
 	std::string deleteCRLF(std::string str);
 	int jumpToNextMode(std::string::iterator it);
 	bool findKey(std::vector<std::string> vec, std::string key);
+	std::map<int, std::string>::iterator selectTrunc(int fd);
 
 
 //**********************************/BOT//**********************************/

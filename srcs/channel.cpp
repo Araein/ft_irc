@@ -70,16 +70,6 @@ bool channel::getIsInvited(int id) const
 	return false;
 }
 
-std::string channel::getAllChanOp(void) const
-{
-	std::string msg = "";
-
-	for (std::vector<client>::const_iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
-		msg += it->getNickname() + " ";
-	msg += " \n";
-	return msg;
-}
-
 std::string channel::getAllConnected(void) const
 {
 	std::string msg = "";
@@ -88,6 +78,7 @@ std::string channel::getAllConnected(void) const
 	msg += " \n";
 	return msg;
 }
+
 
 std::string channel::getAllInvited(void) const
 {
@@ -113,7 +104,7 @@ bool channel::getMode(char c) const
 	return false;
 }
 
-std::string channel::getAllMode(void) const
+std::string channel::getAllMode(void) const // removed the o mode return as it never appears when listing modes even after setting a new op, adding password if k mode is set
 {
 	std::string txt= "";
 	if (chan.i_Mode == true)
@@ -122,11 +113,21 @@ std::string channel::getAllMode(void) const
 		txt += 't';
 	if (chan.k_Mode == true)
 		txt += 'k';
-	if (chan.o_Mode == true)
-		txt += 'o';
 	if (chan.l_Mode == true)
 		txt += 'l';
+	if (chan.k_Mode == true)
+		txt += getPassword();
 	return txt;
+}
+
+std::string channel::getAllChanOp(void) const
+{
+	std::string msg = "";
+
+	for (std::vector<client>::const_iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++)
+		msg += it->getNickname() + " ";
+	msg += " \n";
+	return msg;
 }
 
 bool channel::getConnectedFromString(std::string const &user) const
@@ -290,6 +291,19 @@ void channel::sendToChannel(client const &user, std::string const &message)
 		if (it->getFD() > 0 &&  it->getID() != user.getID())
 		{
 			std::string msg = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost PRIVMSG " + chan.name + " :" + message + "\r\n";
+			send(it->getFD(), msg.c_str(), msg.size(), 0);
+		}
+	}
+}
+
+void channel::sendToChannelNotice(client const &user, std::string const &message)
+{
+	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
+	{
+		if (it->getFD() > 0)
+		{
+			std::string CLIENT = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost NOTICE ";
+			std::string  msg = CLIENT + chan.name + " :" + message + "\r\n";
 			send(it->getFD(), msg.c_str(), msg.size(), 0);
 		}
 	}

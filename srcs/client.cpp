@@ -1,4 +1,4 @@
-#include "irc.hpp"
+#include "client.hpp"
 
 client::~client(void) {}
 client::client(int id, int fd): _fd(fd), _id(id), _log(0), fileId(100), _netcat(0)
