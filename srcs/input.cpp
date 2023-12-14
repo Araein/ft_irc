@@ -80,7 +80,6 @@ void server::configureNewUser(std::string const &buff, int fd)
 			std::string str = "NICK " + nickname;
 			cmdNick(fd, str);
 			mapUser.find(fd)->second.setLog();
-			printHome(fd);
 			std::cout << GREEN << BOLD << "[42_IRC:  USER LOGGED IN] "<< mapUser.find(fd)->second.getNickname() << NONE << std::endl;
 		}
 		if (mapUser.find(fd)->second.getLog() == 1)

@@ -840,7 +840,7 @@ void server::cmdPass(std::string password, int fd)
 {
 	std::string msg;
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
-	if (mapUser.find(fd)->second.getLog() > 2)
+	if (mapUser.find(fd)->second.getLog() > 1)
 	{
 		msg = CLIENT + "462 " + mapUser.find(fd)->second.getNickname() + " :You have already logged in\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
@@ -858,6 +858,7 @@ void server::cmdPass(std::string password, int fd)
 		msg = CLIENT + "372 " + mapUser.find(fd)->second.getNickname() + " :" + GREEN + BOLD + "You have successfully logged in" + NONE + "\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		sendWelcomMsgs(fd);
+		printHome(fd);
 		return;
 	}
 	msg = CLIENT + "464 "+ mapUser.find(fd)->second.getNickname() + " :" + RED + BOLD + "Invalid password, you will be disconnected" + NONE + "\r\n";
