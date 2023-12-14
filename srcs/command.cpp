@@ -12,6 +12,12 @@ void server::parseCommand(std::string buff, int fd)
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
 	if (command == "kick" || command == "KICK")
 	{
+		if (param.size() == 0)
+		{
+			msg = CLIENT + "461 " + mapUser.find(fd)->second.getNickname() + " :Need more parameters\r\n";
+			send(fd, msg.c_str(), msg.size(), 0);
+			return;
+		}
 		cmdKick(fd, buff);
 	}
 	else if (command == "nick" || command == "NICK")
@@ -21,6 +27,10 @@ void server::parseCommand(std::string buff, int fd)
 	else if (command == "privmsg" || command == "PRIVMSG" || command == "msg" || command == "MSG")
 	{
 		cmdPrivmsg(fd, buff);
+	}
+	else if (command == "notice" || command == "NOTICE")
+	{
+		cmdNotice(fd, buff);
 	}
 	else if (command == "join" || command == "JOIN")
 	{
@@ -36,21 +46,33 @@ void server::parseCommand(std::string buff, int fd)
 	}
 	else if (command == "mode" || command == "MODE")
 	{
+		if (param.size() == 0)
+		{
+			msg = CLIENT + "461 " + mapUser.find(fd)->second.getNickname() + " :Need more parameters\r\n";
+			send(fd, msg.c_str(), msg.size(), 0);
+			return;
+		}
 		if (selectUser(param) != mapUser.end())
 		{
-			std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
 			if (txt == "+i")
 				msg = CLIENT + "324 " + mapUser.find(fd)->second.getNickname() + " :" + param + " +i\r\n";
 			else
-				msg = CLIENT + "472 " + mapUser.find(fd)->second.getNickname() + " :" + param + " is not supported to 42IRC\r\n";
+				msg = CLIENT + "472 " + mapUser.find(fd)->second.getNickname() + " :" + txt + " is not implemented in 42_IRC\r\n";
 			send(fd, msg.c_str(), msg.size(), 0);
+			return;
 		}
-		else
-			cmdMode(fd, buff);
+		cmdMode(fd, buff);
 	}
 	else if (command == "part" || command == "PART")
 	{
-		cmdPart(fd, buff);
+		if (param.size() == 0)
+		{
+			msg = CLIENT + "461 " + mapUser.find(fd)->second.getNickname() + " :Need more parameters\r\n";
+			send(fd, msg.c_str(), msg.size(), 0);
+			return;
+		}
+		else
+			cmdPart(fd, buff);
 	}
 	else if (command == "ping" || command == "PING")
 	{
@@ -84,26 +106,35 @@ void server::parseCommand(std::string buff, int fd)
 	else
 	{
 		std::string temp;
-		if (buff[buff.size() - 1] == '\n' && _partCommand.size() == 0)
+		if (buff[buff.size() - 1] == '\n' && selectTrunc(fd) == truncCmd.end())
 		{
-			std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
-			msg = CLIENT + "421 " + mapUser.find(fd)->second.getNickname() + " :" + command + " unknown to 42_IRC\r\n";
+			msg = CLIENT + "421 " + mapUser.find(fd)->second.getNickname() + " :" + command + " not found in 42_IRC\r\n";
 			send(fd, msg.c_str(), msg.size(), 0);
-			std::cout << BLUE << "[42_IRC:  COMMAND NOT SUPPORTED] " << command << NONE << std::endl;
+			std::cout << BLUE << "[42_IRC:  COMMAND NOT FOUND] " << command << NONE << std::endl;
 			return;	
 		}
-		if (buff[buff.size() - 1] == '\n' && _partCommand.size() > 0)
+		if (buff[buff.size() - 1] == '\n' && selectTrunc(fd) != truncCmd.end())
 		{
-			_partCommand += buff;
-			temp = _partCommand;
-			_partCommand = "";
+			selectTrunc(fd)->second += buff;
+			temp = selectTrunc(fd)->second;
+			truncCmd.erase(selectTrunc(fd));
 			parseCommand(temp, fd);
 			return;
 		}
-		if (buff[buff.size() - 1] == '\r')
-			_partCommand += buff.substr(0, buff.size() - 1);
+		if (selectTrunc(fd) != truncCmd.end())
+		{
+			if (buff[buff.size() - 1] == '\r')
+				selectTrunc(fd)->second += buff.substr(0, buff.size() - 1);
+			else
+				selectTrunc(fd)->second += buff;
+		}
 		else
-			_partCommand += buff;
+		{
+			if (buff[buff.size() - 1] == '\r')
+				truncCmd.insert(std::make_pair(fd, buff.substr(0, buff.size() - 1)));
+			else
+				truncCmd.insert(std::make_pair(fd, buff));
+		}
 	}
 }
 
@@ -187,8 +218,8 @@ void server::cmdKick(int fd, std::string buff)
 						countchannel++;
 						continue;
 					}
-					channelIt->unsetUserInvited(targetClient);
-					channelIt->setUserDisconnect(targetClient);
+					channelIt->unsetUserInvited(*targetClient);
+					channelIt->setUserDisconnect(*targetClient);
 					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
 					send(targetClient->getFD(), message.c_str(), message.size(), 0);
 					message = ":" + kicker.getNickname() + "!" + kicker.getUsername() + "@localhost KICK " + mychannel + " " + nicks + reason + "\n";
@@ -207,24 +238,49 @@ void server::cmdKick(int fd, std::string buff)
 
 void server::cmdNick(int fd, std::string buff)
 {
-	std::vector<std::string> vec = splitCommandNick(buff);
+	std::vector<std::string> vec = splitCommand(buff);
 	std::string msg;
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
 	if (vec.size() == 1 || vec[1].size() == 0)
 	{
-		msg = CLIENT + "431 " + mapUser.find(fd)->second.getNickname() + " :Your new nickname is empty and has not been changed\r\n";
+		msg = CLIENT + "431 " + mapUser.find(fd)->second.getNickname() + " :Your new nickname is empty and can't be applied\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
 	else if (nameUserCheck(vec[1]) == false)
 	{
-		msg = CLIENT + "432 " + mapUser.find(fd)->second.getNickname() + " :Nick " + vec[1] + " is invalid and has not been changed\r\n";
+		msg = CLIENT + "432 :Nick " + vec[1] + " is invalid and can't be applied\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
-	else if (nameExist(vec[1]) == false)
+	else if (nameExist(vec[1]) == false && mapUser.find(fd)->second.getLog() == 2)
 	{
-		msg = CLIENT + "433 " + mapUser.find(fd)->second.getNickname() + " :has not been changed " + vec[1] + "\r\n";
+		msg = CLIENT + "433 " + mapUser.find(fd)->second.getNickname() + " :can't be applied " + vec[1] + "\r\n";
+		send(fd, msg.c_str(), msg.size(), 0);
+		return;
+	}
+	else if (mapUser.find(fd)->second.getLog() == 0 && nameExist(vec[1]) == false){
+		std::string nick;
+		if (vec[1].size() > 20){
+			vec[1].replace(19, 1, "_");
+			if (nameExist(vec[1]) == false){
+				for (int i = 0; i < 1000 ; i++){
+					vec[1].replace(19, 1, to_string(i));
+				}
+			}
+		}
+		else {
+			vec[1].append("_");
+			if (nameExist(vec[1]) == false){
+				for (int i = 0; nameExist(vec[1]) == false ; i++){
+					vec[1].replace(vec[1].end() - 1, vec[1].end(), to_string(i));
+				}
+			}
+		}
+		nick = vec[1];
+		mapUser.find(fd)->second.setNickname(nick);
+		CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
+		msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + "\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
@@ -233,24 +289,11 @@ void server::cmdNick(int fd, std::string buff)
 		newNick = vec[1].substr(0, 19);
 	else
 		newNick = vec[1];
-	userUpDate(&mapUser.find(fd)->second, newNick);
 	mapUser.find(fd)->second.setNickname(newNick);
-	//Gestion du username
-	if (vec.size() >= 3)
-	{
-		if (vec[2].size() > 0 || nameUserCheck(vec[2]) == true)
-		{
-			if (vec[2].size() > 20)
-				mapUser.find(fd)->second.setUsername(vec[2].substr(0, 19));
-			else
-				mapUser.find(fd)->second.setUsername(vec[2]);
-		}
-	}
 	CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
 	msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + "\r\n";
 	send(fd, msg.c_str(), msg.size(), 0);
 }
-
 
 // void server::cmdJoin(std::string buff, int fd)
 // {
@@ -296,13 +339,13 @@ void server::cmdPrivmsg(int fd, std::string buff)
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
 	if (vec.size() == 1)
 	{
-		msg = CLIENT + "411 " + mapUser.find(fd)->second.getNickname() + " :No recipient given\r\n";
+		msg = CLIENT + "411 " + mapUser.find(fd)->second.getNickname() + " :No recipient specified\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
 	if (vec.size() == 2)
 	{
-		msg = CLIENT + "412 " + mapUser.find(fd)->second.getNickname() + " :No message given\r\n";
+		msg = CLIENT + "412 " + mapUser.find(fd)->second.getNickname() + " :No message received\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
@@ -310,14 +353,14 @@ void server::cmdPrivmsg(int fd, std::string buff)
 	{
 		if (selectUser(vec[1]) == mapUser.end())
 		{
-			msg = CLIENT + "401 " + mapUser.find(fd)->second.getNickname() + vec[1] + " :\r\n";
+			msg = CLIENT + "401 " + mapUser.find(fd)->second.getNickname() + " " + vec[1] + " :\r\n";
 			send(fd, msg.c_str(), msg.size(), 0);
 			return;
 		}
 		cmdPrivateMsg(fd, vec);
 		return;
 	}
-	if (it->userCanWrite(&mapUser.find(fd)->second, vec[1]) == true) 
+	if (it->userCanWrite(mapUser.find(fd)->second) == true) 
 	{
 		std::string str = vec[2].substr(0, 5);
 		if (str == "!bot ")
@@ -334,7 +377,7 @@ void server::cmdPrivmsg(int fd, std::string buff)
 			else if (cmd == "del")
 				trfDel(fd, &vec[2][5], vec[1]);
 			else
-				trfHelp(fd, vec[1]);
+				trfHelp(fd);
 		}
 		else
 			it->sendToChannel(mapUser.find(fd)->second, vec[2]);
@@ -342,7 +385,7 @@ void server::cmdPrivmsg(int fd, std::string buff)
 	}
 }
 
-void server::cmdJoin(std::string buff, int fd)
+void server::cmdJoin(std::string buff, int fd)	
 {
 	std::string msg;
 	std::map<std::string, std::string> chanPass = splitCommandJoin(buff);
@@ -362,15 +405,15 @@ void server::cmdJoin(std::string buff, int fd)
 		nbChan++;
 		if (nbChan > maxChannelConnect)
 		{
-			msg = CLIENT + "405 " + mapUser.find(fd)->second.getNickname() + " " + it_chanPass->first +  ":\r\n";
+			msg = CLIENT + "405 " + mapUser.find(fd)->second.getNickname() + " " + it_chanPass->first + " :\r\n";
 			send(fd, msg.c_str(), msg.size(), 0);
 			return;
 		}
 		if ((it_channelList = selectChannel(it_chanPass->first)) != channelList.end())
 		{
-			if (it_channelList->userCanJoin(&mapUser.find(fd)->second, it_chanPass->second) == true)
+			if (it_channelList->userCanJoin(mapUser.find(fd)->second, it_chanPass->second) == true)
 			{
-				it_channelList->setUserConnect(&mapUser.find(fd)->second);
+				it_channelList->setUserConnect(mapUser.find(fd)->second);
 			}
 		}
 		else
@@ -384,11 +427,11 @@ void server::cmdJoin(std::string buff, int fd)
 			else
 			{
 				if (it_chanPass->first.size() > 50)
-					channelName = it_chanPass->first.substr(0, 49);
+					channelName = it_chanPass->first.substr(0, 49) + "_";
 				else
 					channelName = it_chanPass->first;
 				channel temp(channelName);
-				temp.setUserConnect(&mapUser.find(fd)->second);
+				temp.setUserConnect(mapUser.find(fd)->second);
 				channelList.push_back(temp);
 			}
 		}
@@ -459,7 +502,7 @@ void server::cmdInvite(int fd, std::string buff)
 			send(inviter.getFD(), message.c_str(), message.size(), 0);
 			return ;
 		}
-		channelIt->setUserInvited(&it2->second);
+		channelIt->setUserInvited(it2->second);
 		message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost 341 " + inviter.getNickname() + " " + user + " " + mychannel + "\r\n";
 		send(inviter.getFD(), message.c_str(), message.size(), 0);
 		message = ":" + inviter.getNickname() + "!" + inviter.getUsername() + "@localhost NOTICE @" + mychannel + " :" + inviter.getNickname() + " invited " + user + " into channel  " + mychannel + "\r\n";
@@ -592,7 +635,7 @@ void server::cmdMode(int fd, std::string buff)
 						continue ;
 					else if (tmp.empty() == false){ // checking is arg is empty, if it is, we ignore o mode
 						if (itchan->getClient(tmp)){ // checking if user provided exists, if it does setting it up as ops
-							itchan->setUserChanOp(itchan->getClient(tmp));
+							itchan->setUserChanOp(*itchan->getClient(tmp));
 							itchan->setMode('o', true);
 							argmsg += "o";
 							keys.push_back("chanops");
@@ -667,7 +710,7 @@ void server::cmdMode(int fd, std::string buff)
 						continue ;
 					if (tmp.empty() == false ){
 						if (itchan->getClient(tmp)){ // checking if user exists if it does remove it from admins
-							itchan->undoUserChanOp(itchan->getClient(tmp));
+							itchan->undoUserChanOp(*itchan->getClient(tmp));
 							argmsg += 'o';
 							keys.push_back("chanopsremove");
 							values.push_back(tmp);
@@ -710,11 +753,19 @@ void server::cmdMode(int fd, std::string buff)
 
 void server::cmdPing(std::string buff, int fd)
 {
+	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
 	std::istringstream iss(buff);
-	std::string pingMsg;
-	iss >> pingMsg >> pingMsg; 
-	std::string pongMsg = "PONG " + pingMsg + "\r\n";
-	send(fd,pongMsg.c_str(), pongMsg.size(), 0);
+	std::string str1;
+	std::string str2;
+	iss >> str1 >> str2;
+	if (str2.size() == 0)
+	{
+		std::string msg = CLIENT + "409 " + mapUser.find(fd)->second.getNickname() + " :No origin specified\r\n";
+		send(fd, msg.c_str(), msg.size(), 0);
+		return;
+	}
+	std::string pongMsg = "PONG " + str2 + "\r\n";
+	send(fd, pongMsg.c_str(), pongMsg.size(), 0);
 }
 
 
@@ -769,8 +820,8 @@ void server::cmdPart(int fd, std::string buff)
 				continue ;
 			}
 		
-			channelIt->unsetUserInvited(&parter);
-			channelIt->setUserDisconnect(&parter);
+			channelIt->unsetUserInvited(parter);
+			channelIt->setUserDisconnect(parter);
 			message = ":" + parter.getNickname() + "!" + parter.getUsername() + "@localhost PART " + mychannel + reason + "\n";
 			channelIt->sendToChannelnoPRIVMSG(parter, message);
 			send(fd, message.c_str(), message.size(), 0);
@@ -778,7 +829,7 @@ void server::cmdPart(int fd, std::string buff)
 			if (channelIt->getNbConnectedUser() == 0)
 			{
 				if (channelIt->getConnectedFromString("MrRobot"))
-					channelIt->setUserDisconnect(MrRobot);
+					channelIt->setUserDisconnect(*MrRobot);
 				channelList.erase(channelIt);
 			} 
 		}
@@ -789,7 +840,7 @@ void server::cmdPass(std::string password, int fd)
 {
 	std::string msg;
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
-	if (mapUser.find(fd)->second.getLog() > 0)
+	if (mapUser.find(fd)->second.getLog() > 2)
 	{
 		msg = CLIENT + "462 " + mapUser.find(fd)->second.getNickname() + " :You have already logged in\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
@@ -804,7 +855,7 @@ void server::cmdPass(std::string password, int fd)
 	if (_password.compare(password) == 0)
 	{
 		mapUser.find(fd)->second.setLog();
-		msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + " :" + GREEN + BOLD + "You have successfully logged in" + NONE + "\r\n";
+		msg = CLIENT + "372 " + mapUser.find(fd)->second.getNickname() + " :" + GREEN + BOLD + "You have successfully logged in" + NONE + "\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 		sendWelcomMsgs(fd);
 		return;
@@ -819,8 +870,14 @@ void server::cmdPrivateMsg(int fd, std::vector<std::string> vec)
 {
 	std::map<int, client>::iterator it_recip = selectUser(vec[1]);
 	std::map<int, client>::iterator it_sender = selectUser(mapUser.find(fd)->second.getNickname());
-	std::vector<privChannel>::iterator it_privlist = selectPrivChan(it_sender->second.getNickname(), it_recip->second.getNickname());
+	std::vector<privChannel>::const_iterator it_privlist = selectPrivChan(it_sender->second.getNickname(), it_recip->second.getNickname());
 	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
+	if (it_recip->second.getNickname() == "server" || it_recip->second.getNickname() == "MrRobot" || it_recip->second.getNickname() == "chanOp42")
+	{
+		std::string msg = CLIENT + "401 " + mapUser.find(fd)->second.getNickname() + " :\r\n";
+		send(fd, msg.c_str(), msg.size(), 0);
+		return;
+	}
 	if (it_privlist == privateList.end())
 	{
 		privChannel pc;
@@ -830,16 +887,28 @@ void server::cmdPrivateMsg(int fd, std::vector<std::string> vec)
 	std::string str = vec[2].substr(0, 5);
 	if (str == "!bot " || str == "!trf ")
 	{
-		std::string msg = "001 : To use !bot or !trf join a channel(not private channel)\r\n";
+		std::string msg = CLIENT + "372 " + mapUser.find(fd)->second.getNickname() + " :To use !bot or !trf join a channel (not private channel)\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
 	}
-	
-	std::cout << "sentence = ." << vec[2] << "." << std::endl;
-	//std::string msg = CLIENT + "PRIVMSG " + it_recip->second.getNickname() + " " + vec[1] + " :" + vec[2] + "\r\n";
-	std::string msg = CLIENT + "PRIVMSG " + vec[1] + " :" + vec[2] + "\r\n";
-		std::cout << "msg = ." << msg << "." << std::endl;
-
+	std::string msg = CLIENT + "PRIVMSG " + it_recip->second.getNickname() + " " + vec[1] + " :" + vec[2] + "\r\n";
 	send(it_recip->first, msg.c_str(), msg.size(), 0);
 	std::cout << YELLOW << vec[1] << ": <" << mapUser.find(fd)->second.getNickname() << "> " << vec[2] << NONE << std::endl;
+}
+
+void server::cmdNotice(int fd, std::string buff)
+{
+	std::vector<std::string> vec = splitCommandPrivmsg(buff);
+	if (vec.size() < 3)
+		return;
+	std::vector<channel>::iterator it_chan = selectChannel(vec[1]);
+	std::map<int, client>::iterator it_user = selectUser(vec[1]);
+	if (it_chan != channelList.end())
+		it_chan->sendToChannelNotice(mapUser.find(fd)->second, vec[2]);
+	else if (it_user != mapUser.end())
+	{
+		std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost NOTICE ";
+		std::string  msg = CLIENT + mapUser.find(fd)->second.getNickname() + " :" + vec[2] + "\r\n";
+		send(it_user->first, msg.c_str(), msg.size(), 0);
+	}
 }
 

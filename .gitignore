@@ -2,5 +2,5 @@
 *.o
 ircserv
 debug.log
-.gitignore
 note.txt
+files

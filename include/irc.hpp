@@ -28,7 +28,6 @@
 #include <fstream>
 #include <ostream>
 
-
 #define bufferSize 4096
 #define minPort 49152
 #define maxPort 65535
@@ -66,3 +65,4 @@ std::string ltrim(const std::string& str);
 int jumpToNextMode(std::string::iterator it);
 void printFullUser(client &user);
 bool findKey(std::vector<std::string> vec, std::string key);
+std::string to_string(int i);

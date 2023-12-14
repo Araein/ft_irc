@@ -1,8 +1,8 @@
 #include "irc.hpp"
 
-void server::trfSend(int fd, std::string txt, std::string channelName)
+void server::trfSend(int fd, std::string const &txt, std::string const &channelName)
 {
-	std::vector<std::string> vec = splitCommandNick(txt);
+	std::vector<std::string> vec = splitCommand(txt);
 	std::vector<channel>::iterator it_chan = selectChannel(channelName);
 	std::string rep;
 	std::string line;
@@ -18,7 +18,7 @@ void server::trfSend(int fd, std::string txt, std::string channelName)
 	else if (it_chan->getIsConnected(selectUser(vec[1])->second.getID()) == false)
 		rep = vec[1] + " has not joined " + channelName;
 	else if (it_chan->getIsConnected(mapUser.find(fd)->second.getID()) == false)
-		rep = "Your has not joined " + channelName;
+		rep = "You have not joined " + channelName;
 	else
 	{
 		std::ifstream userFile(vec[2].c_str());
@@ -31,7 +31,7 @@ void server::trfSend(int fd, std::string txt, std::string channelName)
 				trf.textFile += line + "\n";
 				if (trf.textFile.size() > 100000)
 				{
-					rep = "File is too large and cannot be sent";
+					rep = "File is too large";
 					break;
 				}
 			}
@@ -42,8 +42,8 @@ void server::trfSend(int fd, std::string txt, std::string channelName)
 	}
 	if (mapUser.find(fd)->second.getHowManyFile() >= maxSEND)
 	{
-		selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, "You have too many undelivered files. Tape '!trf' for info");
-		std::cout << CYAN << "[42_IRC: <<<< " << mapUser.find(fd)->second.getNickname() << ":" << " Failed to sent a file" << NONE << std::endl;
+		selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, "You have too many undelivered files.");
+		std::cout << CYAN << "[42_IRC: <<<< " << mapUser.find(fd)->second.getNickname() << ":" << " Failed to send a file" << NONE << std::endl;
 	}
 	else if (rep.size() == 0)
 	{
@@ -54,37 +54,37 @@ void server::trfSend(int fd, std::string txt, std::string channelName)
 		trf.id = mapUser.find(fd)->second.setFileList(trf);
 		rep = "Download: '!trf get " + mapUser.find(fd)->second.getNickname() + " " + trf.id + "'"; 
 		selectChannel(channelName)->sendToOne(selectUser(vec[1])->second, rep);
-		rep = "Successfull sent file " + trf.id; 
+		rep = "Successful sent file " + trf.id; 
 		selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, rep);
 		std::cout << CYAN << "[42_IRC: <<<< " << mapUser.find(fd)->second.getNickname() << ":" << " Sent a file" << NONE << std::endl;
 	}
 	else
 	{
 		selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, rep);
-		std::cout << CYAN << "[42_IRC: <<<< " << mapUser.find(fd)->second.getNickname() << ":" << " Failed to sent a file" << NONE << std::endl;
+		std::cout << CYAN << "[42_IRC: <<<< " << mapUser.find(fd)->second.getNickname() << ":" << " Failed to send a file" << NONE << std::endl;
 	}
 }
 
-void server::trfGet(int fd, std::string txt, std::string channelName)
+void server::trfGet(int fd, std::string const &txt, std::string const &channelName)
 {
-	std::vector<std::string> vec = splitCommandNick(txt);
+	std::vector<std::string> vec = splitCommand(txt);
 	std::vector<channel>::iterator it = selectChannel(channelName);
 	std::string rep;
 	transferFile trf;
 	if (vec.size() == 1)
 		rep = "User is missing";
 	else if (selectUser(vec[1]) == mapUser.end())
-		rep = "User does not exist or is no more connected on 42IRC";
+		rep = "User does not exist or is no more connected on 42_IRC";
 	else if (vec.size() == 2)
 		rep = "File number is missing";
 	else if (selectUser(vec[1])->second.getNumFileExist(vec[2]) == false)
-		rep = "File number is invalid";
+		rep = "File number does not exist";
 	else if (selectUser(vec[1])->second.getFileDest(vec[2]) != fd)
 		rep = "You are not allowed to download this file";
 	else if (it == channelList.end())
 		rep = "No such channel";
 	else if (it->getIsConnected(mapUser.find(fd)->second.getID()) == false)
-		rep = "You has not joined " + channelName;
+		rep = "You have not joined " + channelName;
 	else
 	{
 		trf = *(selectUser(vec[1])->second.getTrf(vec[2]));
@@ -99,15 +99,15 @@ void server::trfGet(int fd, std::string txt, std::string channelName)
 			selectUser(vec[1])->second.delFileList(vec[2]);
 			rep = "Successful download";
 		}
-		std::cout << CYAN << "[42_IRC: <<<< " << selectUser(vec[1])->second.getNickname() << ":" << " get a file" << NONE << std::endl;
+		std::cout << CYAN << "[42_IRC: <<<< " << selectUser(vec[1])->second.getNickname() << ":" << rep << NONE << std::endl;
 	}
 	selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, rep);
 
 }
 
-void server::trfDel(int fd, std::string txt, std::string channelName)
+void server::trfDel(int fd, std::string const &txt, std::string const &channelName)
 {
-	std::vector<std::string> vec = splitCommandNick(txt);
+	std::vector<std::string> vec = splitCommand(txt);
 	std::string rep;
 	transferFile trf;
 	if (vec.size() == 1)
@@ -118,24 +118,21 @@ void server::trfDel(int fd, std::string txt, std::string channelName)
 	{
 		rep = "Successfully deleted file";
 		mapUser.find(fd)->second.delFileList(vec[1]);
-		std::cout << CYAN << "[42_IRC: <<<< " << mapUser.find(fd)->second.getNickname() << ":" << " delete a file" << NONE << std::endl;
+		std::cout << CYAN << "[42_IRC: <<<< " << mapUser.find(fd)->second.getNickname() << ":" << " deleted a file" << NONE << std::endl;
 	}
 	selectChannel(channelName)->sendToOne(mapUser.find(fd)->second, rep);
 }
 
-void server::trfHelp(int fd, std::string channelName)
+void server::trfHelp(int fd) const
 {
-	std::string msg;
-	std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() +  "@localhost ";
-	msg = CLIENT + " 372 : <!trf send> <recipient> <path source>\n";
-	send(fd, msg.c_str(), msg.size(), 0);
-	msg = CLIENT + " 372 : <!trf get> <sender> <serial number> [path destination]\n";
-	send(fd, msg.c_str(), msg.size(), 0);
-	msg = CLIENT + " 372 : <!trf del> <serial number>\n";
+	std::string msg = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 372 : ";
+	msg += "<!trf send> <recipient> <path source>\n";
+	msg += "<!trf get> <sender> <serial number> [path destination]\n";
+	msg += "<!trf del> <serial number>\r\n";
 	send(fd, msg.c_str(), msg.size(), 0);
 }
 
-std::string server::extractFilename(std::string filename)
+std::string server::extractFilename(std::string const &filename)
 {
 	std::istringstream iss(filename);
 	std::string str;
