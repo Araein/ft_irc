@@ -299,7 +299,7 @@ void channel::sendToChannelNotice(client const &user, std::string const &message
 {
 	for (std::vector<client>::iterator it = chan.connected.begin(); it != chan.connected.end(); it++)
 	{
-		if (it->getFD() > 0)
+		if (it->getFD() > 0 && it->getFD() != user.getFD())
 		{
 			std::string CLIENT = ":" + user.getNickname() + "!" + user.getUsername() + "@localhost NOTICE ";
 			std::string  msg = CLIENT + chan.name + " :" + message + "\r\n";
