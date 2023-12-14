@@ -28,6 +28,10 @@ void server::parseCommand(std::string buff, int fd)
 	{
 		cmdPrivmsg(fd, buff);
 	}
+	else if (command == "notice" || command == "NOTICE")
+	{
+		cmdNotice(fd, buff);
+	}
 	else if (command == "join" || command == "JOIN")
 	{
 		cmdJoin(buff, fd);
@@ -813,5 +817,22 @@ void server::cmdPrivateMsg(int fd, std::vector<std::string> vec)
 	std::string msg = CLIENT + "PRIVMSG " + it_recip->second.getNickname() + " " + vec[1] + " :" + vec[2] + "\r\n";
 	send(it_recip->first, msg.c_str(), msg.size(), 0);
 	std::cout << YELLOW << vec[1] << ": <" << mapUser.find(fd)->second.getNickname() << "> " << vec[2] << NONE << std::endl;
+}
+
+void server::cmdNotice(int fd, std::string buff)
+{
+	std::vector<std::string> vec = splitCommandPrivmsg(buff);
+	if (vec.size() < 3)
+		return;
+	std::vector<channel>::iterator it_chan = selectChannel(vec[1]);
+	std::map<int, client>::iterator it_user = selectUser(vec[1]);
+	if (it_chan != channelList.end())
+		it_chan->sendToChannelNotice(mapUser.find(fd)->second, vec[2]);
+	else if (it_user != mapUser.end())
+	{
+		std::string CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost NOTICE ";
+		std::string  msg = CLIENT + mapUser.find(fd)->second.getNickname() + " :" + vec[2] + "\r\n";
+		send(it_user->first, msg.c_str(), msg.size(), 0);
+	}
 }
 

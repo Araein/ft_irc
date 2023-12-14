@@ -70,6 +70,7 @@ class channel
 
 //**********************************/FUNCTION//**********************************/
 	void sendToChannel(client const &user, std::string const &message);
+	void sendToChannelNotice(client const &user, std::string const &message);
 	void sendInfoToChannel(client const &user, std::string const &message);
 	void welcomeMessage(client const &user) const;
 	bool userCanWrite(client const &user);

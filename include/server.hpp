@@ -55,7 +55,8 @@ class server
 	void cmdPing(std::string buff, int fd);
 	void cmdPrivmsg(int fd, std::string buff);
 	void cmdPrivateMsg(int fd, std::vector<std::string> vec);
-	void cmdPartPrivmsg(int fd, std::string const &name1, std::string const &name2);
+	void cmdNotice(int fd, std::string buff);
+
 
 //**********************************/SERVER//**********************************/
 	void acceptNewUser();
