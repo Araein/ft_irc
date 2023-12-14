@@ -44,7 +44,7 @@ void server::inputMessage(int fd)
 	else 
 	{
 		if (mapUser.find(fd)->second.getLog() < 2)
-			configureNewUser(std::string(buff).append(test), fd);
+			configureNewUser(std::string(buff).append(left), fd);
 		else
 		{
 			if (buff[0] == '/')
