@@ -5,8 +5,8 @@ client::client(int id, int fd): _fd(fd), _id(id), _log(0), fileId(100), _netcat(
 {
 	std::ostringstream oss;
 	oss << _id;
-	_nickname = "user_" + oss.str();
-	_username = "user" + oss.str();
+	_nickname = "";
+	_username = "";
 	if (_id <= 102)
 	{
 		_netcat = -2;
