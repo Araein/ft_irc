@@ -406,10 +406,7 @@ void channel::sendToChannelnoPRIVMSG(client const &user, std::string const &mess
 	for (int i = 0; i < chan.nbConnectedUser; i++)
 	{
 		if (chan.connected[i].getID() != user.getID())
-		{
-			if (send(chan.connected[i].getFD(), message.c_str(), message.size(), 0) == -1)
-				std::cerr << RED << "erreur send" << NONE << std::endl;
-		}
+			send(chan.connected[i].getFD(), message.c_str(), message.size(), 0);
 	}
 }
 

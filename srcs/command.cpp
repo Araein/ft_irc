@@ -445,7 +445,6 @@ void server::cmdTopic(int fd, std::string buff)
 	std::string tmp;
 	std::string channelName;
 	std::istringstream iss(buff);
-	// int index;
 
 	iss >> tmp;
 	iss >> channelName;
@@ -454,7 +453,6 @@ void server::cmdTopic(int fd, std::string buff)
 		send(fd, std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 403" + channelName + ":no such channel\r\n").c_str(), std::string(":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost 403 " + channelName + ":no such channel\r\n").length(), 0);
 		return ;
 	}
-	// index = findChanbyName(channel);
 	tmp = iss.str().substr(6 + channelName.length() + 1, buff.length() - (6 + channelName.length() + 1));
 	if (it_channelList->getIsConnected(mapUser.find(fd)->second.getID()) == true){
 		if (tmp.empty() == true && it_channelList->getTopic().empty() == true){
@@ -508,17 +506,17 @@ void server::cmdMode(int fd, std::string buff)
 	iss >> arg;
 	if (arg == "b")
 		return ;
-	if (chan[0] != '#') // mode is sent for user mode, ignoring (CLIENT SENDS MODE +i AT BEGINNING, MAKING A CRASH LATER IN THIS FUNCTION IF THIS LINE IS REMOVED AS THE CHANNELS ARE NOT SET YET)
+	if (chan[0] != '#')
 		return;
-	while (itchan != channelList.end() && itchan->getChannelName() != chan){ //find channel | IT CHAAAAN UwU
+	while (itchan != channelList.end() && itchan->getChannelName() != chan){
 		itchan++;
 	}
-	if (itchan == channelList.end()){ // channel not found, does not output anything on client side, this is expected behavior
+	if (itchan == channelList.end()){
 		msg = ":localhost 403 " + user.getNickname() + " " + chan + " :No such channel\r\n";
 		send(fd, msg.c_str(), msg.length(), 0);
 		return ;
 	}
-	if (arg.empty()){ // list modes for channel even if no modes
+	if (arg.empty()){
 		msg = ":localhost 324 " + user.getNickname() + " " + chan + " +" + itchan->getAllMode() + "\r\n";
 		send(fd, msg.c_str(), msg.length(), 0);
 		return;
@@ -537,18 +535,18 @@ void server::cmdMode(int fd, std::string buff)
 					mode = 1;
 					argmsg += "+";
 				}
-				if (*it == 'i' && argmsg.find('i') == std::string::npos && arg.find('i') != std::string::npos){ // found i mode, setting up invite mode. Checks if there is already a i mode in the command wether it's suppresing or adding doesn't matter) if there is ignoring the i mode
+				if (*it == 'i' && argmsg.find('i') == std::string::npos && arg.find('i') != std::string::npos){
 					itchan->setMode('i', true);
 					itchan->setAllInvited();
 					argmsg += "i";
 				}
-				if (*it == 't' && argmsg.find('t') == std::string::npos && arg.find('t') != std::string::npos){ // found t mode, setting up restricted topic mode> Checks if there is already a t mode in the command wether it's suppresing or adding doesn't matter) if there is ignoring the t mode
+				if (*it == 't' && argmsg.find('t') == std::string::npos && arg.find('t') != std::string::npos){
 					itchan->setMode('t', true);
 					argmsg += "t";
 				}
-				if (*it == 'k' && argmsg.find('k') == std::string::npos && arg.find('k') != std::string::npos){ // found k mode, setting up password
+				if (*it == 'k' && argmsg.find('k') == std::string::npos && arg.find('k') != std::string::npos){
 					iss >> tmp;
-					if (tmp.empty() == false){ // if password is not empty we set it up, else we ignore it. Checks if there is already a k mode in teh command (wether it's suppresing or adding doesn't matter) if there is ignoring the k mode
+					if (tmp.empty() == false){
 						itchan->setPassword(tmp);
 						itchan->setMode('k', true);
 						itchan->setNeedPass(true);
@@ -561,15 +559,15 @@ void server::cmdMode(int fd, std::string buff)
 					iss >> tmp;
 					if (tmp.empty() == true && argmsg.find('o') != std::string::npos)
 						continue ;
-					else if (tmp.empty() == false){ // checking is arg is empty, if it is, we ignore o mode
-						if (itchan->getClient(tmp)){ // checking if user provided exists, if it does setting it up as ops
+					else if (tmp.empty() == false){
+						if (itchan->getClient(tmp)){
 							itchan->setUserChanOp(*itchan->getClient(tmp));
 							itchan->setMode('o', true);
 							argmsg += "o";
 							keys.push_back("chanops");
 							values.push_back(tmp);
 						}
-						else{ // else return error and ignore o mode
+						else{
 							std::string error = ":localhost 401 " + user.getNickname() + " " + tmp + " :no such nick\r\n";
 							send(fd, error.c_str(), error.length(), 0);
 							error = ":localhost 441 " + user.getNickname() + " " + tmp + " " + itchan->getChannelName() + " :user not on channel\r\n";
@@ -579,7 +577,7 @@ void server::cmdMode(int fd, std::string buff)
 				}
 				if (*it == 'l' && arg.find('l') != std::string::npos){
 					iss >> tmp;
-					if (tmp.empty() == false && std::atoi(tmp.c_str()) > 0){ // checking if arg is empty, if it is, we ignore l mode and send error but if it isn't empty but invalid parameter (string or == 0) we ignore
+					if (tmp.empty() == false && std::atoi(tmp.c_str()) > 0){
 						itchan->setMaxConnectedUser(std::atoi(tmp.c_str()));
 						itchan->setMode('l',true);
 						argmsg += "l";
@@ -605,16 +603,16 @@ void server::cmdMode(int fd, std::string buff)
 					mode = 0;
 					argmsg += "-";
 				}
-				if (*it == 'i' && argmsg.find('i') == std::string::npos && arg.find('i') != std::string::npos){ // removing invite mode, if there is already a i in the command ignoring this one
+				if (*it == 'i' && argmsg.find('i') == std::string::npos && arg.find('i') != std::string::npos){
 					itchan->setMode('i', false);
 					argmsg += "i";
 				}
-				if (*it == 't'  && argmsg.find('t') == std::string::npos && arg.find('t') != std::string::npos){ // removing restrictions on topic, if there is already a i in the command ignoring this one
+				if (*it == 't'  && argmsg.find('t') == std::string::npos && arg.find('t') != std::string::npos){
 					itchan->setMode('t', false);
 					argmsg += "t";
 				}
-				if (*it == 'k' && arg.find('k') != std::string::npos){ // remove password if a password is set, if not ignoring
-					if (argmsg.find('k') != std::string::npos && findKey(keys, "password") == true) // if there is a k before BUT the argument is not valid we ignore all the k's altogether
+				if (*it == 'k' && arg.find('k') != std::string::npos){
+					if (argmsg.find('k') != std::string::npos && findKey(keys, "password") == true)
 					{
 						if (itchan->getMode('k') == true){
 							itchan->setMode('k', false);
@@ -637,13 +635,13 @@ void server::cmdMode(int fd, std::string buff)
 					if (tmp.empty() == true && argmsg.find('o') != std::string::npos)
 						continue ;
 					if (tmp.empty() == false ){
-						if (itchan->getClient(tmp)){ // checking if user exists if it does remove it from admins
+						if (itchan->getClient(tmp)){
 							itchan->undoUserChanOp(*itchan->getClient(tmp));
 							argmsg += 'o';
 							keys.push_back("chanopsremove");
 							values.push_back(tmp);
 						}
-						else{ // else return error and ignore o mode
+						else{
 							std::string error = ":localhost 401 " + user.getNickname() + " " + tmp + " :no such nick\r\n";
 							send(fd, error.c_str(), error.length(), 0);
 							error = ":localhost 441 " + user.getNickname() + " " + tmp + " " + itchan->getChannelName() + " :user not on channel\r\n";
