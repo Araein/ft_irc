@@ -5,8 +5,6 @@
 class client
 {
 
-	std::string rtrim(const std::string& str);
-	std::string ltrim(const std::string& str);
 	int  _fd;
 	int  _id;
 	int _log;
@@ -28,7 +26,7 @@ class client
 	int getLog() const;
 	int getNetcat() const;
 	int getHowManyFile() const;
-	bool getIsChanOp() const;
+	bool getIsChanOp();
 	bool getNumFileExist(std::string id) const;
 	size_t getHowManyChannel() const;
 	std::string getPassword() const;
@@ -37,21 +35,21 @@ class client
 	int getFileDest(std::string id) const;
 	std::vector<channel>::iterator getConnectBegin();
 	std::vector<channel>::iterator getConnectEnd();
-	std::vector<transferFile>::const_iterator getTrf(std::string const &id) const;
+	std::vector<transferFile>::iterator getTrf(std::string id);
 
 
 //**********************************/SETTER//**********************************/
-	void setPassword(std::string const &pass);
-	void setUsername(std::string const &username);
-	void setNickname(std::string const &nickname);
+	void setPassword(std::string pass);
+	void setUsername(std::string username);
+	void setNickname(std::string nickname);
 	void setLog();
 	void setNetcat(int value);
 	void setNetcat();
 	std::string setFileList(transferFile &trf);
 
 //**********************************/FUNCTION//**********************************/
-	void delFileList(std::string const &id);
-	void addChannel(channel const &chan);
+	void delFileList(std::string id);
+	void addChannel(channel *chan);
 	void deleteChannel(channel const &chan);
 	void exitUser();
 

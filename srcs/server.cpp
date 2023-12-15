@@ -1,24 +1,27 @@
 #include "irc.hpp"
 
-server::~server(void) {}
-server::server(int fd, int port, std::string password)
+server::server(int port, std::string const &password):
+_id(100), _port(port), _curPlace(0), _totalPlace(0), _password(password)
 {
-	_id = 100;
-	_port = port;
-	_password = password;
-	_curPlace = 0;
-	_totalPlace = 0;
-	for (int i = 0; i < maxFD; i++)//+1 pour un fd temporaire pour eviter les BROKE PIPE
+	printServerHeader();
+	createChannel();
+	for (int i = 0; i < maxFD + 1; i++)
 	{
 		_fds[i].fd = -1;
-		_fds[i].events = POLLIN | POLLERR;
+		_fds[i].events = POLLIN;
 		_fds[i].revents = 0;
 	}
 	_fds[maxFD].fd = -2;
-	_fds[maxFD].events = POLLIN | POLLERR;
-	_fds[maxFD].revents = 0;
-	_fds[0].fd = fd;
 }
+
+server::~server(void)
+{
+	delete admin;
+	delete MrRobot;
+	delete [] chan;
+}
+
+//**********************************//SOCKET//**********************************//
 
 bool server::initSocket(void)
 {
@@ -28,47 +31,50 @@ bool server::initSocket(void)
 	sock.sin_addr.s_addr = INADDR_ANY;
 	sock.sin_port = htons(_port);
 
-	std::cout << "[SERVER: INITIALISATION]" << std::endl;
+	std::cout << "[42_IRC:  INITIALISATION]" << std::endl;
 	_fds[0].fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
 	if (_fds[0].fd < 0)
 	{
-		std::cerr << "Failed to open socket" << std::endl;
+		std::cerr << RED << "[42_IRC:  ERROR] Failed to open socket" << NONE << std::endl;
 		return false;
 	}
 	if (setsockopt(_fds[0].fd, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt))){
-		std::cerr << "Failed to config socket" << std::endl;
+		std::cerr << RED << "[42_IRC:  ERROR] Failed to config socket" << NONE << std::endl;
 		close(_fds[0].fd);
 		return false;
 	}
-	std::cout << "[SERVER: CONNECTED]" << std::endl;
+	std::cout << "[42_IRC:  CONNECTED]" << std::endl;
 	if (bind(_fds[0].fd, (sockaddr *)&sock, sizeof(sock)) < 0)
 	{
-		std::cerr << "Failed to bind to socket" << std::endl;
+		std::cerr << RED << "[42_IRC:  ERROR] Failed to bind socket" << NONE << std::endl;
+		close(_fds[0].fd);
 		return false;
 	}
-	std::cout << "[SERVER: BINDING]" << std::endl;
+	std::cout << "[42_IRC:  BOUND]" << std::endl;
 	if (listen(_fds[0].fd, SOMAXCONN) < 0)
 	{
-		std::cerr << "Failed to listen to socket" << std::endl;
+		std::cerr << RED << "[42_IRC:  ERROR] Failed to listen to socket" << NONE << std::endl;
+		close(_fds[0].fd);
 		return false;
 	}
-	client us(_id, _fds[0].fd);//**********************************************A COMPLETER
+	client us(++_id, _fds[0].fd);
+	us.setNetcat(-1);
+	us.setNickname("server");
 	mapUser.insert(std::make_pair(_fds[0].fd, us));
-	std::cout << "[SERVER: LISTENING ON PORT " << _port << "]" << std::endl;
 	_totalPlace++;
+	std::cout << "[42_IRC:  LISTENING ON PORT " << _port << "]" << std::endl;
 	return true;
 }
 
-void server::createChannel(void)
-{
-	channel chan0("#Minishell");
-	vecChannel.push_back(chan0);
-	channel chan1("#SoLong");
-	vecChannel.push_back(chan1);
-	channel chan2("#PushSwap");
-	vecChannel.push_back(chan2);
-	channel chan3("#Inception");
-	vecChannel.push_back(chan3);
+int server::findChanbyName(std::string chan) const{
+	int i = 0;
+	for (std::vector<channel>::const_iterator it = channelList.begin(); it != channelList.end(); it++)
+	{
+		if (chan == it->getChannelName())
+			return i;
+		i++;
+	}
+	return -1;
 }
 
 void server::mainLoop(void)
@@ -79,233 +85,140 @@ void server::mainLoop(void)
 		ret = poll(_fds, maxFD + 1, 1000);
 		if (ret < 0)
 		{
-			std::cerr << "Failed to call poll()" << std::endl;
+			std::cerr << RED << "[42_IRC:  ERROR] Failed to call poll()" << NONE << std::endl;
 			closeAll();
 			return;
 		}
+		closeOne(_fds[maxFD].fd);
+		userNetcat();
 		acceptNewUser();
-		if (ret == 0)
-			continue;
-		for (int i = 1; i < maxFD + 1; i++)
-		{
-			if (_fds[i].revents & (POLLIN | POLLERR))
-			{
-				if (_fds[i].revents & POLLIN)
-					userMessage(_fds[i].fd);//**********************************************A FINIR
-				else if (_fds[i].revents & POLLERR)
-					errMessage(_fds[i].fd);//**********************************************A FAIRE
-			}
-		}
+		if (ret > 0)
+			receivMessage();
 	}
 }
 
 void server::acceptNewUser(void)
 {
-	if (_fds[maxFD].fd > 0){
-		close(_fds[maxFD].fd);
-		_fds[maxFD].fd = -2;
-		_fds[maxFD].revents = 0;
-	}
 	sockaddr_in sock;
 	socklen_t sizeSock = sizeof(sock);
 	memset(&sock, 0, sizeSock);
-	pollfd tempfds;
-	tempfds.events = POLLIN | POLLERR;
-	tempfds.revents = 0;
-	tempfds.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
-	if (tempfds.fd < 0)
+	pollfd tmp;
+	tmp.revents = 0;
+	tmp.events = POLLIN;
+	tmp.fd = accept(_fds[0].fd, (sockaddr *)&sock, &sizeSock);
+	if (tmp.fd == -1)
 		return;
+	std::cout << "[42_IRC:  NEW CONNECTION REQUEST]" << std::endl;
 	_curPlace = findPlace();
-	_fds[_curPlace].fd = tempfds.fd;
-	_fds[_curPlace].revents = tempfds.revents;
+	_fds[_curPlace].fd = tmp.fd;
+	_fds[_curPlace].events = tmp.events;
+	_fds[_curPlace].revents = tmp.revents;
 	if (_curPlace == maxFD)
-		printFullUser(_fds[_curPlace].fd);
-	else
 	{
-		_totalPlace++;
-		client us(++_id, _fds[_curPlace].fd);
-		mapUser.insert(std::make_pair(_fds[_curPlace].fd, us));
-	}
-}
-
-void server::userMessage(int fd)// si POLLIN
-{
-	int size;
-	char buff[bufferSize];
-	memset(&buff, 0, bufferSize);
-
-	size = recv(fd, buff, bufferSize - 1, MSG_DONTWAIT);
-	if (size == -1)
-	{
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
-			send(fd, "An error has occurred\nYour message could not be sent./nPlease try again\n", 72, 0);
-	}
-	else if (size == 0)
-	{
-		std::cout << "Bye " << (mapUser.find(fd))->second.getNickname() << ". Thanks to use 42_IRC." << std::endl;
-		closeOne(fd);
-	}
-	else if (size > 0)
-	{
-		if ((mapUser.find(fd))->second.getPWD() == false)// password non encore valide
-		{
-			(mapUser.find(fd))->second.firstMessage(buff);//parsing du message dans la class client
-			if (((mapUser.find(fd))->second.getPassword()).compare(_password) != 0)//compare les mot de passe
-			{
-				send(fd, "INCORRECT PASSWORD\n You will be disconnected\n", 45, 0);
-				closeOne(fd);
-			}
-			else
-			{
-				(mapUser.find(fd))->second.setPWD();//definie passeword validate
-				send(fd, "Password validate\n", 18, 0);
-				sendWelcomeMsgs(fd);
-			}
-		}
-		else
-			parseMessage(buff, fd);//**********************************************A COMPLETER
-	}
-}
-
-void server::parseMessage(std::string buff, int fd)
-{
-	std::istringstream iss(buff);
-	std::string command;
-	iss >> command;
-	if (command == "KICK" || command == "kick")
-	{
-		std::cout << "commande recu a traiter: KICK" << std::endl; 
-	}
-	else if (command == "NICK" || command == "nick")
-		cmdNick(fd, buff);
-	else if (command == "PRIVMSG" || command == "privmsg")
-		cmdPrivmsg(fd, buff);
-	else if (command == "JOIN" || command == "join")
-		cmdJoin(buff, fd);
-	else if (command == "INVITE" || command == "invite")
-	{
-		std::cout << "commande recu a traiter: INVITE" << std::endl;
-	}
-	else if (command == "TOPIC" || command == "topic")
-	{
-		std::cout << "commande recu a traiter: TOPIC" << std::endl;
-	}
-	else if (command == "MODE" || command == "mode")
-	{
-		std::cout << "commande recu a traiter: " << buff << std::endl;
-	}
-	else if (command == "PING" || command == "ping")
-	{
-		std::istringstream iss(buff);
-		std::string pingMsg;
-		iss >> pingMsg >> pingMsg; 
-		std::string pongMsg = "PONG " + pingMsg + "\r\n";
-		send(fd,pongMsg.c_str(), pongMsg.size(), 0);
-	}
-	else if (command == "QUIT" || command == "quit")
-	{
-		std::cout << "Bye <" << (mapUser.find(fd))->second.getNickname() << "> Thanks to use 42_IRC." << std::endl;
-		closeOne(fd);
-	}
-	else
-		std::cout << "Message en attente de parsing: " << buff << std::endl;
-
-}
-
-void server::errMessage(int fd)// si POLLERR
-{
-	(void)fd;
-	std::cout << " errMessage en cours" << std::endl;
-}
-
-void server::closeOne(int fd)
-{
-	mapUser.erase(mapUser.find(fd));
-	for(int i = 1; i < maxFD + 1; i++)
-	{
-		if (_fds[i].fd == fd){
-			close(_fds[i].fd);
-			_fds[i].fd = -1;
-			_fds[i].revents = 0;
-		}
-	}
-	_totalPlace--;
-}
-
-void server::closeAll(void)
-{
-	for (int i = 0; i < maxFD; i++)
-	{
-		if (_fds[i].fd > -1)
-			close(_fds[i].fd);
-	}
-}
-
-void server::sendWelcomeMsgs(int fd)
-{
-	if (fd == -1)
+		std::string msg = RED;
+		msg += "Maximum number of connections reached";
+		msg += NONE;
+		msg += "\r\n";
+		send(tmp.fd, msg.c_str(), msg.size(), 0);
+		closeOne(_fds[_curPlace].fd);
 		return;
-	std::string msg;
-	msg = "001 " + (mapUser.find(fd))->second.getNickname() + " :Welcome to 42 IRC!\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = "002 RPL_YOURHOST :Your host is ircserv running version 0.1\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = "003 RPL_CREATED :The server was created god knows when\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	msg = "004 RPL_MYINFO :ircserv 0.1 level0 chan_modeballecouille\n";
-	send(fd, msg.c_str(), msg.length(), 0);
-	send(fd, "                                                              \n", 63, 0);
-	send(fd, "   **     **  *********  *********   *********      ********* \n", 63, 0);
-	send(fd, "   **     **         **     **       **      **   **          \n", 63, 0);
-	send(fd, "   **     **         **     **       **       ** **           \n", 63, 0);
-	send(fd, "   **     **         **     **       **       ** **           \n", 63, 0);
-	send(fd, "   *********  *********     **       **********  **           \n", 63, 0);
-	send(fd, "          **  **            **       **    **    **           \n", 63, 0);
-	send(fd, "          **  **            **       **     **   **           \n", 63, 0);
-	send(fd, "          **  **            **       **      **   **          \n", 63, 0);
-	send(fd, "          **  *********  *********   **       **    ********* \n", 63, 0);
-	send(fd, "                                                              \n", 63, 0);
-	send(fd, "\nChannels available:\n", 21, 0);
-	send(fd, "  Minishell\n  PushSwap\n  SoLong\n  Inception\n", 44, 0);
-	send(fd, "\nCommands available:\n", 21, 0);
-	send(fd, "  \'KICK\n  \'TOPIC\n  \'MODE\n  \'JOIN\n  \'INVITE\n  \'QUIT\n", 51, 0);
-}
-
-
-void server::printNewUser(int fd)
-{
-	(void)fd;
-}
-
-int server::findPlace(void)
-{
-	for (int i = 1; i < maxFD; i++)
-	{
-		if (_fds[i].fd == -1)
-			return i;
 	}
-	return maxFD;
+	client user( ++_id, _fds[_curPlace].fd);
+	mapUser.insert(std::make_pair(_fds[_curPlace].fd, user));
+	_totalPlace++;
 }
 
-void server::printFullUser(int fd)
+
+//**********************************//NETCAT//**********************************//
+
+void server::userNetcat(void)
 {
-	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
-	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
-	send(fd, "|--------------------- 42_IRC is full ------------------------|\n", 64, 0);
-	send(fd, "|------------------ Please try again later -------------------|\n", 64, 0);
-	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
-	send(fd, "|-------------------------------------------------------------|\n", 64, 0);
+	for (std::map<int, client>::iterator it = mapUser.begin(); it != mapUser.end(); it++)
+	{
+		std::string msg;
+		if (it->second.getLog() == 0)
+			it->second.setNetcat();
+		if (it->second.getNetcat() == 2 && it->second.getLog() == 0)
+		{
+			it->second.setNetcat(-2);
+			msg = "Please enter your password to connect to 42IRC\n";
+			msg += "Use QUIT to quit the server\n";
+			send(it->second.getFD(), msg.c_str(), msg.size(), 0);
+		}
+	}
+	client user( ++_id, _fds[_curPlace].fd);
+	mapUser.insert(std::make_pair(_fds[_curPlace].fd, user));
+	_totalPlace++;
 }
 
 
+//**********************************//DATA//**********************************//
 
-int server::getFD(int i) const { return _fds[i].fd; }
-int server::getPort(void) const { return _port; }
-std::string server::getPassword(void) const { return _password;}
+void server::createChannel(void)
+{
+	admin = new client(_id, -3);
+	admin->setNickname("chanOp42");
+	admin->setUsername("chanOp42");
+	mapUser.insert(std::make_pair(-3, *admin));
 
-void server::setFD(int i, int val) { _fds[i].fd = val; }
+	MrRobot = new client( ++_id, -4);
+	MrRobot->setNickname("MrRobot");
+	MrRobot->setUsername("MrRobot");
+	mapUser.insert(std::make_pair(-4, *MrRobot));
 
-
+	chan = new channel[10];
+	chan[0].setChannelName("#Libft");
+	chan[0].setUserChanOp(*admin);
+	chan[0].setTopic("Discuss around the Libft and how to create your first library");
+	chan[1].setChannelName("#get_next_line");
+	chan[1].setUserChanOp(*admin);
+	chan[1].setTopic("Discute around get_next_line and how to read a file");
+	chan[2].setChannelName("#BornToBeRoot");
+	chan[2].setUserChanOp(*admin);
+	chan[2].setTopic("Discuss around the virtual Machine and Linux");
+	chan[3].setChannelName("#soLong");
+	chan[3].setUserChanOp(*admin);
+	chan[3].setTopic("Discuss around the minilibx");
+	chan[4].setChannelName("#minishell");
+	chan[4].setUserChanOp(*admin);
+	chan[4].setTopic("Discuss around the Shell");
+	chan[5].setChannelName("#philosopher");
+	chan[5].setUserChanOp(*admin);
+	chan[5].setTopic("Discuss around the threads");
+	chan[6].setChannelName("#Evaluation");
+	chan[6].setUserChanOp(*admin);
+	chan[6].setMaxConnectedUser(2);
+	chan[6].setTopic("Evaluate or get evaluated");
+	chan[6].setPassword("stud42");
+	chan[7].setChannelName("#Promo");
+	chan[7].setUserChanOp(*admin);
+	chan[7].setNeedPass(true);
+	chan[7].setTopic("Discuss with students from your promo");
+	chan[7].setPassword("stud42");
+	chan[8].setChannelName("#Staff");
+	chan[8].setUserChanOp(*admin);
+	chan[8].setMaxConnectedUser(5);
+	chan[8].setTopic("Participate in the development of future student projects. On invitation by a staff member\n");
+	chan[8].setMode('i', true);
+	chan[8].setUserInvited(*admin);
+	chan[8].setPassword("stud42");
+	chan[9].setChannelName("#API");
+	chan[9].setUserChanOp(*admin);
+	chan[9].setTopic("Welcome to the discussion forum reserved for tutors. On invitation by a tutor or staff\n");
+	chan[9].setPassword("stud42");
+	chan[9].setMode('i', true);
+	chan[9].setUserInvited(*admin);
+	channelList.push_back(chan[0]);
+	channelList.push_back(chan[1]);
+	channelList.push_back(chan[2]);
+	channelList.push_back(chan[3]);
+	channelList.push_back(chan[4]);
+	channelList.push_back(chan[5]);
+	channelList.push_back(chan[6]);
+	channelList.push_back(chan[7]);
+	channelList.push_back(chan[8]);
+	channelList.push_back(chan[9]);
+}
 
 
 
