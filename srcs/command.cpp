@@ -253,7 +253,9 @@ void server::cmdNick(int fd, std::string buff)
 		send(fd, msg.c_str(), msg.size(), 0);
 		return;
 	}
-	else if (nameExist(vec[1]) == false && mapUser.find(fd)->second.getLog() == 2)
+	if (vec[1].size() > 20)
+		vec[1] = vec[1].substr(0, 19);
+	if (nameExist(vec[1]) == false && mapUser.find(fd)->second.getLog() == 2)
 	{
 		msg = CLIENT + "433 " + mapUser.find(fd)->second.getNickname() + " :can't be applied " + vec[1] + "\r\n";
 		send(fd, msg.c_str(), msg.size(), 0);
@@ -261,20 +263,23 @@ void server::cmdNick(int fd, std::string buff)
 	}
 	else if (mapUser.find(fd)->second.getLog() == 1 && nameExist(vec[1]) == false)
 	{
-		std::string nick;
-		if (vec[1].size() > 20)
-		{
-			vec[1].replace(19, 1, "_");
-			if (nameExist(vec[1]) == false)
-			{
-				for (int i = 0; i < 1000 ; i++)
-				{
-					vec[1].replace(19, 1, to_string(i));
-				}
-			}
-		}
-		else
-		{
+		//std::string nick;
+
+		// inutile vu qu'on "coupe" avant?  à verifier
+	
+		// if (vec[1].size() > 20)
+		// {
+		// 	vec[1].replace(19, 1, "_");
+		// 	if (nameExist(vec[1]) == false)
+		// 	{
+		// 		for (int i = 0; i < 1000 ; i++)
+		// 		{
+		// 			vec[1].replace(19, 1, to_string(i));
+		// 		}
+		// 	}
+		// }
+		// else
+		// {
 			vec[1].append("_");
 			if (nameExist(vec[1]) == false)
 			{
@@ -285,22 +290,17 @@ void server::cmdNick(int fd, std::string buff)
 				}
 				vec[1].append(tempo);
 			}
-		}
-		nick = vec[1];
-		userUpDate(mapUser.find(fd)->second, nick);
-		mapUser.find(fd)->second.setNickname(nick);
-		CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
-		msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + "\r\n";
-		send(fd, msg.c_str(), msg.size(), 0);
-		return;
+		// }
+		// nick = vec[1];
+	// userUpDate(mapUser.find(fd)->second, vec[1]);
+	// mapUser.find(fd)->second.setNickname(vec[1]);
+	// CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
+	// msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + "\r\n";
+	// send(fd, msg.c_str(), msg.size(), 0);
+	// 	return;
 	}
-	std::string newNick;
-	if (vec[1].size() > 20)
-		newNick = vec[1].substr(0, 19);
-	else
-		newNick = vec[1];
-	userUpDate(mapUser.find(fd)->second, newNick);
-	mapUser.find(fd)->second.setNickname(newNick);
+	userUpDate(mapUser.find(fd)->second, vec[1]);
+	mapUser.find(fd)->second.setNickname(vec[1]);
 	CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
 	msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + "\r\n";
 	send(fd, msg.c_str(), msg.size(), 0);
