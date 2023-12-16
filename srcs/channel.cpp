@@ -150,7 +150,6 @@ client* channel::getClient(const std::string& user)
 	return NULL;
 }
 
-
 //**********************************//SETTER//**********************************//
 
 void channel::setNeedPass(bool value) { chan.needPass = value; }
@@ -408,8 +407,7 @@ void channel::sendToChannelnoPRIVMSG(client const &user, std::string const &mess
 	{
 		if (chan.connected[i].getID() != user.getID())
 		{
-			if (send(chan.connected[i].getFD(), message.c_str(), message.size(), 0) == -1)
-				std::cerr << RED << "erreur send" << NONE << std::endl;
+			send(chan.connected[i].getFD(), message.c_str(), message.size(), 0);
 		}
 	}
 }
@@ -427,7 +425,8 @@ void channel::sendToOne(client const &user, std::string const &message) const
 	}
 }
 
-void channel::undoUserChanOp(client const &user){
+void channel::undoUserChanOp(client const &user)
+{
 	if (getIsChanOp(user.getID()) == true){
 		for (std::vector<client>::iterator it = chan.chanOp.begin(); it != chan.chanOp.end(); it++){
 			if (it->getID() == user.getID()){
@@ -438,7 +437,8 @@ void channel::undoUserChanOp(client const &user){
 	}
 }
 
-void channel::unsetUserInvited(client const &user){
+void channel::unsetUserInvited(client const &user)
+{
 	for (std::vector<client>::iterator it = chan.invited.begin(); it != chan.invited.end(); it++){
 		if (it->getID() == user.getID())
 		{

@@ -49,5 +49,3 @@ int main (int ac, char **av)
 	delete srv;
 	return 0;
 }
-
-

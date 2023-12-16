@@ -219,7 +219,3 @@ void server::createChannel(void)
 	channelList.push_back(chan[8]);
 	channelList.push_back(chan[9]);
 }
-
-
-
-

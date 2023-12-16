@@ -55,5 +55,4 @@ class client
 	void deleteChannel(channel const &chan);
 	void exitUser();
 
-
 };

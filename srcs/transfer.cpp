@@ -144,5 +144,3 @@ std::string server::extractFilename(std::string const &filename)
 	}
 	return vec[vec.size() - 1];
 }
-
-

@@ -263,23 +263,6 @@ void server::cmdNick(int fd, std::string buff)
 	}
 	else if (mapUser.find(fd)->second.getLog() == 1 && nameExist(vec[1]) == false)
 	{
-		//std::string nick;
-
-		// inutile vu qu'on "coupe" avant?  à verifier
-	
-		// if (vec[1].size() > 20)
-		// {
-		// 	vec[1].replace(19, 1, "_");
-		// 	if (nameExist(vec[1]) == false)
-		// 	{
-		// 		for (int i = 0; i < 1000 ; i++)
-		// 		{
-		// 			vec[1].replace(19, 1, to_string(i));
-		// 		}
-		// 	}
-		// }
-		// else
-		// {
 			vec[1].append("_");
 			if (nameExist(vec[1]) == false)
 			{
@@ -290,14 +273,6 @@ void server::cmdNick(int fd, std::string buff)
 				}
 				vec[1].append(tempo);
 			}
-		// }
-		// nick = vec[1];
-	// userUpDate(mapUser.find(fd)->second, vec[1]);
-	// mapUser.find(fd)->second.setNickname(vec[1]);
-	// CLIENT = ":" + mapUser.find(fd)->second.getNickname() + "!" + mapUser.find(fd)->second.getUsername() + "@localhost ";
-	// msg = CLIENT + "001 " + mapUser.find(fd)->second.getNickname() + "\r\n";
-	// send(fd, msg.c_str(), msg.size(), 0);
-	// 	return;
 	}
 	userUpDate(mapUser.find(fd)->second, vec[1]);
 	mapUser.find(fd)->second.setNickname(vec[1]);
@@ -306,42 +281,6 @@ void server::cmdNick(int fd, std::string buff)
 	send(fd, msg.c_str(), msg.size(), 0);
 }
 
-// void server::cmdJoin(std::string buff, int fd)
-// {
-// 	std::istringstream iss(buff);
-// 	std::string cmd;
-// 	std::string name;
-// 	iss >> cmd >> name;
-// 	int join = 0;
-	
-// 	std::map<int, client>::iterator it = mapUser.find(fd);
-//     client& myclient = it->second;
-
-// 	for (size_t i = 0; i < channelList.size(); i++)
-// 	{
-// 		if (channelList[i].getChannelName().compare(name) == 0) // verifie si le channel existe deja
-// 		{
-// 			join = 1;
-// 			channelList[i].setNbUserUp();//incremente le nombre de connectes
-// 			channelList[i].setConnect((mapUser.find(fd))->second);//insert le nouveau clien client dans un vector dans channel
-// 			if (channelList[i].getNbUser() == 1)//si c est le 1er connecte il devient admin
-// 				channelList[i].setAdminTrue((mapUser.find(fd))->second);
-// 			std::string message = ":" + myclient.getNickname() + "!" + myclient.getUsername() + "@localhost JOIN " + channelList[i].getChannelName() + "\r\n";		
-// 			send(fd, message.c_str(), message.size(), 0);
-// 		}
-// 	}
-// 	if (join == 0)//si le channel n existe pas on le cree
-// 	{
-// 		channel temp(name);
-// 		temp.setNbUserUp();
-// 		temp.setConnect((mapUser.find(fd))->second);
-// 		temp.setAdminTrue((mapUser.find(fd))->second);
-// 		channelList.push_back(temp);
-// 		std::string message = ":" + myclient.getNickname() + "!" + myclient.getUsername() + "@localhost JOIN " + temp.getChannelName() + "\r\n";		
-// 		send(fd, message.c_str(), message.size(), 0);
-// 	}
-// }
-	
 void server::cmdPrivmsg(int fd, std::string buff)
 {
 	std::vector<channel>::iterator it;
@@ -782,7 +721,6 @@ void server::cmdPing(std::string buff, int fd)
 
 //    Parameters: <channel> *( "," <channel> ) [ <Part Message> ]
 
-//pas reussi a trigger ERR_NEEDMOREPARAMS
 void server::cmdPart(int fd, std::string buff)
 {
 	std::istringstream iss(buff);
@@ -919,4 +857,3 @@ void server::cmdNotice(int fd, std::string buff)
 		send(it_user->first, msg.c_str(), msg.size(), 0);
 	}
 }
-

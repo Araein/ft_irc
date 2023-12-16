@@ -236,7 +236,8 @@ int server::jumpToNextMode(std::string::iterator it){
 	return i - 1;
 }
 
-bool server::findKey(std::vector<std::string> vec, std::string key){
+bool server::findKey(std::vector<std::string> vec, std::string key)
+{
 	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++){
 		if (*it == key)
 			return true;
